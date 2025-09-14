@@ -1,0 +1,41 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Virtualenv
+.venv/
+env/
+venv/
+ENV/
+
+# Poetry
+.cache/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# === IDE / Edito
+.idea/*
+
+# env
+.env
+.env.dev
+!.env.example
