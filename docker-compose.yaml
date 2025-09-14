@@ -1,25 +1,26 @@
+version: "3.9"
+
 services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: media-backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-    env_file:
-      - ./.env
+    restart: always
+    environment:
+      - .env
     ports:
       - "${APP_PORT}:8000"
     depends_on:
-      - db
-
-  db:
-    image: postgres:15
-    container_name: media-db
-    restart: always
-    env_file:
-      - ./.env
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres
 
 volumes:
-  db_data:
+  postgres_data:

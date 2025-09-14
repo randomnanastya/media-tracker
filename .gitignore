@@ -15,7 +15,6 @@ __pycache__/
 env/
 venv/
 ENV/
-media-tracker-py*/   # локальный venv PyCharm
 
 # Poetry
 .cache/
@@ -29,22 +28,14 @@ media-tracker-py*/   # локальный venv PyCharm
 htmlcov/
 *.cover
 *.log
-.poetry/
-.cache/pypoetry/
-
-# Docker
-*.log
-*.pid
-docker-compose.yaml
-
-# Environment files
-.env
-.env.*      # .env.dev, .env.prod и т.д.
-!.env.example  # пушим шаблон
 
 # Jupyter
 .ipynb_checkpoints/
 
-# PyCharm
-.idea/
-*.iml
+# === IDE / Edito
+.idea/*
+
+# env
+.env
+.env.dev
+!.env.example
