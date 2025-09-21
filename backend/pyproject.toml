@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "media-tracker"
+version = "0.1.0"
+description = "Collects and stores stats from Sonarr, Radarr, and Jellyfin. Keeps history of watched and added media even if deleted from your library. Data can be expanded and visualized in UI or Grafana."
+authors = ["Anastasia Salikova <randomnanastya@gmail.com>"]
+readme = "../README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+fastapi = "^0.116.1"
+uvicorn = { extras = ["standard"], version = "^0.23.0" }  # версия uvicorn под fastapi 0.116
+sqlalchemy = "^2.0"
+alembic = "^1.15"
+psycopg2-binary = "^2.9.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+httpx = "^0.27"
+alembic = "^1.16.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

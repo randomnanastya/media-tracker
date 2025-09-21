@@ -1,0 +1,50 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Virtualenv
+.venv/
+env/
+venv/
+ENV/
+media-tracker-py*/   # локальный venv PyCharm
+
+# Poetry
+.cache/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+*.log
+.poetry/
+.cache/pypoetry/
+
+# Docker
+*.log
+*.pid
+docker-compose.yaml
+
+# Environment files
+.env
+.env.*      # .env.dev, .env.prod и т.д.
+!.env.example  # пушим шаблон
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+*.iml
