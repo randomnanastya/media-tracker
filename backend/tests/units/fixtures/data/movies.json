@@ -1,0 +1,1669 @@
+[
+  {
+    "title": "Курт Кобейн: Чёртов Монтаж",
+    "originalTitle": "Cobain: Montage of Heck",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 10,
+        "title": "커트 코베인: 몽타주 오브 헥",
+        "id": 96
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 10,
+        "title": "Курт Кобейн Чёртов Монтаж",
+        "id": 97
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 10,
+        "title": "Kurt Cobain: Montage of Heck",
+        "id": 98
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 10,
+        "title": "柯本的人生蒙太奇",
+        "id": 99
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "курт кобейн чёртов монтаж",
+    "sizeOnDisk": 2203154432,
+    "status": "released",
+    "overview": "Взгляд на жизнь, творчество и мысли Курта Кобейна, кумира целого поколения и одной из ярчайших фигур конца XX века.  После смерти Кобейна права на все его неопубликованные материалы были поделены между участниками Nirvana и родственниками музыканта. Автору фильма был предоставлен беспрецедентный доступ к личным архивам музыканта всеми правообладателями оных. При помощи анимации, откровенных интервью с ближайшими соратниками певца, а также рисунков и домашних видеозаписей самого Курта, «Чёртов монтаж» отслеживает творческий путь Кобейна от самых ранних начинаний в городе Абердин, штат Вашингтон, до зенита всемирной славы — и находит за титанической фигурой легенды",
+    "inCinemas": "2015-03-23T00:00:00Z",
+    "physicalRelease": "2015-06-03T00:00:00Z",
+    "digitalRelease": "2015-03-21T00:00:00Z",
+    "releaseDate": "2015-03-21T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/6/poster.jpg?lastWrite=638945226844003080",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/d0DgEvMNrGGlUXqyQ7HJbgnIxO7.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/6/fanart.jpg?lastWrite=638814724964338661",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/30UGnraRdbZl4a8vcfYJPIzvzjM.jpg"
+      }
+    ],
+    "website": "",
+    "year": 2015,
+    "youTubeTrailerId": "DsB6SzPV9B0",
+    "studio": "Public Road Productions",
+    "path": "/data/media/movies/Cobain Montage of Heck (2015)",
+    "qualityProfileId": 7,
+    "hasFile": true,
+    "movieFileId": 3,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/movies/Cobain Montage of Heck (2015)",
+    "runtime": 132,
+    "cleanTitle": "cobainmontageheck",
+    "imdbId": "tt4229236",
+    "tmdbId": 319075,
+    "titleSlug": "319075",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "NR",
+    "genres": [
+      "Documentary",
+      "Music",
+      "TV Movie"
+    ],
+    "keywords": [
+      "1990s",
+      "addiction",
+      "alternative rock",
+      "biography",
+      "camcorder",
+      "fatherhood",
+      "grunge",
+      "guitar",
+      "indie rock",
+      "intimate",
+      "lifestyle",
+      "musician",
+      "power pop",
+      "price of fame",
+      "rock star",
+      "seattle, washington",
+      "stage",
+      "washington"
+    ],
+    "tags": [],
+    "added": "2024-11-24T15:53:18Z",
+    "ratings": {
+      "imdb": {
+        "votes": 33011,
+        "value": 7.5,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 717,
+        "value": 7.7,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 83,
+        "type": "user"
+      },
+      "rottenTomatoes": {
+        "votes": 0,
+        "value": 97,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 6,
+      "relativePath": "Cobain Montage of Heck (2015) - [SDTV][AC3 5.1][XviD].avi",
+      "path": "/data/media/movies/Cobain Montage of Heck (2015)/Cobain Montage of Heck (2015) - [SDTV][AC3 5.1][XviD].avi",
+      "size": 2203154432,
+      "dateAdded": "2024-11-25T18:37:30Z",
+      "sceneName": "Cobain.Montage.of.Heck.2015.A1.HDRip",
+      "edition": "",
+      "languages": [
+        {
+          "id": 1,
+          "name": "English"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 1,
+          "name": "SDTV",
+          "source": "tv",
+          "resolution": 480,
+          "modifier": "none"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 1,
+      "mediaInfo": {
+        "audioBitrate": 448000,
+        "audioChannels": 5.1,
+        "audioCodec": "AC3",
+        "audioLanguages": "",
+        "audioStreamCount": 1,
+        "videoBitDepth": 8,
+        "videoBitrate": 1758831,
+        "videoCodec": "XviD",
+        "videoFps": 23.976,
+        "videoDynamicRange": "",
+        "videoDynamicRangeType": "",
+        "resolution": "720x400",
+        "runTime": "2:12:22",
+        "scanType": "Progressive",
+        "subtitles": ""
+      },
+      "originalFilePath": "Cobain.Montage.of.Heck.2015.A1.HDRip.avi",
+      "qualityCutoffNotMet": true,
+      "id": 3
+    },
+    "popularity": 1.9088,
+    "lastSearchTime": "2024-11-25T17:31:30Z",
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 2203154432,
+      "releaseGroups": []
+    },
+    "id": 6
+  },
+  {
+    "title": "Мстители: Эра Альтрона",
+    "originalTitle": "Avengers: Age of Ultron",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Marvel Avengers: Age of Ultron",
+        "id": 114
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "The Avengers 2",
+        "id": 115
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Os Vingadores 2 - Era de Ultron",
+        "id": 116
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Marvel's Avengers: Age of Ultron",
+        "id": 117
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Os Vingadores: A Era de Ultron",
+        "id": 118
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Vingadores 2",
+        "id": 119
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "The Avengers Age of Ultron",
+        "id": 120
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "复仇者联盟2：奥创纪元",
+        "id": 122
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Marvel's The Avengers 2: Age of Ultron",
+        "id": 123
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "마블 어벤져스: 에이지 오브 울트론",
+        "id": 124
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "어벤져스 2",
+        "id": 125
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers 2: Vek Ultrona",
+        "id": 126
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "어벤져스 에이지 오브 울트론",
+        "id": 127
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers - L'Ère d'Ultron",
+        "id": 128
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Marvel Studios' Avengers: Age of Ultron",
+        "id": 129
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers 2 - Age of Ultron",
+        "id": 130
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Bosszúállók: Ultron kora",
+        "id": 131
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Vengadores 2 La era de Ultron",
+        "id": 132
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers 2: Đế Chế Ultron",
+        "id": 134
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "შურისმაძიებლები: ალტრონის ხანა",
+        "id": 135
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers 2 - L'Ère d'Ultron",
+        "id": 136
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers: Czas Ultrona",
+        "id": 137
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Avengers II: Age of Ultron",
+        "id": 138
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "アベンジャーズ／エイジ・オブ・ウルトロン：2015",
+        "id": 139
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 13,
+        "title": "Кек алушылар: Альтрон дәуірі",
+        "id": 140
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "мстители эра альтрона",
+    "sizeOnDisk": 43922554880,
+    "status": "released",
+    "overview": "Человечество на грани уничтожения. На этот раз людям угрожает Альтрон — искусcтвенный интеллект, ранее созданый для того, чтобы защищать Землю от любых угроз. Однако, главной угрозой он посчитал человечество. Международная организация Щ. И. Т не способна справится с таким мощным врагом, и потому они вновь обращаются за помощью к Величайшим Героям Земли — Мстителям. Однако Альтрон слишком силен, и есть большая вероятность, что даже им не удастся остановить начало надвигающейся Эры Альтрона, где нет места для людей…",
+    "inCinemas": "2015-04-22T00:00:00Z",
+    "physicalRelease": "2015-09-21T00:00:00Z",
+    "digitalRelease": "2015-04-23T00:00:00Z",
+    "releaseDate": "2015-04-23T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/9/poster.jpg?lastWrite=638726470573561231",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/4ssDuvEDkSArWEdyBl2X5EHvYKU.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/9/fanart.jpg?lastWrite=638891641925517027",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/kIBK5SKwgqIIuRKhhWrJn3XkbPq.jpg"
+      }
+    ],
+    "website": "https://www.marvel.com/movies/avengers-age-of-ultron",
+    "year": 2015,
+    "youTubeTrailerId": "0WM915QsOyI",
+    "studio": "Marvel Studios",
+    "path": "/data/media/3d/Avengers Age of Ultron (2015)",
+    "qualityProfileId": 7,
+    "hasFile": true,
+    "movieFileId": 7,
+    "monitored": false,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/3d/Avengers Age of Ultron (2015)",
+    "runtime": 141,
+    "cleanTitle": "avengersageultron",
+    "imdbId": "tt2395427",
+    "tmdbId": 99861,
+    "titleSlug": "99861",
+    "rootFolderPath": "/data/media/3d",
+    "certification": "PG-13",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "keywords": [
+      "artificial intelligence (a.i.)",
+      "based on comic",
+      "creator",
+      "duringcreditsstinger",
+      "evil robot",
+      "fictitious country",
+      "good versus evil",
+      "marvel cinematic universe (mcu)",
+      "saving the world",
+      "sequel",
+      "super villain",
+      "superhero",
+      "superhero team",
+      "vision"
+    ],
+    "tags": [],
+    "added": "2025-01-16T17:57:11Z",
+    "ratings": {
+      "imdb": {
+        "votes": 975563,
+        "value": 7.3,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 23732,
+        "value": 7.271,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 66,
+        "type": "user"
+      },
+      "rottenTomatoes": {
+        "votes": 0,
+        "value": 75,
+        "type": "user"
+      },
+      "trakt": {
+        "votes": 51432,
+        "value": 7.48678,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 9,
+      "relativePath": "Avengers Age of Ultron (2015) - [DVD].iso",
+      "path": "/data/media/3d/Avengers Age of Ultron (2015)/Avengers Age of Ultron (2015) - [DVD].iso",
+      "size": 43922554880,
+      "dateAdded": "2025-01-16T17:57:57Z",
+      "languages": [
+        {
+          "id": 0,
+          "name": "Unknown"
+        },
+        {
+          "id": 1,
+          "name": "English"
+        },
+        {
+          "id": 11,
+          "name": "Russian"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 2,
+          "name": "DVD",
+          "source": "dvd",
+          "resolution": 0,
+          "modifier": "none"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 0,
+      "originalFilePath": "Avengers.Age.of.Ultron.3D.Seven.iso",
+      "qualityCutoffNotMet": true,
+      "id": 7
+    },
+    "collection": {
+      "title": "The Avengers Collection",
+      "tmdbId": 86311
+    },
+    "popularity": 16.364,
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 43922554880,
+      "releaseGroups": []
+    },
+    "id": 9
+  },
+  {
+    "title": "Поток",
+    "originalTitle": "Straume",
+    "originalLanguage": {
+      "id": 36,
+      "name": "Latvian"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "猫猫的奇幻漂流",
+        "id": 141
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "جریان",
+        "id": 142
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "喵的奇幻漂流",
+        "id": 143
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Vooluga kaasa",
+        "id": 144
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Áradás",
+        "id": 146
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Течение",
+        "id": 147
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Flow, un mundo que salvar",
+        "id": 149
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Потік. Останній кіт на Землі",
+        "id": 151
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "ผจญภัยน้ำท่วมโลก",
+        "id": 152
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "貓貓的奇幻漂流",
+        "id": 254
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "플로우",
+        "id": 262
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "الانسياب",
+        "id": 323
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 17,
+        "title": "Flow - À Deriva",
+        "id": 404
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "поток",
+    "sizeOnDisk": 40805025353,
+    "status": "released",
+    "overview": "Кот просыпается в мире, погруженном в воду, где не осталось людей. Ему удается найти убежище на лодке вместе с другими животными, однако ужиться с ними оказывается ещё сложнее, чем преодолеть свой страх воды. Но каждому предстоит научиться жить с теми, кто отличается от них, и адаптироваться к новому дивному миру.",
+    "inCinemas": "2024-08-29T00:00:00Z",
+    "physicalRelease": "2025-03-04T00:00:00Z",
+    "digitalRelease": "2025-01-07T00:00:00Z",
+    "releaseDate": "2025-01-07T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/10/poster.jpg?lastWrite=638733939963527503",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/imKSymKBK7o73sajciEmndJoVkR.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/10/fanart.jpg?lastWrite=638919297864367311",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/ku9p7ciLeuV1R8pqJGMgawaaVE8.jpg"
+      }
+    ],
+    "website": "https://flowthemovie.com/",
+    "year": 2024,
+    "youTubeTrailerId": "shsVQvHUTxw",
+    "studio": "Dream Well Studio",
+    "path": "/data/media/movies/Flow (2024)",
+    "qualityProfileId": 7,
+    "hasFile": true,
+    "movieFileId": 32,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/movies/Flow (2024)",
+    "runtime": 85,
+    "cleanTitle": "flow",
+    "imdbId": "tt4772188",
+    "tmdbId": 823219,
+    "titleSlug": "823219",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "PG",
+    "genres": [
+      "Animation",
+      "Adventure",
+      "Fantasy",
+      "Family"
+    ],
+    "keywords": [
+      "3d animation",
+      "adventure",
+      "amused",
+      "barco",
+      "bird",
+      "boat",
+      "capybara",
+      "cat",
+      "dog",
+      "dystopia",
+      "fantasy",
+      "flood",
+      "gato",
+      "kids",
+      "labrador",
+      "lemur",
+      "no dialogue",
+      "ocean",
+      "ruins",
+      "teamwork"
+    ],
+    "tags": [],
+    "added": "2025-01-25T09:26:33Z",
+    "ratings": {
+      "imdb": {
+        "votes": 94632,
+        "value": 7.9,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 2313,
+        "value": 8.144,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 87,
+        "type": "user"
+      },
+      "rottenTomatoes": {
+        "votes": 0,
+        "value": 97,
+        "type": "user"
+      },
+      "trakt": {
+        "votes": 6503,
+        "value": 7.91127,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 10,
+      "relativePath": "Flow (2024) - [Remux-2160p][DV HDR10Plus][DTS-HD MA 5.1][x265].mkv",
+      "path": "/data/media/movies/Flow (2024)/Flow (2024) - [Remux-2160p][DV HDR10Plus][DTS-HD MA 5.1][x265].mkv",
+      "size": 40805025353,
+      "dateAdded": "2025-06-21T11:29:41Z",
+      "sceneName": "Flow.aka.Straume.2024.2160p.UHD.BDREMUX.Hybrid.HDR.DV.HEVC-Нечипорук",
+      "edition": "",
+      "languages": [
+        {
+          "id": 36,
+          "name": "Latvian"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 31,
+          "name": "Remux-2160p",
+          "source": "bluray",
+          "resolution": 2160,
+          "modifier": "remux"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 0,
+      "mediaInfo": {
+        "audioBitrate": 4278046,
+        "audioChannels": 5.1,
+        "audioCodec": "DTS-HD MA",
+        "audioLanguages": "",
+        "audioStreamCount": 1,
+        "videoBitDepth": 10,
+        "videoBitrate": 60815895,
+        "videoCodec": "x265",
+        "videoFps": 24,
+        "videoDynamicRange": "HDR",
+        "videoDynamicRangeType": "DV HDR10Plus",
+        "resolution": "3840x2160",
+        "runTime": "1:23:34",
+        "scanType": "Progressive",
+        "subtitles": "eng/spa/ita"
+      },
+      "originalFilePath": "Flow.aka.Straume.2024.2160p.UHD.BDREMUX.Hybrid.HDR.DV.HEVC-Нечипорук.mkv",
+      "qualityCutoffNotMet": false,
+      "id": 32
+    },
+    "popularity": 15.2459,
+    "lastSearchTime": "2025-01-25T09:27:15Z",
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 40805025353,
+      "releaseGroups": []
+    },
+    "id": 10
+  },
+  {
+    "title": "Английский пациент",
+    "originalTitle": "The English Patient",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 51,
+        "title": "O Paciente Inglês",
+        "id": 324
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 51,
+        "title": "Den engelske pasienten",
+        "id": 325
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 51,
+        "title": "El paciente inglés",
+        "id": 326
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 51,
+        "title": "英伦情人",
+        "id": 327
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "английский пациент",
+    "sizeOnDisk": 12284099615,
+    "status": "released",
+    "overview": "Вторая мировая война близится к концу. Молодая канадская медсестра ухаживает на заброшеной вилле за своим «английским пациентом», который получил страшные ожоги во время авиакатастрофы в пустыне Сахара. Медленно угасая, он воскрешает в памяти свой страстный роман с замужней женщиной, сметенный ураганом войны и банальными предрассудками, что в конце концов и привело к трагической развязке.",
+    "inCinemas": "1996-11-14T00:00:00Z",
+    "physicalRelease": "2006-08-31T00:00:00Z",
+    "digitalRelease": "2018-11-12T00:00:00Z",
+    "releaseDate": "2006-08-31T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/33/poster.jpg?lastWrite=638855344247622894",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/8eHHqMg8qEYtVw8LQLygsHXSR2q.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/33/fanart.jpg?lastWrite=638940040229132320",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/yYe63HwFBNFDcnWtBm8KR6NSAeg.jpg"
+      }
+    ],
+    "website": "",
+    "year": 1996,
+    "youTubeTrailerId": "Xk_LRcOFT0c",
+    "studio": "Miramax",
+    "path": "/data/media/movies/The English Patient (1996)",
+    "qualityProfileId": 7,
+    "hasFile": true,
+    "movieFileId": 31,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/movies/The English Patient (1996)",
+    "runtime": 162,
+    "cleanTitle": "theenglishpatient",
+    "imdbId": "tt0116209",
+    "tmdbId": 409,
+    "titleSlug": "409",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "R",
+    "genres": [
+      "Drama",
+      "Romance",
+      "War"
+    ],
+    "keywords": [
+      "airplane",
+      "amnesia",
+      "burn",
+      "cairo",
+      "cave",
+      "cave painting",
+      "desert",
+      "desert scientist",
+      "egypt",
+      "expedition",
+      "hearing",
+      "identity",
+      "intelligence",
+      "landmine",
+      "map",
+      "mine clearer",
+      "prisoner of war",
+      "sandstorm",
+      "secret love",
+      "traitor",
+      "world war ii"
+    ],
+    "tags": [],
+    "added": "2025-05-22T17:31:50Z",
+    "ratings": {
+      "imdb": {
+        "votes": 210376,
+        "value": 7.4,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 2287,
+        "value": 7.2,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 86,
+        "type": "user"
+      },
+      "rottenTomatoes": {
+        "votes": 0,
+        "value": 86,
+        "type": "user"
+      },
+      "trakt": {
+        "votes": 3162,
+        "value": 7.17299,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 33,
+      "relativePath": "The English Patient (1996) - [Bluray-1080p][DTS 5.1][x264]-CiNEFiLE.mkv",
+      "path": "/data/media/movies/The English Patient (1996)/The English Patient (1996) - [Bluray-1080p][DTS 5.1][x264]-CiNEFiLE.mkv",
+      "size": 12284099615,
+      "dateAdded": "2025-05-22T19:16:49Z",
+      "sceneName": "The.English.Patient.1996.1080p.BluRay.x264-CiNEFiLE.Rus",
+      "releaseGroup": "CiNEFiLE",
+      "edition": "",
+      "languages": [
+        {
+          "id": 1,
+          "name": "English"
+        },
+        {
+          "id": 11,
+          "name": "Russian"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 7,
+          "name": "Bluray-1080p",
+          "source": "bluray",
+          "resolution": 1080,
+          "modifier": "none"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 0,
+      "mediaInfo": {
+        "audioBitrate": 1536000,
+        "audioChannels": 5.1,
+        "audioCodec": "DTS",
+        "audioLanguages": "eng/rus",
+        "audioStreamCount": 2,
+        "videoBitDepth": 8,
+        "videoBitrate": 0,
+        "videoCodec": "x264",
+        "videoFps": 23.976,
+        "videoDynamicRange": "",
+        "videoDynamicRangeType": "",
+        "resolution": "1920x1040",
+        "runTime": "2:41:44",
+        "scanType": "Progressive",
+        "subtitles": "eng/rus"
+      },
+      "originalFilePath": "The.English.Patient.1996.1080p.BluRay.x264-CiNEFiLE.Rus.mkv",
+      "qualityCutoffNotMet": true,
+      "id": 31
+    },
+    "popularity": 5.3782,
+    "lastSearchTime": "2025-05-22T17:32:45Z",
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 12284099615,
+      "releaseGroups": [
+        "CiNEFiLE"
+      ]
+    },
+    "id": 33
+  },
+  {
+    "title": "Иллюзия обмана 3",
+    "originalTitle": "Now You See Me: Now You Don't",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "Now You See Me 3",
+        "id": 328
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "出神入化3",
+        "id": 329
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "惊天魔盗团3",
+        "id": 330
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "Majstori iluzije 3",
+        "id": 331
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "Truque de Mestre 3",
+        "id": 332
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "Um Truque de Mestre 3",
+        "id": 340
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "L'illusione perfetta - Now You See Me: Now You Don't",
+        "id": 357
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 52,
+        "title": "Insaisissables 3",
+        "id": 374
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "иллюзия обмана 3",
+    "sizeOnDisk": 0,
+    "status": "announced",
+    "overview": "«4-ре всадника» возвращаются вместе с молодым поколением иллюзионистов, демонстрируя головокружительные трюки, магию и превращения, каких ещё не видел мир.",
+    "inCinemas": "2025-11-12T00:00:00Z",
+    "releaseDate": "2026-02-10T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/34/poster.jpg?lastWrite=638862258136458465",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/oD3Eey4e4Z259XLm3eD3WGcoJAh.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/34/fanart.jpg?lastWrite=638862258141178267",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/ufqytAlziHq5pljKByGJ8IKhtEZ.jpg"
+      }
+    ],
+    "website": "https://nowyouseeme.movie",
+    "year": 2025,
+    "youTubeTrailerId": "uogrgIasYcA",
+    "studio": "Secret Hideout",
+    "path": "/data/media/movies/Now You See Me Now You Don't (2025)",
+    "qualityProfileId": 7,
+    "hasFile": false,
+    "movieFileId": 0,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": false,
+    "folderName": "/data/media/movies/Now You See Me Now You Don't (2025)",
+    "runtime": 0,
+    "cleanTitle": "nowyouseemenowyoudont",
+    "imdbId": "tt4712810",
+    "tmdbId": 425274,
+    "titleSlug": "425274",
+    "rootFolderPath": "/data/media/movies",
+    "genres": [
+      "Thriller",
+      "Crime",
+      "Mystery"
+    ],
+    "keywords": [
+      "illusionist",
+      "sequel",
+      "team up"
+    ],
+    "tags": [],
+    "added": "2025-06-20T18:47:54Z",
+    "ratings": {
+      "tmdb": {
+        "votes": 0,
+        "value": 0,
+        "type": "user"
+      }
+    },
+    "collection": {
+      "title": "Now You See Me Collection",
+      "tmdbId": 382685
+    },
+    "popularity": 11.2824,
+    "statistics": {
+      "movieFileCount": 0,
+      "sizeOnDisk": 0,
+      "releaseGroups": []
+    },
+    "id": 34
+  },
+  {
+    "title": "Аватар: Огонь и пепел",
+    "originalTitle": "Avatar: Fire and Ash",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "Avatar 3",
+        "id": 360
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "Avatar: The Seed Bearer",
+        "id": 361
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "아바타 3",
+        "id": 362
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "阿凡达3：带种者",
+        "id": 363
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "阿凡达3",
+        "id": 364
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "阿凡達：火與灰燼",
+        "id": 365
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "أفاتار: النار والرماد",
+        "id": 366
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "أفاتار 3",
+        "id": 367
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "אווטאר 3",
+        "id": 368
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "Avatar: O Portador de Semente",
+        "id": 369
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "阿凡達3",
+        "id": 370
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "阿凡達: 火與燼",
+        "id": 371
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "Avatar: Alov və Kül",
+        "id": 405
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 57,
+        "title": "Аватар 3",
+        "id": 414
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "аватар огонь и пепел",
+    "sizeOnDisk": 0,
+    "status": "announced",
+    "overview": "Джейк и Нейтири отправляются на другие планеты системы Альфа-Центавра.",
+    "inCinemas": "2025-12-17T00:00:00Z",
+    "releaseDate": "2026-03-17T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/36/poster.jpg?lastWrite=638945226916580078",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/5bxrxnRaxZooBAxgUVBZ13dpzC7.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/36/fanart.jpg?lastWrite=638903495653768339",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/pN3eaCl3sqwrerU8UNdp40F2mK0.jpg"
+      }
+    ],
+    "website": "https://www.avatar.com/movies/avatar-fire-and-ash",
+    "year": 2025,
+    "youTubeTrailerId": "Ma1x7ikpid8",
+    "studio": "20th Century Studios",
+    "path": "/data/media/movies/Avatar Fire and Ash (2025)",
+    "qualityProfileId": 7,
+    "hasFile": false,
+    "movieFileId": 0,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": false,
+    "folderName": "/data/media/movies/Avatar Fire and Ash (2025)",
+    "runtime": 192,
+    "cleanTitle": "avatarfireash",
+    "imdbId": "tt1757678",
+    "tmdbId": 83533,
+    "titleSlug": "83533",
+    "rootFolderPath": "/data/media/movies",
+    "genres": [
+      "Science Fiction",
+      "Adventure",
+      "Fantasy"
+    ],
+    "keywords": [
+      "sequel"
+    ],
+    "tags": [],
+    "added": "2025-08-09T15:19:18Z",
+    "ratings": {
+      "tmdb": {
+        "votes": 0,
+        "value": 0,
+        "type": "user"
+      }
+    },
+    "collection": {
+      "title": "Avatar Collection",
+      "tmdbId": 87096
+    },
+    "popularity": 25.3813,
+    "statistics": {
+      "movieFileCount": 0,
+      "sizeOnDisk": 0,
+      "releaseGroups": []
+    },
+    "id": 36
+  },
+  {
+    "title": "Зверополис 2",
+    "originalTitle": "Zootopia 2",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 62,
+        "title": "زوتروبوليس ٢",
+        "id": 372
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 62,
+        "title": "زوتروبوليس 2",
+        "id": 373
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "зверополис 2",
+    "sizeOnDisk": 0,
+    "status": "announced",
+    "overview": "Кролик-полицейский Джуди и лис Ник идут по следу загадочной рептилии, чьё прибытие в Зверополис переворачивает жизнь города с ног на голову. Чтобы раскрыть дело, Джуди и Ник вынуждены работать под прикрытием в разных районах города.",
+    "inCinemas": "2025-11-26T00:00:00Z",
+    "releaseDate": "2026-02-24T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/37/poster.jpg?lastWrite=638903495804222172",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/LrMBxFwnsMgXTnaWqHYinn3vDN.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/37/fanart.jpg?lastWrite=638938311726065205",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/oMB0dF0NTXA9UPu3GxE9gGbcMwP.jpg"
+      }
+    ],
+    "website": "",
+    "year": 2025,
+    "youTubeTrailerId": "BjkIOU5PhyQ",
+    "studio": "Walt Disney Animation Studios",
+    "path": "/data/media/movies/Zootopia 2 (2025)",
+    "qualityProfileId": 7,
+    "hasFile": false,
+    "movieFileId": 0,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": false,
+    "folderName": "/data/media/movies/Zootopia 2 (2025)",
+    "runtime": 0,
+    "cleanTitle": "zootopia2",
+    "imdbId": "tt26443597",
+    "tmdbId": 1084242,
+    "titleSlug": "1084242",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "PG",
+    "genres": [
+      "Family",
+      "Comedy",
+      "Crime",
+      "Adventure",
+      "Animation"
+    ],
+    "keywords": [
+      "anthropomorphism",
+      "sequel"
+    ],
+    "tags": [],
+    "added": "2025-08-09T15:19:34Z",
+    "ratings": {
+      "tmdb": {
+        "votes": 0,
+        "value": 0,
+        "type": "user"
+      }
+    },
+    "collection": {
+      "title": "Zootopia Collection",
+      "tmdbId": 1084247
+    },
+    "popularity": 10.4276,
+    "statistics": {
+      "movieFileCount": 0,
+      "sizeOnDisk": 0,
+      "releaseGroups": []
+    },
+    "id": 37
+  },
+  {
+    "title": "Свайпнуть",
+    "originalTitle": "Swiped",
+    "originalLanguage": {
+      "id": 1,
+      "name": "English"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 69,
+        "title": "刷入爱河",
+        "id": 415
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "свайпнуть",
+    "sizeOnDisk": 10335913766,
+    "status": "released",
+    "overview": "История о Уитни Вульф Хёрд, основательнице и бывшем генеральном директоре платформы для знакомств Bumble.",
+    "digitalRelease": "2025-09-18T00:00:00Z",
+    "releaseDate": "2025-09-18T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/41/poster.jpg?lastWrite=638912952793429507",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/znxBfe14cefxx5Lu1tgNzggJagt.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/41/fanart.jpg?lastWrite=638945226991996959",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/6Gv1h3yDmyX42mh6TypoEdQO1yl.jpg"
+      }
+    ],
+    "website": "https://www.hulu.com/movie/634cbcfb-c31e-46aa-8f46-91244705ea98",
+    "year": 2025,
+    "youTubeTrailerId": "8seUGDLZRIo",
+    "studio": "20th Century Studios",
+    "path": "/data/media/movies/Swiped (2025)",
+    "qualityProfileId": 8,
+    "hasFile": true,
+    "movieFileId": 40,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/movies/Swiped (2025)",
+    "runtime": 111,
+    "cleanTitle": "swiped",
+    "imdbId": "tt31909270",
+    "tmdbId": 1265344,
+    "titleSlug": "1265344",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "R",
+    "genres": [
+      "History",
+      "Drama"
+    ],
+    "keywords": [
+      "based on true story",
+      "instructive",
+      "online dating",
+      "questioning",
+      "woman director"
+    ],
+    "tags": [],
+    "added": "2025-08-20T14:01:15Z",
+    "ratings": {
+      "imdb": {
+        "votes": 1407,
+        "value": 6.4,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 62,
+        "value": 6.863,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 45,
+        "type": "user"
+      },
+      "trakt": {
+        "votes": 349,
+        "value": 7.03438,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 41,
+      "relativePath": "Swiped (2025) - [WEBDL-2160p][AC3 5.1][h265].mkv",
+      "path": "/data/media/movies/Swiped (2025)/Swiped (2025) - [WEBDL-2160p][AC3 5.1][h265].mkv",
+      "size": 10335913766,
+      "dateAdded": "2025-09-25T07:34:30Z",
+      "sceneName": "Swiped.2025.2160p.DSNP.WEB-DL.DDP5.1",
+      "edition": "",
+      "languages": [
+        {
+          "id": 11,
+          "name": "Russian"
+        },
+        {
+          "id": 1,
+          "name": "English"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 18,
+          "name": "WEBDL-2160p",
+          "source": "webdl",
+          "resolution": 2160,
+          "modifier": "none"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 1,
+      "mediaInfo": {
+        "audioBitrate": 384000,
+        "audioChannels": 5.1,
+        "audioCodec": "AC3",
+        "audioLanguages": "rus/rus/rus/eng",
+        "audioStreamCount": 4,
+        "videoBitDepth": 10,
+        "videoBitrate": 10488515,
+        "videoCodec": "h265",
+        "videoFps": 24,
+        "videoDynamicRange": "",
+        "videoDynamicRangeType": "",
+        "resolution": "3840x2160",
+        "runTime": "1:50:28",
+        "scanType": "Progressive",
+        "subtitles": "eng/eng"
+      },
+      "originalFilePath": "Swiped.2025.2160p.DSNP.WEB-DL.DDP5.1.mkv",
+      "qualityCutoffNotMet": true,
+      "id": 40
+    },
+    "popularity": 111.9362,
+    "lastSearchTime": "2025-08-20T14:03:03Z",
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 10335913766,
+      "releaseGroups": []
+    },
+    "id": 41
+  },
+  {
+    "title": "Гадкая сестра",
+    "originalTitle": "Den stygge stesøsteren",
+    "originalLanguage": {
+      "id": 15,
+      "name": "Norwegian"
+    },
+    "alternateTitles": [
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Den stygge stedsøster",
+        "id": 406
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "A csúf mostohatestvér",
+        "id": 407
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Ha'Akhot Ha'Mekho'eret",
+        "id": 408
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "La hermanastra fea",
+        "id": 409
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Brzydka siostra",
+        "id": 410
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Гадкая сестра",
+        "id": 411
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Ošklivá nevlastní sestra",
+        "id": 412
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Çirkin Ögey Bacı",
+        "id": 413
+      },
+      {
+        "sourceType": "tmdb",
+        "movieMetadataId": 70,
+        "title": "Neglītā pusmāsa",
+        "id": 416
+      }
+    ],
+    "secondaryYearSourceId": 0,
+    "sortTitle": "гадкая сестра",
+    "sizeOnDisk": 13040750851,
+    "status": "released",
+    "overview": "Женщина с двумя дочерями выходит замуж за богатого, как она думала, вдовца, но после его внезапной смерти оказывается в ещё больших долгах. Её старшая дочь Эльвира, некрасивая сводная сестра прекрасной Агнес, мечтает выйти замуж за принца и готова на многое, чтобы стать красавицей и блистать на грядущем балу. Рассматривая это как выгодное вложение средств, мать отправляет Эльвиру на операцию по исправлению формы носа.",
+    "inCinemas": "2025-03-07T00:00:00Z",
+    "digitalRelease": "2025-05-09T00:00:00Z",
+    "releaseDate": "2025-05-09T00:00:00Z",
+    "images": [
+      {
+        "coverType": "poster",
+        "url": "/MediaCover/42/poster.jpg?lastWrite=638927667848083861",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/crX9rSg9EohybhkEe8iTQUCe55y.jpg"
+      },
+      {
+        "coverType": "fanart",
+        "url": "/MediaCover/42/fanart.jpg?lastWrite=638927667850533762",
+        "remoteUrl": "https://image.tmdb.org/t/p/original/eQV9rSQ6S1ja4lGTwHTnQuVhoG.jpg"
+      }
+    ],
+    "website": "https://www.uglystepsister.movie",
+    "year": 2025,
+    "youTubeTrailerId": "5vZ1_Yxjwzs",
+    "studio": "Mer Film",
+    "path": "/data/media/movies/The Ugly Stepsister (2025)",
+    "qualityProfileId": 8,
+    "hasFile": true,
+    "movieFileId": 37,
+    "monitored": true,
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "folderName": "/data/media/movies/The Ugly Stepsister (2025)",
+    "runtime": 109,
+    "cleanTitle": "theuglystepsister",
+    "imdbId": "tt29344903",
+    "tmdbId": 1284120,
+    "titleSlug": "1284120",
+    "rootFolderPath": "/data/media/movies",
+    "certification": "NR",
+    "genres": [
+      "Horror",
+      "Comedy",
+      "Fantasy",
+      "Drama"
+    ],
+    "keywords": [
+      "baffled",
+      "based on fairy tale",
+      "beauty standards",
+      "body horror",
+      "bold",
+      "brisk",
+      "cinderella story",
+      "desperate",
+      "exuberant",
+      "forceful",
+      "horror",
+      "independent film",
+      "psychological horror",
+      "satire",
+      "stepmother stepdaughter relationship"
+    ],
+    "tags": [],
+    "added": "2025-09-06T14:46:20Z",
+    "ratings": {
+      "imdb": {
+        "votes": 22271,
+        "value": 7,
+        "type": "user"
+      },
+      "tmdb": {
+        "votes": 404,
+        "value": 7.2,
+        "type": "user"
+      },
+      "metacritic": {
+        "votes": 0,
+        "value": 70,
+        "type": "user"
+      },
+      "rottenTomatoes": {
+        "votes": 0,
+        "value": 96,
+        "type": "user"
+      },
+      "trakt": {
+        "votes": 1145,
+        "value": 6.97205,
+        "type": "user"
+      }
+    },
+    "movieFile": {
+      "movieId": 42,
+      "relativePath": "The Ugly Stepsister (2025) - [AMZN][WEBDL-2160p][AC3 2.0][h265].mkv",
+      "path": "/data/media/movies/The Ugly Stepsister (2025)/The Ugly Stepsister (2025) - [AMZN][WEBDL-2160p][AC3 2.0][h265].mkv",
+      "size": 13040750851,
+      "dateAdded": "2025-09-06T15:08:25Z",
+      "sceneName": "The.Ugly.Stepsister.2025.2160p.UHD.AMZN.WEB-DL.SDR-Нечипорук",
+      "edition": "",
+      "languages": [
+        {
+          "id": 11,
+          "name": "Russian"
+        },
+        {
+          "id": 32,
+          "name": "Ukrainian"
+        },
+        {
+          "id": 15,
+          "name": "Norwegian"
+        }
+      ],
+      "quality": {
+        "quality": {
+          "id": 18,
+          "name": "WEBDL-2160p",
+          "source": "webdl",
+          "resolution": 2160,
+          "modifier": "none"
+        },
+        "revision": {
+          "version": 1,
+          "real": 0,
+          "isRepack": false
+        }
+      },
+      "indexerFlags": 0,
+      "mediaInfo": {
+        "audioBitrate": 256000,
+        "audioChannels": 2,
+        "audioCodec": "AC3",
+        "audioLanguages": "rus/ukr/nob",
+        "audioStreamCount": 3,
+        "videoBitDepth": 8,
+        "videoBitrate": 14864483,
+        "videoCodec": "h265",
+        "videoFps": 23.976,
+        "videoDynamicRange": "",
+        "videoDynamicRangeType": "",
+        "resolution": "3600x2160",
+        "runTime": "1:49:24",
+        "scanType": "Progressive",
+        "subtitles": "rus/rus/ukr/eng/fre"
+      },
+      "originalFilePath": "The.Ugly.Stepsister.2025.2160p.UHD.AMZN.WEB-DL.SDR-Нечипорук.mkv",
+      "qualityCutoffNotMet": true,
+      "id": 37
+    },
+    "popularity": 63.7922,
+    "lastSearchTime": "2025-09-06T14:47:20Z",
+    "statistics": {
+      "movieFileCount": 1,
+      "sizeOnDisk": 13040750851,
+      "releaseGroups": []
+    },
+    "id": 42
+  }
+]

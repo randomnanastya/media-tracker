@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+from typing import cast
+
 from sqlalchemy import select
 import logging
 
@@ -26,10 +28,11 @@ async def import_radarr_movies() -> int:
                 continue
 
             # Check if the movie already exists by radarr_id
-            exists = await session.execute(
-                select(Movie).where(Movie.radarr_id == radarr_id)
-            )
-            if exists.scalars().first():
+            from sqlalchemy import exists
+            result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
+            movie_exists: bool = cast(bool, result.scalar())
+
+            if movie_exists:
                 continue  # skip already added
 
             # Handle release date with timezone

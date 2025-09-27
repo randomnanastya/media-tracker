@@ -13,21 +13,17 @@ DB_NAME = os.getenv("POSTGRES_DB")
 
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# создаём асинхронный движок
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
     echo=True,
 )
 
-# асинхронный sessionmaker
 AsyncSessionLocal: Callable[..., AsyncSession] = sessionmaker(
     bind=async_engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
 
-
-# удобный контекстный менеджер для работы с сессией
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
