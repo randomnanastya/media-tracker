@@ -8,16 +8,12 @@ from app.services.radarr_service import import_radarr_movies
 
 logger = logging.getLogger(__name__)
 
-# logger.debug("Запрос к Radarr: %s", url)
-# logger.info("Импортировано фильмов: %d", imported)
-# logger.error("Ошибка при импорте: %s", str(e))
-
 app = FastAPI(title="Media Tracker")
 
 # Radarr API v1
 app.include_router(radarr.router, prefix="/api/v1/radarr")
 
-# Планировщик
+# Scheduler
 scheduler = AsyncIOScheduler()
 scheduler.add_job(import_radarr_movies, "cron", hour=3, minute=0)
 scheduler.start()
