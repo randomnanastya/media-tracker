@@ -1,24 +1,13 @@
-# Используем официальный образ Python
-FROM python:3.12-slim
+FROM python:3.12
 
-# Рабочая директория внутри контейнера
+RUN pip install --no-cache-dir poetry
+
 WORKDIR /app
 
-# Копируем только файлы с зависимостями
 COPY pyproject.toml poetry.lock* ./
 
-# Обновляем pip и устанавливаем Poetry
-RUN pip install --upgrade pip \
-    && pip install poetry
+RUN poetry install --no-dev --no-root --no-interaction --no-ansi
 
-# Устанавливаем только prod-зависимости
-RUN poetry install --no-root --no-dev
+COPY . .
 
-# Копируем код приложения
-COPY . /app
-
-# Устанавливаем Gunicorn для продакшена
-RUN pip install gunicorn uvicorn
-
-# Указываем команду запуска
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "4"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

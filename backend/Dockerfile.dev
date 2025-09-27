@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Берём полный образ Python 3.12
+FROM python:3.12
 
 # Устанавливаем poetry
 RUN pip install --no-cache-dir poetry
@@ -8,11 +9,11 @@ WORKDIR /app
 # Копируем зависимости
 COPY pyproject.toml poetry.lock* ./
 
-# Устанавливаем все зависимости (включая dev)
+# Устанавливаем зависимости
 RUN poetry install --no-root --no-interaction --no-ansi
 
-# Копируем приложение
+# Копируем код приложения
 COPY . .
 
-# Hot-reload режим
+# Hot-reload для разработки
 CMD ["poetry", "run", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
