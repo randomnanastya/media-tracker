@@ -1,0 +1,64 @@
+name: Backend Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'MTB-*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5431; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Run migrations
+        run: |
+          poetry run alembic upgrade head
+
+      - name: Run all tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5431
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+          APP_ENV: testing
+        run: |
+          poetry run pytest tests/ -v

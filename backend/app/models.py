@@ -11,7 +11,7 @@ class MediaType(enum.Enum):
     SERIES = "series"
 
 class Media(Base):
-    __tablename__: str = "media"
+    __tablename__ = "media"
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(Enum(MediaType), nullable=False)
@@ -28,7 +28,7 @@ class Media(Base):
     movie = relationship("Movie", back_populates="media", uselist=False)
 
 class Series(Base):
-    __tablename__: str = "series"
+    __tablename__ = "series"
 
     id = Column(Integer, ForeignKey("media.id"), primary_key=True)
     jellyfin_id = Column(Integer, nullable=True, unique=True)
@@ -40,7 +40,7 @@ class Series(Base):
     seasons = relationship("Season", back_populates="series")
 
 class Movie(Base):
-    __tablename__: str = "movies"
+    __tablename__ = "movies"
 
     id = Column(Integer, ForeignKey("media.id"), primary_key=True)
     radarr_id = Column(Integer, nullable=True, unique=True)
@@ -50,7 +50,7 @@ class Movie(Base):
     media = relationship("Media", back_populates="movie")
 
 class Season(Base):
-    __tablename__: str = "seasons"
+    __tablename__ = "seasons"
 
     id = Column(Integer, primary_key=True)
     series_id = Column(Integer, ForeignKey("series.id"), nullable=False)
@@ -64,7 +64,7 @@ class Season(Base):
     episodes = relationship("Episode", back_populates="season")
 
 class Episode(Base):
-    __tablename__: str = "episodes"
+    __tablename__ = "episodes"
 
     id = Column(Integer, primary_key=True)
     season_id = Column(Integer, ForeignKey("seasons.id"), nullable=False)
@@ -78,7 +78,7 @@ class Episode(Base):
     season = relationship("Season", back_populates="episodes")
 
 class User(Base):
-    __tablename__: str = "users"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     username = Column(String, nullable=False, unique=True)
@@ -87,7 +87,7 @@ class User(Base):
     watch_history = relationship("WatchHistory", back_populates="user")
 
 class WatchHistory(Base):
-    __tablename__: str = "watch_history"
+    __tablename__ = "watch_history"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
