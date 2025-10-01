@@ -18,11 +18,11 @@ jobs:
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: test_db
+          POSTGRES_DB: test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -35,31 +35,31 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libpq-dev
+
+      - name: Install Poetry
+        run: pip install poetry
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
+        run: poetry install
 
       - name: Wait for Postgres
         run: |
-          until pg_isready -h localhost -p 5431; do
+          until pg_isready -h localhost -p 5432; do
             echo "Waiting for postgres..."
             sleep 2
           done
 
       - name: Run migrations
-        run: |
-          poetry run alembic upgrade head
+        run: poetry run alembic upgrade head
 
       - name: Run all tests
         env:
           POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5431
+          POSTGRES_PORT: 5432
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
           POSTGRES_DB: test
           APP_ENV: testing
-        run: |
-          poetry run pytest tests/ -v
-          
+        run: poetry run pytest tests/ -v

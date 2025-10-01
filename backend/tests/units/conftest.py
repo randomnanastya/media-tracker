@@ -7,15 +7,12 @@ from unittest.mock import patch, AsyncMock, MagicMock
 
 from _pytest import pathlib
 
-# set tests env database
-os.environ.update({
-    'POSTGRES_HOST': 'localhost',
-    'POSTGRES_PORT': '5432',
-    'POSTGRES_USER': 'test',
-    'POSTGRES_PASSWORD': 'test',
-    'POSTGRES_DB': 'test',
-    'APP_ENV': 'testing'
-})
+os.environ.setdefault('POSTGRES_HOST', 'localhost')
+os.environ.setdefault('POSTGRES_PORT', '5432')
+os.environ.setdefault('POSTGRES_USER', 'test')
+os.environ.setdefault('POSTGRES_PASSWORD', 'test')
+os.environ.setdefault('POSTGRES_DB', 'test')
+os.environ.setdefault('APP_ENV', 'testing')
 
 # mock scheduler before imports
 with patch('apscheduler.schedulers.asyncio.AsyncIOScheduler') as mock_scheduler:
