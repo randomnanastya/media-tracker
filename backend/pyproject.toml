@@ -5,6 +5,10 @@ description = "Collects and stores stats from Sonarr, Radarr, and Jellyfin. Keep
 authors = ["Anastasia Salikova <randomnanastya@gmail.com>"]
 readme = "../README.md"
 
+packages = [
+  { include = "app" }
+]
+
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 fastapi = "^0.116.1"
