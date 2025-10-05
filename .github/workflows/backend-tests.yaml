@@ -55,6 +55,13 @@ jobs:
           done
 
       - name: Run migrations
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+          APP_ENV: testing
         run: poetry run alembic upgrade head
 
       - name: Run all tests
