@@ -10,7 +10,33 @@ on:
       - 'MTB-*'
 
 jobs:
-  test:
+
+  # -------------------------------
+  # 1. Unit tests
+  # ----------------------------
+  unit-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies (no-root)
+        run: poetry install --no-root  # только зависимости, без установки пакета
+
+      - name: Run unit tests
+        run: poetry run pytest tests/units -v  # запускаем только юнит-тесты
+  # -------------------------------
+  # 2. Integration tests
+  # -------------------------------
+  integration-tests:
     runs-on: ubuntu-latest
     defaults:
       run:
