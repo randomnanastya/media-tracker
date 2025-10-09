@@ -41,7 +41,9 @@ jobs:
         run: poetry install --no-root  # только зависимости, без установки пакета
 
       - name: Run unit tests
-        run: poetry run pytest tests/units -v  --cov=app --cov-report=xml # запускаем только юнит-тесты
+        run: |
+          export PYTHONPATH=$(pwd)
+          poetry run pytest tests/units -v --cov=app --cov-report=xml
   # -------------------------------
   # 2. Integration tests
   # -------------------------------
