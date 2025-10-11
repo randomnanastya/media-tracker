@@ -1,220 +1,173 @@
-# tests/units/test_radarr_service.py
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, call
-from datetime import datetime, timezone
+from unittest.mock import Mock
 
 from app.services.radarr_service import import_radarr_movies
-from app.models import Media, Movie, MediaType
+
+
+def count_movies_without_id(movies):
+    """Helper to count movies without Radarr ID"""
+    return sum(1 for movie in movies if 'id' not in movie)
+
+
+def count_valid_movies(movies):
+    """Helper to count movies with Radarr ID"""
+    return sum(1 for movie in movies if 'id' in movie)
+
+
+def calculate_expected_entities_count(movies_count):
+    """Calculate expected number of entities created (Media + Movie per film)"""
+    return movies_count * 2
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_creates_both_entities():
+async def test_import_radarr_movies_creates_both_entities(
+        mock_session,
+        radarr_movies_basic,
+        mock_fetch_radarr_movies,
+        mock_exists_result_false
+):
     """Test service creates both Media and Movie entities for each movie"""
     # Arrange
-    mock_session = AsyncMock()
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "Movie 2",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
-    ]
+    mock_fetch_radarr_movies.return_value = radarr_movies_basic
+    mock_session.execute.return_value = mock_exists_result_false
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = sample_movies
+    expected_movies_count = len(radarr_movies_basic)
+    expected_entities_count = calculate_expected_entities_count(expected_movies_count)
 
-        # Mock exists check - все фильмы новые
-        mock_result = Mock()
-        mock_result.scalar.return_value = False
-        mock_session.execute.return_value = mock_result
+    # Act
+    imported_count = await import_radarr_movies(mock_session)
 
-        # Mock DB operations
-        mock_session.add = Mock()
-        mock_session.flush = AsyncMock()
-        mock_session.commit = AsyncMock()
-        mock_session.rollback = AsyncMock()
+    # Assert
+    assert imported_count == expected_movies_count, \
+        f"Expected to import {expected_movies_count} movies, but got {imported_count}"
 
-        # Act
-        result = await import_radarr_movies(mock_session)
+    assert mock_session.execute.call_count == expected_movies_count, \
+        f"Expected {expected_movies_count} existence checks, but got {mock_session.execute.call_count}"
 
-        # Assert - проверяем бизнес-логику и взаимодействие с БД
-        assert result == 2  # Импортировано 2 фильма
+    assert mock_session.add.call_count == expected_entities_count, \
+        f"Expected {expected_entities_count} entities created, but got {mock_session.add.call_count}"
 
-        # Проверяем вызовы проверки существования
-        assert mock_session.execute.call_count == 2
+    assert mock_session.flush.call_count == expected_movies_count, \
+        f"Expected {expected_movies_count} flush calls, but got {mock_session.flush.call_count}"
 
-        # Проверяем создание сущностей - семантика вместо количества
-        assert mock_session.add.call_count == 4  # 2 Media + 2 Movie
-
-        # Проверяем что flush вызывался для каждой пары сущностей
-        assert mock_session.flush.call_count == 2
-
-        # Проверяем коммит
-        mock_session.commit.assert_called_once()
-        mock_session.rollback.assert_not_called()
+    mock_session.commit.assert_called_once()
+    mock_session.rollback.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_skips_existing_movies():
+async def test_import_radarr_movies_skips_existing_movies(
+        mock_session,
+        mock_fetch_radarr_movies,
+        sample_movies_mixed,
+        setup_mock_session_exists_check
+):
     """Test service skips movies that already exist in database"""
     # Arrange
-    mock_session = AsyncMock()
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Existing Movie",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "New Movie",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
-    ]
+    mock_fetch_radarr_movies.return_value = sample_movies_mixed
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = sample_movies
+    # First movie exists, second is new
+    setup_mock_session_exists_check([True, False])
 
-        # Mock exists check - первый существует, второй новый
-        mock_result = Mock()
-        mock_result.scalar.side_effect = [True, False]  # Первый существует
-        mock_session.execute.return_value = mock_result
+    expected_imported_count = 1
+    expected_entities_count = calculate_expected_entities_count(expected_imported_count)
 
-        # Mock DB operations
-        mock_session.add = Mock()
-        mock_session.flush = AsyncMock()
-        mock_session.commit = AsyncMock()
-        mock_session.rollback = AsyncMock()
+    # Act
+    imported_count = await import_radarr_movies(mock_session)
 
-        # Act
-        result = await import_radarr_movies(mock_session)
+    # Assert
+    assert imported_count == expected_imported_count, \
+        f"Expected to import {expected_imported_count} new movies, but got {imported_count}"
 
-        # Assert
-        assert result == 1  # Только один новый фильм импортирован
+    assert mock_session.add.call_count == expected_entities_count, \
+        f"Expected {expected_entities_count} entities created, but got {mock_session.add.call_count}"
 
-        # Проверяем что для существующего фильма не создавались сущности
-        assert mock_session.add.call_count == 2  # Только для второго фильма (1 Media + 1 Movie)
-        assert mock_session.flush.call_count == 1  # Только один flush
+    assert mock_session.flush.call_count == expected_imported_count, \
+        f"Expected {expected_imported_count} flush calls, but got {mock_session.flush.call_count}"
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_handles_partial_insert_failure():
+async def test_import_radarr_movies_handles_partial_insert_failure(
+        mock_session,
+        mock_fetch_radarr_movies,
+        mock_exists_result_false,
+        sample_movies_basic
+):
     """Test service handles partial insert failures with rollback"""
     # Arrange
-    mock_session = AsyncMock()
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "Movie 2",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
-    ]
+    mock_fetch_radarr_movies.return_value = sample_movies_basic
+    mock_session.execute.return_value = mock_exists_result_false
 
-    with patch("app.services.radarr_movies.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = sample_movies
+    # Simulate failure on second movie flush
+    mock_session.flush.side_effect = [None, Exception("Flush failed")]
 
-        # Mock exists check - все новые
-        mock_result = Mock()
-        mock_result.scalar.return_value = False
-        mock_session.execute.return_value = mock_result
+    expected_successful_imports = 1
+    total_movies = len(sample_movies_basic)
 
-        # Mock flush to fail on second movie
-        mock_session.add = Mock()
-        mock_session.flush = AsyncMock()
-        mock_session.flush.side_effect = [None, Exception("Flush failed")]
-        mock_session.commit = AsyncMock()
-        mock_session.rollback = AsyncMock()
+    # Act
+    imported_count = await import_radarr_movies(mock_session)
 
-        # Act
-        result = await import_radarr_movies(mock_session)
+    # Assert
+    assert imported_count == expected_successful_imports, \
+        f"Expected {expected_successful_imports} successful imports despite partial failure, but got {imported_count}"
 
-        # Assert
-        assert result == 1  # Только один успешный импорт
+    assert mock_session.rollback.call_count == 1, \
+        "Expected rollback after partial insert failure"
 
-        # Проверяем откат при ошибке
-        mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Коммит все равно должен быть
+    assert mock_session.commit.call_count == 1, \
+        "Expected commit to be called even after partial failure"
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_handles_commit_failure():
+async def test_import_radarr_movies_handles_commit_failure(
+        mock_session,
+        mock_fetch_radarr_movies,
+        mock_exists_result_false,
+        sample_movies_basic
+):
     """Test service handles commit failure"""
     # Arrange
-    mock_session = AsyncMock()
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        }
-    ]
+    mock_fetch_radarr_movies.return_value = sample_movies_basic
+    mock_session.execute.return_value = mock_exists_result_false
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = sample_movies
+    # Simulate commit failure
+    mock_session.commit.side_effect = Exception("Commit failed")
 
-        # Mock exists check
-        mock_result = Mock()
-        mock_result.scalar.return_value = False
-        mock_session.execute.return_value = mock_result
+    expected_error_message = "Commit failed"
 
-        # Mock commit to fail
-        mock_session.add = Mock()
-        mock_session.flush = AsyncMock()
-        mock_session.commit = AsyncMock()
-        mock_session.commit.side_effect = Exception("Commit failed")
-        mock_session.rollback = AsyncMock()
+    # Act & Assert
+    with pytest.raises(Exception, match=expected_error_message):
+        await import_radarr_movies(mock_session)
 
-        # Act & Assert
-        with pytest.raises(Exception, match="Commit failed"):
-            await import_radarr_movies(mock_session)
-
-        # Проверяем что откат был вызван при ошибке коммита
-        mock_session.rollback.assert_called_once()
+    assert mock_session.rollback.call_count == 1, \
+        "Expected rollback after commit failure"
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_skips_movies_without_id():
+async def test_import_radarr_movies_skips_movies_without_id(
+        mock_session,
+        radarr_movies_invalid_data,
+        mock_fetch_radarr_movies,
+        mock_exists_result_false
+):
     """Test service skips movies without Radarr ID"""
     # Arrange
-    mock_session = AsyncMock()
-    sample_movies = [
-        {
-            "title": "Movie without ID"  # Нет id поля
-        },
-        {
-            "id": 2,
-            "title": "Valid Movie",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
-    ]
+    mock_fetch_radarr_movies.return_value = radarr_movies_invalid_data
+    mock_session.execute.return_value = mock_exists_result_false
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
-        mock_fetch.return_value = sample_movies
+    expected_valid_count = count_valid_movies(radarr_movies_invalid_data)
+    expected_invalid_count = count_movies_without_id(radarr_movies_invalid_data)
 
-        # Mock exists check только для валидного фильма
-        mock_result = Mock()
-        mock_result.scalar.return_value = False
-        mock_session.execute.return_value = mock_result
+    # Act
+    imported_count = await import_radarr_movies(mock_session)
 
-        mock_session.add = Mock()
-        mock_session.flush = AsyncMock()
-        mock_session.commit = AsyncMock()
+    # Assert
+    assert imported_count == expected_valid_count, \
+        f"Expected to import {expected_valid_count} valid movies, but got {imported_count}"
 
-        # Act
-        result = await import_radarr_movies(mock_session)
+    assert mock_session.execute.call_count == expected_valid_count, \
+        f"Expected existence checks only for {expected_valid_count} valid movies, but got {mock_session.execute.call_count}"
 
-        # Assert
-        assert result == 1  # Только один валидный фильм
-
-        # Проверяем что execute вызывался только для валидного фильма
-        assert mock_session.execute.call_count == 1
+    # Optional: verify the total movies processed
+    total_movies = len(radarr_movies_invalid_data)
+    assert expected_valid_count + expected_invalid_count == total_movies, \
+        f"Movie count mismatch: {expected_valid_count} valid + {expected_invalid_count} invalid should equal {total_movies} total"

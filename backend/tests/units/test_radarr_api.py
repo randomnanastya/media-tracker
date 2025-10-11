@@ -1,125 +1,116 @@
 # tests/units/test_radarr_api.py
 import pytest
-from unittest.mock import patch, AsyncMock, Mock
-from httpx import AsyncClient, RequestError
-
-from app.main import app
-from app.database import get_session
-
+from unittest.mock import patch, AsyncMock
+from httpx import RequestError
 
 @pytest.mark.asyncio
-async def test_import_radarr_success(radarr_movies_basic):
-    mock_session = AsyncMock()
+async def test_import_radarr_success(async_client, mock_session, radarr_movies_basic, mock_exists_result_false):
+    """API должен вернуть 200 и корректный JSON при успешном импорте"""
 
     with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = radarr_movies_basic
 
-        mock_result = Mock()
-        mock_result.scalar.return_value = False
-        mock_session.execute.return_value = mock_result
+        mock_session.execute.return_value = mock_exists_result_false
 
-        # # Override the session dependency
-        async def override_get_session():
-            return mock_session
-
-        app.dependency_overrides[get_session] = override_get_session
-
-        # Call the endpoint using AsyncClient
-        async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.post("/api/v1/radarr/import")
+        response = await async_client.post("/api/v1/radarr/import")
 
         assert response.status_code == 200
-        assert response.json() == {"status": "ok", "imported": 3}
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_basic)}
 
-    # # Clean up overrides
-    app.dependency_overrides = {}
+@pytest.mark.asyncio
+async def test_import_radarr_empty_success(async_client, mock_session, radarr_movies_empty, mock_exists_result_false):
+    """API должен вернуть 200 и корректный JSON c 0 при получении пустого массива от radarr"""
 
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = radarr_movies_empty
 
-# @pytest.mark.asyncio
-# async def test_radarr_import_returns_success(radarr_movies_basic):
-#     """Test API returns success response on successful import"""
-#
-#     # Arrange
-#     with patch("app.services.radarr_service.import_radarr_movies", new_callable=AsyncMock) as mock_service:
-#         mock_service.return_value = 3  # Сервис вернул что импортировал 3 фильма
-#         # Mock session (нужен для dependency)
-#         mock_session = AsyncMock()
-#
-#         async def override_get_session():
-#             return mock_session
-#
-#         app.dependency_overrides[get_session] = override_get_session
-#
-#         # Act
-#         async with AsyncClient(app=app, base_url="http://test") as ac:
-#             response = await ac.post("/api/v1/radarr/import")
-#
-#         # Assert - проверяем только HTTP ответ
-#         assert response.status_code == 200
-#         assert response.json() == {"status": "ok", "imported": 3}
-#
-#         # Проверяем что сервис был вызван
-#         mock_service.assert_called_once()
-#
-#     # Clean up
-#     app.dependency_overrides = {}
-#
-#
-# @pytest.mark.asyncio
-# async def test_radarr_import_returns_error_on_service_failure():
-#     """Test API returns error when service fails"""
-#     # Arrange
-#     with patch("app.services.radarr_service.import_radarr_movies", new_callable=AsyncMock) as mock_service:
-#         mock_service.side_effect = Exception("Service error")
-#
-#         # Mock session
-#         mock_session = AsyncMock()
-#
-#         async def override_get_session():
-#             return mock_session
-#
-#         app.dependency_overrides[get_session] = override_get_session
-#
-#         # Act
-#         async with AsyncClient(app=app, base_url="http://test") as ac:
-#             response = await ac.post("/api/v1/radarr/import")
-#
-#         # Assert - проверяем обработку ошибок
-#         assert response.status_code == 500
-#         assert "error" in response.json()
-#
-#         mock_service.assert_called_once()
-#
-#     # Clean up
-#     app.dependency_overrides = {}
-#
-#
-# @pytest.mark.asyncio
-# async def test_radarr_import_returns_network_error():
-#     """Test API returns network error when Radarr API fails"""
-#     # Arrange
-#     with patch("app.services.radarr_service.import_radarr_movies", new_callable=AsyncMock) as mock_service:
-#         mock_service.side_effect = RequestError("Network error")
-#
-#         # Mock session
-#         mock_session = AsyncMock()
-#
-#         async def override_get_session():
-#             return mock_session
-#
-#         app.dependency_overrides[get_session] = override_get_session
-#
-#         # Act
-#         async with AsyncClient(app=app, base_url="http://test") as ac:
-#             response = await ac.post("/api/v1/radarr/import")
-#
-#         # Assert
-#         assert response.status_code == 502
-#         assert "Network error" in response.json().get("detail", "")
-#
-#         mock_service.assert_called_once()
-#
-#     # Clean up
-#     app.dependency_overrides = {}
-#
-#
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_empty)}
+
+@pytest.mark.asyncio
+async def test_import_radarr_success_with_large_list(async_client, mock_session, radarr_movies_large_list, mock_exists_result_false):
+    """API должен вернуть 200, количество добавленных фильмов из radarr"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = radarr_movies_large_list
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_large_list)}
+
+@pytest.mark.asyncio
+async def test_import_radarr_success_with_specific_chars(async_client, mock_session, radarr_movies_special_chars, mock_exists_result_false):
+    """API должен вернуть 200, количество добавленных фильмов с наличием спецсимволов из radarr"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = radarr_movies_special_chars
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_special_chars)}
+
+@pytest.mark.asyncio
+async def test_import_radarr_success_with_real_data(async_client, mock_session, radarr_movies_from_json, mock_exists_result_false):
+    """API должен вернуть 200, количество добавленных фильмов с неиспользуемыми полями в json из radarr"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = radarr_movies_from_json
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_from_json)}
+
+@pytest.mark.asyncio
+async def test_import_radarr_skip_movie_without_radarr_id(async_client, mock_session, radarr_movies_invalid_data, mock_exists_result_false):
+    """API должен вернуть 200, количество добавленных фильмов только с id radarr"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.return_value = radarr_movies_invalid_data
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "imported": len(radarr_movies_invalid_data) - 1}
+
+@pytest.mark.asyncio
+async def test_import_radarr_err_on_service_failure(async_client, mock_session, mock_exists_result_false):
+    """API должен вернуть 500, когда приходит ошибка из radarr"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.side_effect = Exception("Service error")
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 500
+        assert response.json() == {'detail': 'Internal server error: Service error'}
+
+@pytest.mark.asyncio
+async def test_radarr_import_returns_network_error(async_client, mock_session, mock_exists_result_false):
+    """API должен вернуть 502, когда приходит ошибка сети"""
+
+    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+        mock_fetch.side_effect = RequestError("Network error")
+
+        mock_session.execute.return_value = mock_exists_result_false
+
+        response = await async_client.post("/api/v1/radarr/import")
+
+        assert response.status_code == 502
+        assert response.json() == {'detail': 'Network error during API call: Network error'}
