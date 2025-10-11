@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy import select
 import asyncio
 
-from app.main import app, get_session
+from app.database import get_session
+from app.main import app
 from app.models import Base, Media, Movie, MediaType
 from tests.utils.db_asserts import assert_model_matches
 
