@@ -6,11 +6,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.api import radarr
 from app.services.radarr_service import import_radarr_movies
-from app.database import get_session  # <- импортируем рабочий get_session
+from app.database import AsyncSessionLocal  # <- импортируем рабочий get_session
 
 logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
+async def radarr_import_job():
+    async with AsyncSessionLocal() as session:
+        await import_radarr_movies(session)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
