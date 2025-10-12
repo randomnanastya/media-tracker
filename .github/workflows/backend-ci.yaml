@@ -31,17 +31,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        run: pip install poetry
-
-      - name: Install dev dependencies
-        run: poetry install --with dev
+      - name: Run Ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check backend --config backend/pyproject.toml"
 
       - name: Check branch name
         run: |
           BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" | sed 's|refs/heads/||')
           if [[ ! "$BRANCH" =~ ^MTB-[0-9]+[A-Za-z0-9-]*$ ]]; then
-            echo "Invalid branch name: $BRANCH. Must match MTB-<число><буквы/цифры/->"
+            echo "Invalid branch name: $BRANCH. Must match MTB-<number><letters/numbers/dash/->"
             exit 1
           fi
   # -------------------------------
