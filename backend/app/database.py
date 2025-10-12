@@ -1,9 +1,13 @@
 import os
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 DB_USER = os.getenv("POSTGRES_USER", "test")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "test")
@@ -18,9 +22,8 @@ async_engine: AsyncEngine = create_async_engine(
     echo=True,
 )
 
-AsyncSessionLocal: Callable[..., AsyncSession] = sessionmaker(
+AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
     bind=async_engine,
-    class_=AsyncSession,
     expire_on_commit=False,
 )
 

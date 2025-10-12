@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.error_handler import handle_api_errors
@@ -10,7 +10,12 @@ router = APIRouter(tags=["Radarr"])
 
 @router.post("/import", summary="Import movies from Radarr")
 @handle_api_errors
-async def import_radarr(session: AsyncSession = Depends(get_session)):  # noqa: B008
+async def import_radarr(
+    session: AsyncSession = Depends(get_session),
+) -> dict[str, str | int]:
     """Import movies from Radarr into the database."""
-    count = await import_radarr_movies(session)
-    return {"status": "ok", "imported": count}
+    try:
+        count = await import_radarr_movies(session)
+        return {"status": "success", "imported_count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

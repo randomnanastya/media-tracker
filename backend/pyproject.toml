@@ -83,6 +83,9 @@ explicit_package_bases = true
 init_typed = true
 warn_untyped_fields = true
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
