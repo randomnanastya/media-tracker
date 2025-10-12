@@ -34,6 +34,7 @@ ruff = "^0.14.0"
 target-version = "py312"
 line-length = 100
 fix = true
+extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 ignore = [
