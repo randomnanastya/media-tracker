@@ -1,10 +1,9 @@
 import os
-import logging
+
 import httpx
 
 from app.client.endpoints import RADARR_MOVIES
-
-logger = logging.getLogger(__name__)
+from app.core.logging import logger
 
 RADARR_URL = os.getenv("RADARR_URL")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")
@@ -17,7 +16,7 @@ async def fetch_radarr_movies() -> list[dict]:
             response = await client.get(
                 f"{RADARR_URL}{RADARR_MOVIES}",
                 headers={"X-Api-Key": RADARR_API_KEY},
-                timeout=30.0  # optional timeout
+                timeout=30.0,  # optional timeout
             )
             response.raise_for_status()
             movies = response.json()
@@ -29,10 +28,10 @@ async def fetch_radarr_movies() -> list[dict]:
         except httpx.HTTPStatusError as e:
             logger.error(
                 "Radarr API returned an unsuccessful status code %s for URL %s",
-                e.response.status_code, e.request.url
+                e.response.status_code,
+                e.request.url,
             )
             raise
         except Exception as e:
             logger.error("Unexpected error while fetching movies from Radarr: %s", e)
             raise
-
