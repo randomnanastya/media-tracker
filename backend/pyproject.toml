@@ -12,26 +12,79 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 fastapi = "^0.116.1"
-uvicorn = { extras = ["standard"], version = "^0.23.0" }  # версия uvicorn под fastapi 0.116
+uvicorn = { extras = ["standard"], version = "^0.23.0" }
 sqlalchemy = "^2.0"
 alembic = "^1.16"
 psycopg2-binary = "^2.9.10"
-httpx = "^0.25.0"  # Понижаем до 0.25 для совместимости
+httpx = "^0.25.0"
 asyncpg = "^0.28"
 apscheduler = "^3.10"
 
 [tool.poetry.group.dev.dependencies]
 alembic = "^1.16.5"
 pytest-check = "^2.5.4"
-
-[tool.poetry.group.test.dependencies]
-pytest = "^7.4.0"  # Совместимо с pytest-httpx
-pytest-asyncio = "^0.21.0"
+pytest = "^7.4.0"
+pytest-asyncio = "^0.23.0"
 pytest-cov = "^4.1.0"
 pytest-httpx = "^0.27.0"
-# УБИРАЕМ httpx отсюда - используем из основных зависимостей
-# testcontainers = "^3.8.0"  # Пока убираем, может вызвать проблемы
-# testcontainers-postgres = "^3.8.0"  # Пока убираем
+pre-commit = "^4.3.0"
+ruff = "^0.14.0"
+black = "^24.10.0"
+yamlfix = "^1.18.0"
+mypy = "^1.0"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+fix = true
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+ignore = [
+    "E501",
+#    "RUF002",
+#    "RUF001",
+]
+select = [
+    "E", "F", "I",  # flake8: ошибки, баги, импорт
+    "UP",           # pyupgrade: использование современных конструкций Python
+    "ASYNC",        # проверки на async/await
+    "B",            # bugbear: потенциальные ошибки
+    "C4",           # flake8-comprehensions
+    "FA",           # future annotations
+    "SIM",          # flake8-simplify
+    "DTZ",          # datetime без timezone
+    "RUF",          # специфичные для Ruff
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "RUF001", "RUF002"]  # разрешаем assert в тестах
+"migrations/*" = ["RUF001", "RUF002", "RUF003"]  # Игнорировать кириллицу в файлах миграций
+
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+namespace_packages = true
+explicit_package_bases = true
+
+[tool.pydantic-mypy]
+init_typed = true
+warn_untyped_fields = true
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
 
 [build-system]
 requires = ["poetry-core"]

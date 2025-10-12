@@ -1,3 +1,4 @@
+---
 services:
   test_db:
     image: postgres:15
@@ -9,12 +10,11 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - test_db_data:/var/lib/postgresql/data
+      - "test_db_data:/var/lib/postgresql/data"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test -d test"]
+      test: "CMD-SHELL, pg_isready -U test -d test"
       interval: 5s
       timeout: 5s
       retries: 5
-
 volumes:
   test_db_data:

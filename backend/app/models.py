@@ -1,100 +1,115 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, Boolean
-from sqlalchemy.orm import declarative_base, relationship
 import enum
+from datetime import datetime
+from typing import Optional
 
-from sqlalchemy.sql import func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 class MediaType(enum.Enum):
     MOVIE = "movie"
     SERIES = "series"
 
+
 class Media(Base):
     __tablename__ = "media"
 
-    id = Column(Integer, primary_key=True, index=True)
-    type = Column(Enum(MediaType), nullable=False)
-    title = Column(String, nullable=False)
-    release_date = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now()
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    media_type: Mapped[MediaType] = mapped_column(Enum(MediaType), nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    release_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
     # связи
-    series = relationship("Series", back_populates="media", uselist=False)
-    movie = relationship("Movie", back_populates="media", uselist=False)
+    series: Mapped[Optional["Series"]] = relationship(
+        "Series", back_populates="media", uselist=False
+    )
+    movie: Mapped[Optional["Movie"]] = relationship("Movie", back_populates="media", uselist=False)
+
 
 class Series(Base):
     __tablename__ = "series"
 
-    id = Column(Integer, ForeignKey("media.id"), primary_key=True)
-    jellyfin_id = Column(Integer, nullable=True, unique=True)
-    status = Column(String, nullable=True)
-    started_at = Column(DateTime(timezone=True), nullable=True)
-    finished_at = Column(DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
+    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    status: Mapped[str | None] = mapped_column(String, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    media = relationship("Media", back_populates="series")
-    seasons = relationship("Season", back_populates="series")
+    media: Mapped["Media"] = relationship("Media", back_populates="series")
+    seasons: Mapped[list["Season"]] = relationship("Season", back_populates="series")
+
 
 class Movie(Base):
     __tablename__ = "movies"
 
-    id = Column(Integer, ForeignKey("media.id"), primary_key=True)
-    radarr_id = Column(Integer, nullable=True, unique=True)
-    watched = Column(Boolean, default=False)
-    watched_at = Column(DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
+    radarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    watched: Mapped[bool] = mapped_column(Boolean, default=False)
+    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    media = relationship("Media", back_populates="movie")
+    media: Mapped["Media"] = relationship("Media", back_populates="movie")
+
 
 class Season(Base):
     __tablename__ = "seasons"
 
-    id = Column(Integer, primary_key=True)
-    series_id = Column(Integer, ForeignKey("series.id"), nullable=False)
-    jellyfin_id = Column(Integer, nullable=True, unique=True)
-    number = Column(Integer, nullable=False)
-    release_date = Column(DateTime(timezone=True), nullable=True)
-    started_at = Column(DateTime(timezone=True), nullable=True)
-    finished_at = Column(DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    series_id: Mapped[int] = mapped_column(Integer, ForeignKey("series.id"), nullable=False)
+    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    release_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    series = relationship("Series", back_populates="seasons")
-    episodes = relationship("Episode", back_populates="season")
+    series: Mapped["Series"] = relationship("Series", back_populates="seasons")
+    episodes: Mapped[list["Episode"]] = relationship("Episode", back_populates="season")
+
 
 class Episode(Base):
     __tablename__ = "episodes"
 
-    id = Column(Integer, primary_key=True)
-    season_id = Column(Integer, ForeignKey("seasons.id"), nullable=False)
-    jellyfin_id = Column(Integer, nullable=True, unique=True)
-    number = Column(Integer, nullable=False)
-    title = Column(String, nullable=False)
-    air_date = Column(DateTime(timezone=True), nullable=True)
-    watched = Column(Boolean, default=False)
-    watched_at = Column(DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    season_id: Mapped[int] = mapped_column(Integer, ForeignKey("seasons.id"), nullable=False)
+    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    watched: Mapped[bool] = mapped_column(Boolean, default=False)
+    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    season = relationship("Season", back_populates="episodes")
+    season: Mapped["Season"] = relationship("Season", back_populates="episodes")
+
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String, nullable=False, unique=True)
-    jellyfin_user_id = Column(Integer, nullable=True, unique=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    jellyfin_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
 
-    watch_history = relationship("WatchHistory", back_populates="user")
+    watch_history: Mapped[list["WatchHistory"]] = relationship(
+        "WatchHistory", back_populates="user"
+    )
+
 
 class WatchHistory(Base):
     __tablename__ = "watch_history"
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    media_id = Column(Integer, ForeignKey("media.id"), nullable=False)
-    episode_id = Column(Integer, ForeignKey("episodes.id"), nullable=True)
-    watched_at = Column(DateTime(timezone=True), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    media_id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), nullable=False)
+    episode_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("episodes.id"), nullable=True
+    )
+    watched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    user = relationship("User", back_populates="watch_history")
-    media = relationship("Media")
-    episode = relationship("Episode")
+    user: Mapped["User"] = relationship("User", back_populates="watch_history")
+    media: Mapped["Media"] = relationship("Media")
+    episode: Mapped[Optional["Episode"]] = relationship("Episode")
