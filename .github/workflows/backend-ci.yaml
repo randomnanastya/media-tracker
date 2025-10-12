@@ -29,9 +29,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check branch name
         run: |
-          BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" | sed 's|refs/heads/||')
+          BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" |
+          sed 's|refs/heads/||')
           if [[ ! "$BRANCH" =~ ^MTB-[0-9]+[A-Za-z0-9-]*$ ]]; then
-            echo "Invalid branch name: $BRANCH. Must match MTB-<numbers><letters/numbers/dashs/->"
+            echo "Invalid branch name: $BRANCH.
+          Must match MTB-<numbers><letters/numbers/dashs/->"
             exit 1
           fi
   # -------------------------------

@@ -1,3 +1,4 @@
+---
 services:
   backend:
     build:
@@ -5,24 +6,22 @@ services:
       dockerfile: Dockerfile.dev
     container_name: media-backend-dev
     volumes:
-      - ./backend:/app
+      - "./backend:/app"
     env_file:
-      - ./.env.dev
+      - "./.env.dev"
     ports:
-      - "8801:8000"
+    - "8801:8000"
     depends_on:
-      - db
-
+      - "db"
   db:
     image: postgres:15
     container_name: media-db-dev
     restart: always
     env_file:
-      - ./.env.dev
+      - "./.env.dev"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - "db_data:/var/lib/postgresql/data"
     ports:
-      - "5432:5432"
-
+    - "5432:5432"
 volumes:
   db_data:
