@@ -1,10 +1,12 @@
 import enum
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
-from sqlalchemy.orm import DeclarativeMeta, declarative_base, relationship
+from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.sql import func
 
-Base: type[DeclarativeMeta] = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class MediaType(enum.Enum):

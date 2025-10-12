@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 import httpx
 from fastapi import HTTPException
@@ -6,14 +8,14 @@ from fastapi import HTTPException
 from app.core.logging import logger
 
 
-def handle_api_errors(func):
+def handle_api_errors(func: Callable[..., Any]) -> Callable[..., Any]:
     """
     Decorator to wrap API endpoints and handle exceptions consistently.
     Logs errors and returns meaningful HTTP responses.
     """
 
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             return await func(*args, **kwargs)
 
