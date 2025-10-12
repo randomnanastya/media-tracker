@@ -62,7 +62,7 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: "check ."
-          config: "backend/pyproject.toml"
+          src: "."
       - name: Run Black
         run: poetry run black --check .
       - name: Run MyPy
