@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    app.include_router(radarr.router, prefix="/api/radarr")
+    app.include_router(radarr.router, prefix="/api/v1/radarr")
 
     return app
 

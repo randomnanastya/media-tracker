@@ -33,6 +33,7 @@ with patch("apscheduler.schedulers.asyncio.AsyncIOScheduler") as mock_scheduler:
         RADARR_MOVIES_LARGE_LIST,
         RADARR_MOVIES_WITH_INVALID_DATA,
         RADARR_MOVIES_WITH_SPECIAL_CHARACTERS,
+        RADARR_MOVIES_WITHOUT_RADARR_ID,
     )
 
 
@@ -93,6 +94,11 @@ def radarr_movies_empty():
 @pytest.fixture
 def radarr_movies_invalid_data():
     return RADARR_MOVIES_WITH_INVALID_DATA.copy()
+
+
+@pytest.fixture
+def radarr_movies_without_radarr_id():
+    return RADARR_MOVIES_WITHOUT_RADARR_ID.copy()
 
 
 @pytest.fixture

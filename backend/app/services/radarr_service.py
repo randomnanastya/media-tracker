@@ -47,7 +47,7 @@ async def import_radarr_movies(session: AsyncSession) -> int:
 
         try:
             media_obj = Media(
-                type=MediaType.MOVIE,
+                media_type=MediaType.MOVIE,
                 title=m.get("title", "Unknown Title"),
                 release_date=release_date,
             )

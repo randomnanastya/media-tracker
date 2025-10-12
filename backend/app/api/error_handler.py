@@ -35,6 +35,16 @@ def handle_api_errors(func: Callable[..., Any]) -> Callable[..., Any]:
                 status_code=e.response.status_code, detail=f"External API error: {e.response.text}"
             ) from e
 
+        except HTTPException as e:
+            if e.status_code == 500:
+                logger.exception("Internal server error in API endpoint: %s", e.detail)
+
+                raise HTTPException(
+                    status_code=500, detail=f"Internal server error: {e.detail}"
+                ) from e
+
+            raise
+
         except Exception as e:
             # Catch-all for unexpected errors
             logger.exception("Unexpected error in API endpoint")

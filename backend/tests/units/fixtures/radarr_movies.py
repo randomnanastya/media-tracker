@@ -27,21 +27,32 @@ RADARR_MOVIES_BASIC = [
 RADARR_MOVIES_EMPTY: list[dict] = []
 
 RADARR_MOVIES_WITH_INVALID_DATA = [
+    {"id": 11, "title": "Movie without ID", "year": 2023, "tmdbId": 12349},
+    {
+        "id": 22,
+        "title": "Movie with invalid date",
+        "inCinemas": "2025-22-11T00:00:00Z",
+        "year": 2025,
+        "tmdbId": 12348,
+    },
+]
+
+RADARR_MOVIES_WITHOUT_RADARR_ID = [
     {
         "id": 1,
         "title": "Movie with invalid date",
-        "inCinemas": "invalid-date-format",
+        "inCinemas": "2025-07-01T00:00:00Z",
         "year": 2023,
         "tmdbId": 12348,
     },
-    {"title": "Movie without ID", "year": 2023, "tmdbId": 12349},  # Нет id
+    {"title": "Movie without ID", "year": 2023, "tmdbId": 12349},
 ]
 
 RADARR_MOVIES_LARGE_LIST = [
     {
         "id": i,
         "title": f"Movie {i}",
-        "inCinemas": f"2023-{i:02d}-01T00:00:00Z",
+        "inCinemas": f"2023-{(i % 12) + 1:02d}-01T00:00:00Z",
         "year": 2023,
         "tmdbId": 10000 + i,
         "path": f"/movies/Movie {i}",
