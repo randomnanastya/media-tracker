@@ -69,7 +69,7 @@ jobs:
       - name: Run Black
         run: poetry run black --check .
       - name: Run MyPy
-        run: poetry run mypy app
+        run: poetry run mypy --explicit-package-bases app
 
   # -------------------------------
   # 1. Unit tests

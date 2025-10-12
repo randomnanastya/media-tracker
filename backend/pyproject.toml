@@ -76,6 +76,8 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
+namespace_packages = true
+explicit_package_bases = true
 
 [tool.pydantic-mypy]
 init_typed = true
