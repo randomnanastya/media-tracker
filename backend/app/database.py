@@ -1,9 +1,9 @@
 import os
-from typing import Callable, AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
+from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from contextlib import asynccontextmanager
 
 DB_USER = os.getenv("POSTGRES_USER", "test")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "test")
@@ -23,6 +23,7 @@ AsyncSessionLocal: Callable[..., AsyncSession] = sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
 
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

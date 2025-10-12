@@ -36,22 +36,29 @@ fix = true
 
 [tool.ruff.lint]
 ignore = [
-  "E501",  # длинные строки (если используешь black)
+    "E501",
+#    "RUF002",
+#    "RUF001",
 ]
 select = [
-  "E", "F", "I",  # flake8: ошибки, баги, импорт
-  "UP",           # pyupgrade: использование современных конструкций Python
-  "ASYNC",        # проверки на async/await
-  "B",            # bugbear: потенциальные ошибки
-  "C4",           # flake8-comprehensions
-  "FA",           # future annotations
-  "SIM",          # flake8-simplify
-  "DTZ",          # datetime без timezone
-  "RUF",          # специфичные для Ruff
+    "E", "F", "I",  # flake8: ошибки, баги, импорт
+    "UP",           # pyupgrade: использование современных конструкций Python
+    "ASYNC",        # проверки на async/await
+    "B",            # bugbear: потенциальные ошибки
+    "C4",           # flake8-comprehensions
+    "FA",           # future annotations
+    "SIM",          # flake8-simplify
+    "DTZ",          # datetime без timezone
+    "RUF",          # специфичные для Ruff
 ]
 
+[tool.ruff.format]
+quote-style = "double"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]  # разрешаем assert в тестах
+"tests/*" = ["S101", "RUF001", "RUF002"]  # разрешаем assert в тестах
+"migrations/*" = ["RUF001", "RUF002"]  # Игнорировать кириллицу в файлах миграций
+
 
 [tool.black]
 line-length = 100

@@ -1,14 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, Boolean
-from sqlalchemy.orm import declarative_base, relationship
 import enum
 
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy.orm import DeclarativeMeta, declarative_base, relationship
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+Base: type[DeclarativeMeta] = declarative_base()
+
 
 class MediaType(enum.Enum):
     MOVIE = "movie"
     SERIES = "series"
+
 
 class Media(Base):
     __tablename__ = "media"
@@ -17,15 +19,12 @@ class Media(Base):
     type = Column(Enum(MediaType), nullable=False)
     title = Column(String, nullable=False)
     release_date = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now()
-    )
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     # связи
     series = relationship("Series", back_populates="media", uselist=False)
     movie = relationship("Movie", back_populates="media", uselist=False)
+
 
 class Series(Base):
     __tablename__ = "series"
@@ -39,6 +38,7 @@ class Series(Base):
     media = relationship("Media", back_populates="series")
     seasons = relationship("Season", back_populates="series")
 
+
 class Movie(Base):
     __tablename__ = "movies"
 
@@ -48,6 +48,7 @@ class Movie(Base):
     watched_at = Column(DateTime(timezone=True), nullable=True)
 
     media = relationship("Media", back_populates="movie")
+
 
 class Season(Base):
     __tablename__ = "seasons"
@@ -63,6 +64,7 @@ class Season(Base):
     series = relationship("Series", back_populates="seasons")
     episodes = relationship("Episode", back_populates="season")
 
+
 class Episode(Base):
     __tablename__ = "episodes"
 
@@ -77,6 +79,7 @@ class Episode(Base):
 
     season = relationship("Season", back_populates="episodes")
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -85,6 +88,7 @@ class User(Base):
     jellyfin_user_id = Column(Integer, nullable=True, unique=True)
 
     watch_history = relationship("WatchHistory", back_populates="user")
+
 
 class WatchHistory(Base):
     __tablename__ = "watch_history"

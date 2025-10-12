@@ -4,14 +4,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'backend/**'
+#    paths:
+#      - 'backend/**'
   pull_request:
     branches:
       - main
       - 'MTB-*'
-    paths:
-      - 'backend/**'
+#    paths:
+#      - 'backend/**'
 
 jobs:
   # -------------------------------

@@ -1,10 +1,12 @@
 # tests/units/test_radarr_import.py
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from httpx import AsyncClient, RequestError
 
-from app.main import app
+import pytest
+from httpx import AsyncClient
+
 from app.database import get_session
+from app.main import app
+
 
 @pytest.mark.asyncio
 async def test_import_radarr_success():
@@ -13,19 +15,13 @@ async def test_import_radarr_success():
 
     # Mock fetch_radarr_movies to return sample movies
     sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "Movie 2",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
+        {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"},
+        {"id": 2, "title": "Movie 2", "inCinemas": "2023-02-01T00:00:00Z"},
     ]
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+    with patch(
+        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+    ) as mock_fetch:
         mock_fetch.return_value = sample_movies
 
         # Mock session.execute for exists check (assume no existing movies)
@@ -62,6 +58,7 @@ async def test_import_radarr_success():
     # Clean up overrides
     app.dependency_overrides = {}
 
+
 @pytest.mark.asyncio
 async def test_import_radarr_partial_insert_failure():
     # Mock the session
@@ -69,19 +66,13 @@ async def test_import_radarr_partial_insert_failure():
 
     # Mock fetch_radarr_movies to return sample movies
     sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        },
-        {
-            "id": 2,
-            "title": "Movie 2",
-            "inCinemas": "2023-02-01T00:00:00Z"
-        }
+        {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"},
+        {"id": 2, "title": "Movie 2", "inCinemas": "2023-02-01T00:00:00Z"},
     ]
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+    with patch(
+        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+    ) as mock_fetch:
         mock_fetch.return_value = sample_movies
 
         # Mock session.execute for exists check (assume no existing movies)
@@ -121,21 +112,18 @@ async def test_import_radarr_partial_insert_failure():
     # Clean up overrides
     app.dependency_overrides = {}
 
+
 @pytest.mark.asyncio
 async def test_import_radarr_commit_failure():
     # Mock the session
     mock_session = AsyncMock()
 
     # Mock fetch_radarr_movies to return sample movies
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        }
-    ]
+    sample_movies = [{"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"}]
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+    with patch(
+        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+    ) as mock_fetch:
         mock_fetch.return_value = sample_movies
 
         # Mock session.execute for exists check
@@ -175,21 +163,18 @@ async def test_import_radarr_commit_failure():
     # Clean up overrides
     app.dependency_overrides = {}
 
+
 @pytest.mark.asyncio
 async def test_import_radarr_existing_movies():
     # Mock the session
     mock_session = AsyncMock()
 
     # Mock fetch_radarr_movies to return sample movies
-    sample_movies = [
-        {
-            "id": 1,
-            "title": "Movie 1",
-            "inCinemas": "2023-01-01T00:00:00Z"
-        }
-    ]
+    sample_movies = [{"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"}]
 
-    with patch("app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock) as mock_fetch:
+    with patch(
+        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+    ) as mock_fetch:
         mock_fetch.return_value = sample_movies
 
         # Mock session.execute for exists check (assume movie exists)
