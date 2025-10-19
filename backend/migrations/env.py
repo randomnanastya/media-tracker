@@ -1,4 +1,5 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from alembic import context
@@ -6,17 +7,35 @@ from sqlalchemy import engine_from_config, pool
 
 from app.models import Base
 
+try:
+    from typing import Union
+except ImportError:
+    from typing_extensions import Union
+
+from collections.abc import Sequence
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from app.models import Base
+
 # Alembic Config object
 config = context.config
 
-# Собираем DATABASE_URL из переменных окружения Docker
 DATABASE_URL = (
     f"postgresql+psycopg2://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}"
     f"@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
 )
 
-if not all([os.getenv("POSTGRES_USER"), os.getenv("POSTGRES_PASSWORD"), os.getenv("POSTGRES_DB")]):
-    raise RuntimeError("❌ Не заданы переменные окружения для подключения к БД")
+required_env_vars = [
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+    "POSTGRES_HOST",
+    "POSTGRES_PORT",
+]
+missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+if missing_vars:
+    raise RuntimeError(f"❌ Отсутствуют переменные окружения: {', '.join(missing_vars)}")
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 

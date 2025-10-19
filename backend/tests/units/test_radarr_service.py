@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from app.services.radarr_service import import_radarr_movies
@@ -9,8 +11,35 @@ def count_movies_without_id(movies):
 
 
 def count_valid_movies(movies):
-    """Helper to count movies with Radarr ID"""
-    return sum(1 for movie in movies if "id" in movie)
+    valid_movies = []
+    for m in movies:
+        if not m.get("id"):
+            continue
+        date_str = m.get("inCinemas")
+        if date_str:
+            try:
+                datetime.fromisoformat(date_str)
+            except ValueError:
+                continue  # skip invalid date
+        valid_movies.append(m)
+    return len(valid_movies)
+
+
+def count_invalid_movies(movies):
+    """Return number of movies that would be skipped (no id or invalid date)."""
+    invalid_count = 0
+    for m in movies:
+        if not m.get("id"):
+            invalid_count += 1
+            continue
+        date_str = m.get("inCinemas")
+        if date_str:
+            try:
+                datetime.fromisoformat(date_str)
+            except ValueError:
+                invalid_count += 1
+                continue
+    return invalid_count
 
 
 def calculate_expected_entities_count(movies_count):
@@ -31,13 +60,11 @@ async def test_import_radarr_movies_creates_both_entities(
     expected_entities_count = calculate_expected_entities_count(expected_movies_count)
 
     # Act
-    imported_count = await import_radarr_movies(mock_session)
+    result = await import_radarr_movies(mock_session)
 
-    # Assert
     assert (
-        imported_count == expected_movies_count
-    ), f"Expected to import {expected_movies_count} movies, but got {imported_count}"
-
+        result.imported_count == expected_movies_count
+    ), f"Expected to import {expected_movies_count} movies, but got {result}"
     assert (
         mock_session.execute.call_count == expected_movies_count
     ), f"Expected {expected_movies_count} existence checks, but got {mock_session.execute.call_count}"
@@ -69,12 +96,12 @@ async def test_import_radarr_movies_skips_existing_movies(
     expected_entities_count = calculate_expected_entities_count(expected_imported_count)
 
     # Act
-    imported_count = await import_radarr_movies(mock_session)
+    result = await import_radarr_movies(mock_session)
 
     # Assert
     assert (
-        imported_count == expected_imported_count
-    ), f"Expected to import {expected_imported_count} new movies, but got {imported_count}"
+        result.imported_count == expected_imported_count
+    ), f"Expected to import {expected_imported_count} new movies, but got {result.imported_count}"
 
     assert (
         mock_session.add.call_count == expected_entities_count
@@ -100,12 +127,12 @@ async def test_import_radarr_movies_handles_partial_insert_failure(
     expected_successful_imports = 1
 
     # Act
-    imported_count = await import_radarr_movies(mock_session)
+    result = await import_radarr_movies(mock_session)
 
     # Assert
     assert (
-        imported_count == expected_successful_imports
-    ), f"Expected {expected_successful_imports} successful imports despite partial failure, but got {imported_count}"
+        result.imported_count == expected_successful_imports
+    ), f"Expected {expected_successful_imports} successful imports despite partial failure, but got {result.imported_count}"
 
     assert mock_session.rollback.call_count == 1, "Expected rollback after partial insert failure"
 
@@ -145,15 +172,15 @@ async def test_import_radarr_movies_skips_movies_without_id(
     mock_session.execute.return_value = mock_exists_result_false
 
     expected_valid_count = count_valid_movies(radarr_movies_invalid_data)
-    expected_invalid_count = count_movies_without_id(radarr_movies_invalid_data)
+    expected_invalid_count = count_invalid_movies(radarr_movies_invalid_data)
 
     # Act
-    imported_count = await import_radarr_movies(mock_session)
+    result = await import_radarr_movies(mock_session)
 
     # Assert
     assert (
-        imported_count == expected_valid_count
-    ), f"Expected to import {expected_valid_count} valid movies, but got {imported_count}"
+        result.imported_count == expected_valid_count
+    ), f"Expected to import {expected_valid_count} valid movies, but got {result.imported_count}"
 
     assert (
         mock_session.execute.call_count == expected_valid_count
@@ -162,5 +189,5 @@ async def test_import_radarr_movies_skips_movies_without_id(
     # Optional: verify the total movies processed
     total_movies = len(radarr_movies_invalid_data)
     assert (
-        expected_valid_count + expected_invalid_count == total_movies
+        total_movies == expected_valid_count + expected_invalid_count
     ), f"Movie count mismatch: {expected_valid_count} valid + {expected_invalid_count} invalid should equal {total_movies} total"

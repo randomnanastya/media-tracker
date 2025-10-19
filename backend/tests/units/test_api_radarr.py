@@ -1,4 +1,4 @@
-# tests/units/test_radarr_api.py
+# tests/units/test_api_radarr.py
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -21,7 +21,11 @@ async def test_import_radarr_success(
         response = await async_client.post("/api/v1/radarr/import")
 
         assert response.status_code == 200
-        assert response.json() == {"status": "success", "imported_count": len(radarr_movies_basic)}
+        assert response.json() == {
+            "status": "success",
+            "imported_count": len(radarr_movies_basic),
+            "error": None,
+        }
 
 
 @pytest.mark.asyncio
@@ -40,7 +44,11 @@ async def test_import_radarr_empty_success(
         response = await async_client.post("/api/v1/radarr/import")
 
         assert response.status_code == 200
-        assert response.json() == {"status": "success", "imported_count": len(radarr_movies_empty)}
+        assert response.json() == {
+            "status": "success",
+            "imported_count": len(radarr_movies_empty),
+            "error": None,
+        }
 
 
 @pytest.mark.asyncio
@@ -62,6 +70,7 @@ async def test_import_radarr_success_with_large_list(
         assert response.json() == {
             "status": "success",
             "imported_count": len(radarr_movies_large_list),
+            "error": None,
         }
 
 
@@ -84,6 +93,7 @@ async def test_import_radarr_success_with_specific_chars(
         assert response.json() == {
             "status": "success",
             "imported_count": len(radarr_movies_special_chars),
+            "error": None,
         }
 
 
@@ -106,6 +116,7 @@ async def test_import_radarr_success_with_real_data(
         assert response.json() == {
             "status": "success",
             "imported_count": len(radarr_movies_from_json),
+            "error": None,
         }
 
 
@@ -128,10 +139,10 @@ async def test_import_radarr_skip_movie_without_radarr_id(
         assert response.json() == {
             "status": "success",
             "imported_count": len(radarr_movies_without_radarr_id) - 1,
+            "error": None,
         }
 
 
-@pytest.mark.skip(reason="Еще не реализована обработка ошибок")
 @pytest.mark.asyncio
 async def test_import_radarr_skip_movie_with_invalid_data(
     async_client, mock_session, radarr_movies_invalid_data, mock_exists_result_false
@@ -151,6 +162,7 @@ async def test_import_radarr_skip_movie_with_invalid_data(
         assert response.json() == {
             "status": "success",
             "imported_count": len(radarr_movies_invalid_data) - 1,
+            "error": None,
         }
 
 
