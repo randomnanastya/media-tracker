@@ -8,6 +8,8 @@ from app.client.radarr_client import fetch_radarr_movies
 from app.core.logging import logger
 from app.models import Media, MediaType, Movie
 from app.schemas.radarr import RadarrImportResponse
+from app.schemas.error_codes import RadarrErrorCode
+from app.schemas.radarr import ErrorDetail, RadarrImportResponse
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
@@ -16,16 +18,28 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
         movies = await fetch_radarr_movies()
     except Exception as e:
         logger.error("Failed to fetch data from Radarr: %s", e)
+        return RadarrImportResponse(
+            error=ErrorDetail(
+                code=RadarrErrorCode.RADARR_FETCH_FAILED,
+                message=str(e),
+            )
+        )
         raise
 
     imported = 0
 
     for m in movies:
         radarr_id = m.get("id")
-        title = m.get("title", "Unknown Title")
-
         if not radarr_id:
-            logger.warning("Skipping movie without Radarr ID: %s", title)
+            logger.warning("Skipping movie without Radarr ID: %s", m.get("title"))
+            continue
+
+        from sqlalchemy import exists
+
+        result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
+        movie_exists: bool = cast(bool, result.scalar())
+
+        if movie_exists:
             continue
 
         release_date = None
@@ -37,25 +51,13 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                 else:
                     release_date = release_date.astimezone(UTC)
             except Exception as e:
-                logger.error(
-                    "Failed to parse release date for movie '%s': %s",
-                    title,
-                    e,
-                )
-                logger.warning("Skipping movie '%s' due to invalid release date", title)
-                continue
-
-        from sqlalchemy import exists
-
-        result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
-        movie_exists: bool = cast(bool, result.scalar())
-        if movie_exists:
-            continue
+                logger.error("Failed to parse release date for movie '%s': %s", m.get("title"), e)
+                release_date = None
 
         try:
             media_obj = Media(
                 media_type=MediaType.MOVIE,
-                title=title,
+                title=m.get("title", "Unknown Title"),
                 release_date=release_date,
             )
             session.add(media_obj)
@@ -71,7 +73,7 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
 
             imported += 1
         except Exception as e:
-            logger.error("Failed to insert movie '%s' into the database: %s", title, e)
+            logger.error("Failed to insert movie '%s' into the database: %s", m.get("title"), e)
             await session.rollback()
             continue
 
