@@ -4,6 +4,7 @@ from typing import Any
 
 import httpx
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.logging import logger
 
@@ -25,7 +26,10 @@ def handle_api_errors(func: Callable[..., Any]) -> Callable[..., Any]:
             raise HTTPException(
                 status_code=502, detail=f"Network error during API call: {e!s}"
             ) from e
+        except SQLAlchemyError as e:
+            logger.error("Database error in %s: %s", func.__name__, str(e))
 
+            raise HTTPException(status_code=500, detail="Database operation failed") from e
         except httpx.HTTPStatusError as e:
             # External API returned an error status
             logger.exception(

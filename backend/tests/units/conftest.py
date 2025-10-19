@@ -120,6 +120,15 @@ def radarr_movies_from_json():
 
 
 @pytest.fixture
+def sample_movies_mixed():
+    """Mixed movies: existing and new"""
+    return [
+        {"id": 1, "title": "Existing Movie", "inCinemas": "2023-01-01T00:00:00Z"},
+        {"id": 2, "title": "New Movie", "inCinemas": "2023-02-01T00:00:00Z"},
+    ]
+
+
+@pytest.fixture
 def sample_movies_basic():
     """Basic sample movies for testing"""
     return [
@@ -128,12 +137,69 @@ def sample_movies_basic():
     ]
 
 
+# --- Моки серий и эпизодов из Sonarr ---
 @pytest.fixture
-def sample_movies_mixed():
-    """Mixed movies: existing and new"""
+def sonarr_series_basic():
+    """Фикстура для тестовых данных серий из Sonarr."""
     return [
-        {"id": 1, "title": "Existing Movie", "inCinemas": "2023-01-01T00:00:00Z"},
-        {"id": 2, "title": "New Movie", "inCinemas": "2023-02-01T00:00:00Z"},
+        {
+            "id": 1,
+            "title": "Test Series 1",
+            "imdbId": "tt1234567",
+            "firstAired": "2020-01-01",
+            "year": 2020,
+            "status": "continuing",
+            "images": [{"coverType": "poster", "remoteUrl": "http://example.com/poster.jpg"}],
+            "genres": ["Drama", "Sci-Fi"],
+            "ratings": {"value": 8.5, "votes": 1000},
+        },
+        {
+            "id": 2,
+            "title": "Test Series 2",
+            "imdbId": "tt7654321",
+            "firstAired": "2021-02-01",
+            "year": 2021,
+            "status": "ended",
+            "images": [],
+            "genres": ["Comedy"],
+            "ratings": {"value": 7.0, "votes": 500},
+        },
+    ]
+
+
+@pytest.fixture
+def sonarr_episodes_basic():
+    return [
+        {
+            "id": 101,
+            "seriesId": 1,
+            "seasonNumber": 1,  # Одинаковый seasonNumber
+            "episodeNumber": 1,
+            "title": "Pilot",
+            "airDateUtc": "2020-01-01T00:00:00Z",
+            "overview": "The pilot episode.",
+        },
+        {
+            "id": 102,
+            "seriesId": 1,
+            "seasonNumber": 1,  # Одинаковый seasonNumber
+            "episodeNumber": 2,
+            "title": "Episode 2",
+            "airDateUtc": "2020-01-08T00:00:00Z",
+            "overview": "The second episode.",
+        },
+    ]
+
+
+@pytest.fixture
+def sonarr_series_invalid_data():
+    return [
+        {
+            "id": 101,
+            "title": "Pilot",
+            "firstAired": "invalid_date",
+            "overview": "The pilot episode.",
+        }
     ]
 
 
@@ -162,7 +228,7 @@ def setup_mock_session_exists_check(
 
     def _setup(exists_sequence=None):
         if exists_sequence is None:
-            exists_sequence = [False]  # по умололчанию все фильмы новые
+            exists_sequence = [False]
 
         mock_result = Mock()
         if len(exists_sequence) == 1:
@@ -176,11 +242,29 @@ def setup_mock_session_exists_check(
     return _setup
 
 
-# --- Хелпер для мокирования fetch_radarr_movies ---
+# --- Хелперы для мокирования fetch_radarr_movies и fetch_sonarr_series ---
 @pytest.fixture
 def mock_fetch_radarr_movies():
     """Фикстура для мока функции fetch_radarr_movies"""
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+    ) as mock_fetch:
+        yield mock_fetch
+
+
+@pytest.fixture
+def mock_fetch_sonarr_series():
+    """Фикстура для мока функции fetch_sonarr_series"""
+    with patch(
+        "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
+    ) as mock_fetch:
+        yield mock_fetch
+
+
+@pytest.fixture
+def mock_fetch_sonarr_episodes():
+    """Фикстура для мока функции fetch_sonarr_episodes"""
+    with patch(
+        "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
     ) as mock_fetch:
         yield mock_fetch

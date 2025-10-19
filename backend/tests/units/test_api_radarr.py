@@ -1,4 +1,4 @@
-# tests/units/test_radarr_api.py
+# tests/units/test_api_radarr.py
 from unittest.mock import AsyncMock, patch
 
 import httpx

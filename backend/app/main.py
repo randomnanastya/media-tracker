@@ -5,10 +5,11 @@ from typing import Any
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
-from app.api import radarr
+from app.api import radarr, sonarr
 from app.core.logging import logger
 from app.database import AsyncSessionLocal  # <- импортируем рабочий get_session
 from app.services.radarr_service import import_radarr_movies
+from app.services.sonarr_service import import_sonarr_series
 
 scheduler = AsyncIOScheduler()
 
@@ -18,11 +19,17 @@ async def radarr_import_job() -> None:
         await import_radarr_movies(session)
 
 
+async def sonarr_import_job() -> None:
+    async with AsyncSessionLocal() as session:
+        await import_sonarr_series(session)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Startup/shutdown lifecycle with APScheduler."""
     try:
-        scheduler.add_job(import_radarr_movies, "cron", hour=3, minute=0)
+        scheduler.add_job(radarr_import_job, "cron", hour=3, minute=0)
+        scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=30)
         scheduler.start()
         logger.info("✅ Scheduler started (daily import at 03:00)")
     except Exception as e:
@@ -47,7 +54,8 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    app.include_router(radarr.router, prefix="/api/v1/radarr")
+    app.include_router(radarr.router)
+    app.include_router(sonarr.router)
 
     return app
 

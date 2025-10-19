@@ -3,7 +3,7 @@ name = "media-tracker"
 version = "0.1.0"
 description = "Collects and stores stats from Sonarr, Radarr, and Jellyfin. Keeps history of watched and added media even if deleted from your library. Data can be expanded and visualized in UI or Grafana."
 authors = ["Anastasia Salikova <randomnanastya@gmail.com>"]
-readme = "../README.md"
+readme = "README.md"
 
 packages = [
   { include = "app" }
@@ -13,14 +13,16 @@ packages = [
 python = ">=3.12,<3.14"
 fastapi = "^0.116.1"
 uvicorn = { extras = ["standard"], version = "^0.23.0" }
-sqlalchemy = "^2.0"
-alembic = "^1.16"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
+# ❌ УДАЛИЛИ ДУБЛИРУЮЩИЙСЯ alembic отсюда
 psycopg2-binary = "^2.9.10"
 httpx = "^0.25.0"
-asyncpg = "^0.28"
 apscheduler = "^3.10"
+asyncpg = "^0.29.0"
+typing-extensions = "^4.8.0"
 
 [tool.poetry.group.dev.dependencies]
+# ✅ Alembic ОСТАЕТСЯ ТОЛЬКО ЗДЕСЬ для dev (миграции)
 alembic = "^1.16.5"
 pytest-check = "^2.5.4"
 pytest = "^7.4.0"
@@ -63,7 +65,6 @@ quote-style = "double"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "RUF001", "RUF002"]  # разрешаем assert в тестах
 "migrations/*" = ["RUF001", "RUF002", "RUF003"]  # Игнорировать кириллицу в файлах миграций
-
 
 [tool.black]
 line-length = 100

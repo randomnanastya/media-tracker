@@ -20,7 +20,7 @@ async def fetch_radarr_movies() -> list[dict[str, Any]]:
         try:
             response = await client.get(
                 f"{RADARR_URL}{RADARR_MOVIES}",
-                headers={"X-Api-Key": api_key},  # api_key теперь точно str
+                headers={"X-Api-Key": api_key},
                 timeout=30.0,
             )
             response.raise_for_status()

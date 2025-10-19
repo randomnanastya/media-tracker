@@ -7,14 +7,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.client.radarr_client import fetch_radarr_movies
 from app.core.logging import logger
 from app.models import Media, MediaType, Movie
+from app.schemas.error_codes import RadarrErrorCode
+from app.schemas.radarr import ErrorDetail, RadarrImportResponse
 
 
-async def import_radarr_movies(session: AsyncSession) -> int:
+async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
     """Imports movies from Radarr into the database with logging and aware datetime."""
     try:
         movies = await fetch_radarr_movies()
     except Exception as e:
         logger.error("Failed to fetch data from Radarr: %s", e)
+        return RadarrImportResponse(
+            error=ErrorDetail(
+                code=RadarrErrorCode.RADARR_FETCH_FAILED,
+                message=str(e),
+            )
+        )
         raise
 
     imported = 0
@@ -76,4 +84,4 @@ async def import_radarr_movies(session: AsyncSession) -> int:
         raise
 
     logger.info("Imported %d movies from Radarr", imported)
-    return imported
+    return RadarrImportResponse(imported_count=imported)
