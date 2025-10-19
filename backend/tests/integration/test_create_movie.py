@@ -58,7 +58,7 @@ async def test_import_radarr_movies_new_movie(
     # Call the API endpoint
     response = await client.post("/api/v1/radarr/import")
     assert response.status_code == 200
-    assert response.json() == {"status": "success", "imported_count": 1}
+    assert response.json() == {"status": "success", "imported_count": 1, "error": None}
 
     # Verify data in the database
     media_result = await session_for_test.execute(select(Media).where(Media.title == "Test Movie"))
@@ -108,7 +108,11 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     # Call the API endpoint
     response = await client_with_db.post("/api/v1/radarr/import")
     assert response.status_code == 200
-    assert response.json() == {"status": "success", "imported_count": 0}  # No new import
+    assert response.json() == {
+        "status": "success",
+        "imported_count": 0,
+        "error": None,
+    }  # No new import
 
     # Verify no new data was added
     movie_count = await session_for_test.execute(select(Movie))
@@ -125,7 +129,7 @@ async def test_import_radarr_movies_invalid_data(client_with_db, session_for_tes
     # Call the API endpoint
     response = await client_with_db.post("/api/v1/radarr/import")
     assert response.status_code == 200
-    assert response.json() == {"status": "success", "imported_count": 0}  # Skipped
+    assert response.json() == {"status": "success", "imported_count": 0, "error": None}  # Skipped
 
     # Verify no data in the database
     media_count = await session_for_test.execute(select(Media))
