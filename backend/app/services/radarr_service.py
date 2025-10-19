@@ -24,16 +24,10 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
 
     for m in movies:
         radarr_id = m.get("id")
+        title = m.get("title", "Unknown Title")
+
         if not radarr_id:
-            logger.warning("Skipping movie without Radarr ID: %s", m.get("title"))
-            continue
-
-        from sqlalchemy import exists
-
-        result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
-        movie_exists: bool = cast(bool, result.scalar())
-
-        if movie_exists:
+            logger.warning("Skipping movie without Radarr ID: %s", title)
             continue
 
         release_date = None
@@ -47,16 +41,23 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
             except Exception as e:
                 logger.error(
                     "Failed to parse release date for movie '%s': %s",
-                    m.get("title"),
+                    title,
                     e,
                 )
-                logger.warning("Skipping movie '%s' due to invalid release date", m.get("title"))
+                logger.warning("Skipping movie '%s' due to invalid release date", title)
                 continue
+
+        from sqlalchemy import exists
+
+        result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
+        movie_exists: bool = cast(bool, result.scalar())
+        if movie_exists:
+            continue
 
         try:
             media_obj = Media(
                 media_type=MediaType.MOVIE,
-                title=m.get("title", "Unknown Title"),
+                title=title,
                 release_date=release_date,
             )
             session.add(media_obj)
@@ -72,7 +73,7 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
 
             imported += 1
         except Exception as e:
-            logger.error("Failed to insert movie '%s' into the database: %s", m.get("title"), e)
+            logger.error("Failed to insert movie '%s' into the database: %s", title, e)
             await session.rollback()
             continue
 
