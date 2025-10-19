@@ -9,7 +9,8 @@ from app.core.logging import logger
 from app.models import Media, MediaType, Movie
 from app.schemas.radarr import RadarrImportResponse
 from app.schemas.error_codes import RadarrErrorCode
-from app.schemas.radarr import ErrorDetail, RadarrImportResponse
+from app.schemas.radarr import RadarrImportResponse
+from app.schemas.responses import ErrorDetail
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
