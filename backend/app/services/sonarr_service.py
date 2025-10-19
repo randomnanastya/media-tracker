@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
 from app.core.logging import logger
@@ -10,7 +11,7 @@ from app.schemas.responses import ErrorDetail
 from app.schemas.sonarr import SonarrImportResponse
 
 
-async def import_sonarr_series(session) -> SonarrImportResponse:
+async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
     logger.info("Starting Sonarr series import...")
 
     try:
