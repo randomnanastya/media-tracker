@@ -10,7 +10,6 @@ from app.models import Media, MediaType, Movie
 from app.schemas.radarr import RadarrImportResponse
 from app.schemas.error_codes import RadarrErrorCode
 from app.schemas.radarr import RadarrImportResponse
-from app.schemas.responses import ErrorDetail
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
@@ -19,12 +18,6 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
         movies = await fetch_radarr_movies()
     except Exception as e:
         logger.error("Failed to fetch data from Radarr: %s", e)
-        return RadarrImportResponse(
-            error=ErrorDetail(
-                code=RadarrErrorCode.RADARR_FETCH_FAILED,
-                message=str(e),
-            )
-        )
         raise
 
     imported = 0
@@ -52,8 +45,13 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                 else:
                     release_date = release_date.astimezone(UTC)
             except Exception as e:
-                logger.error("Failed to parse release date for movie '%s': %s", m.get("title"), e)
-                release_date = None
+                logger.error(
+                    "Failed to parse release date for movie '%s': %s",
+                    m.get("title"),
+                    e,
+                )
+                logger.warning("Skipping movie '%s' due to invalid release date", m.get("title"))
+                continue
 
         try:
             media_obj = Media(
