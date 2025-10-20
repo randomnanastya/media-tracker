@@ -4,12 +4,14 @@ from typing import Any, cast
 import httpx
 
 from app.client.endpoints import RADARR_MOVIES
+from app.client.error_handler import handle_client_errors
 from app.core.logging import logger
 
 RADARR_URL = os.getenv("RADARR_URL")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")
 
 
+@handle_client_errors
 async def fetch_radarr_movies() -> list[dict[str, Any]]:
     """Fetches the list of movies from the Radarr API."""
     api_key = RADARR_API_KEY

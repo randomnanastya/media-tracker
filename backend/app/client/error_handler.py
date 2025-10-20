@@ -3,6 +3,8 @@ from functools import wraps
 from typing import Any
 
 import httpx
+from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.core.logging import logger
 
@@ -18,6 +20,9 @@ def handle_client_errors(func: Callable[..., Any]) -> Callable[..., Any]:
         except httpx.HTTPStatusError as e:
             logger.error("API status error: %s", e.response.status_code)
             raise ValueError(f"API error: {e.response.text}") from e
+        except ValidationError as e:
+            logger.error("Validation error: %s", str(e))
+            raise HTTPException(status_code=422, detail=str(e.errors())) from e
         except Exception:
             logger.exception("Unexpected client error")
             raise
