@@ -14,7 +14,6 @@ python = ">=3.12,<3.14"
 fastapi = "^0.116.1"
 uvicorn = { extras = ["standard"], version = "^0.23.0" }
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.0"}
-# ❌ УДАЛИЛИ ДУБЛИРУЮЩИЙСЯ alembic отсюда
 psycopg2-binary = "^2.9.10"
 httpx = "^0.25.0"
 apscheduler = "^3.10"
@@ -22,7 +21,6 @@ asyncpg = "^0.29.0"
 typing-extensions = "^4.8.0"
 
 [tool.poetry.group.dev.dependencies]
-# ✅ Alembic ОСТАЕТСЯ ТОЛЬКО ЗДЕСЬ для dev (миграции)
 alembic = "^1.16.5"
 pytest-check = "^2.5.4"
 pytest = "^7.4.0"
@@ -44,8 +42,6 @@ extend-exclude = ["migrations"]
 [tool.ruff.lint]
 ignore = [
     "E501",
-#    "RUF002",
-#    "RUF001",
 ]
 select = [
     "E", "F", "I",  # flake8: ошибки, баги, импорт

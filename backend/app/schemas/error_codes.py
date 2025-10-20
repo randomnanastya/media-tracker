@@ -8,3 +8,4 @@ class SonarrErrorCode(str, Enum):
 
 class RadarrErrorCode(str, Enum):
     RADARR_FETCH_FAILED = "RADARR_FETCH_FAILED"
+    NETWORK_ERROR = "NETWORK_ERROR"
