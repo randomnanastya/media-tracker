@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import cast
 
+import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
