@@ -120,6 +120,13 @@ def radarr_movies_from_json():
 
 
 @pytest.fixture
+def sonarr_series_from_json():
+    path = pathlib.Path(__file__).parent / "fixtures" / "data" / "series.json"
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@pytest.fixture
 def sample_movies_mixed():
     """Mixed movies: existing and new"""
     return [

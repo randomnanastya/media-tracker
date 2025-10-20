@@ -1,4 +1,3 @@
-# tests/units/test_api_radarr.py
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -166,40 +165,46 @@ async def test_import_radarr_skip_movie_with_invalid_data(
         }
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_import_radarr_err_on_service_failure(
     async_client, mock_session, mock_exists_result_false
 ):
-    """API должен вернуть 500, когда приходит ошибка из radarr"""
-
+    """API должен вернуть 200 с ошибкой в ответе, когда приходит ошибка из radarr"""
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.side_effect = Exception("Service error")
-
         mock_session.execute.return_value = mock_exists_result_false
-
         response = await async_client.post("/api/v1/radarr/import")
-
-        assert response.status_code == 500
-        assert response.json() == {"detail": "Internal server error: Service error"}
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "error",
+            "imported_count": 0,
+            "error": {
+                "code": "RADARR_FETCH_FAILED",
+                "message": "Failed to fetch movies: Service error",
+            },
+        }
 
 
 @pytest.mark.asyncio
 async def test_radarr_import_returns_network_error(
     async_client, mock_session, mock_exists_result_false
 ):
-    """API должен вернуть 502, когда приходит ошибка сети"""
+    """API должен вернуть 200 с ошибкой сети в ответе"""
     fake_request = httpx.Request("GET", "http://testserver")
-
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.side_effect = httpx.RequestError("Network error", request=fake_request)
-
         mock_session.execute.return_value = mock_exists_result_false
-
         response = await async_client.post("/api/v1/radarr/import")
-
-        assert response.status_code == 502
-        assert response.json() == {"detail": "Network error during API call: Network error"}
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "error",
+            "imported_count": 0,
+            "error": {
+                "code": "NETWORK_ERROR",
+                "message": "Network error: Network error",
+            },
+        }
