@@ -1,3 +1,4 @@
+---
 name: Release and Docker Build
 
 on:
@@ -184,6 +185,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set image name
+        id: image_name
+        run: echo "IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
       - name: Get version from latest tag
         id: get_version
         run: echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
@@ -196,5 +200,5 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.get_version.outputs.VERSION }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            ${{ steps.image_name.outputs.IMAGE }}:${{ steps.get_version.outputs.VERSION }}
+            ${{ steps.image_name.outputs.IMAGE }}:latest
