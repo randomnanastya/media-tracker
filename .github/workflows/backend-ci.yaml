@@ -38,6 +38,21 @@ jobs:
             exit 1
           fi
   # -------------------------------
+  # 1. commit rules
+  # ----------------------------
+  check-commits:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit messages
+        uses: gsactions/commit-message-checker@v2
+        with:
+          pattern: '^(feat|fix|docs|chore|test|style|refactor)($$ .+ $$)?: .+$'
+          error: 'Commit message must follow Conventional Commits format (e.g., "feat: add new endpoint")'
+  # -------------------------------
   # 1. linter
   # ----------------------------
   lint:
