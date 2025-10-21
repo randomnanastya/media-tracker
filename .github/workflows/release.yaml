@@ -1,14 +1,8 @@
----
-name: Backend CI
+name: Release and Docker Build
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-      - 'MTB-*'
+    branches: [ main ]
 
 jobs:
   yaml-lint:
@@ -17,44 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint YAML files
         run: yamllint . --strict
-  # -------------------------------
-  # check branch name
-  # ----------------------------
-  check-branch:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check branch name
-        run: |
-          BRANCH=$(echo "${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}" |
-          sed 's|refs/heads/||')
-          if [[ ! "$BRANCH" =~ ^MTB-[0-9]+[A-Za-z0-9-]*$ ]]; then
-            echo "Invalid branch name: $BRANCH.
-          Must match MTB-<numbers><letters/numbers/dashs/->"
-            exit 1
-          fi
-  # -------------------------------
-  # 1. commit rules
-  # ----------------------------
-  check-commits:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Check commit messages
-        uses: gsactions/commit-message-checker@v2
-        with:
-          pattern: '^(feat|fix|docs|chore|test|style|refactor)($$ .+ $$)?: .+$'
-          error: 'Commit message must follow Conventional Commits format (e.g., "feat: add new endpoint")'
-  # -------------------------------
-  # 1. linter
-  # ----------------------------
+
   lint:
     runs-on: ubuntu-latest
     defaults:
@@ -86,9 +43,6 @@ jobs:
       - name: Run MyPy
         run: poetry run mypy --explicit-package-bases app
 
-  # -------------------------------
-  # 1. Unit tests
-  # ----------------------------
   unit-tests:
     runs-on: ubuntu-latest
     needs: lint
@@ -97,32 +51,25 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install Poetry
         run: pip install poetry
-
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: ${{ runner.os }}-poetry-
-
       - name: Install dependencies (no-root)
-        run: poetry install --no-root  # только зависимости, без установки пакета
-
+        run: poetry install --no-root
       - name: Run unit tests
         run: |
           export PYTHONPATH=$(pwd)
           poetry run pytest tests/units -v --cov=app --cov-report=xml
-  # -------------------------------
-  # 2. Integration tests
-  # -------------------------------
+
   integration-tests:
     runs-on: ubuntu-latest
     needs: unit-tests
@@ -143,38 +90,30 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential libpq-dev
-
       - name: Install Poetry
         run: pip install poetry
-
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
           restore-keys: ${{ runner.os }}-poetry-
-
       - name: Install dependencies
         run: poetry install
-
       - name: Wait for Postgres
         run: |
           until pg_isready -h localhost -p 5432; do
             echo "Waiting for postgres..."
             sleep 2
           done
-
       - name: Run integration tests
         env:
           POSTGRES_HOST: localhost
@@ -184,3 +123,47 @@ jobs:
           POSTGRES_DB: test
           APP_ENV: testing
         run: poetry run pytest tests/integration -v --cov=app --cov-report=xml
+
+  semantic-release:
+    needs: [yaml-lint, lint, unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js for semantic-release
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install semantic-release
+        run: npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/changelog @semantic-release/github @semantic-release/git
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+  build-and-push-docker:
+    needs: semantic-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get version from latest tag
+        id: get_version
+        run: echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.get_version.outputs.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
