@@ -1,8 +1,9 @@
+---
 name: Release and Docker Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   yaml-lint:
@@ -42,6 +43,22 @@ jobs:
         run: poetry run black --check .
       - name: Run MyPy
         run: poetry run mypy --explicit-package-bases app
+
+  # -------------------------------
+  # 1. commit rules
+  # ----------------------------
+  check-commits:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit messages
+        uses: gsactions/commit-message-checker@v2
+        with:
+          pattern: '^(feat|fix|docs|chore|test|style|refactor)($$ .+ $$)?: .+$'
+          error: 'Commit message must follow Conventional Commits format (e.g., "feat: add new endpoint")'
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -125,7 +142,7 @@ jobs:
         run: poetry run pytest tests/integration -v --cov=app --cov-report=xml
 
   semantic-release:
-    needs: [yaml-lint, lint, unit-tests, integration-tests]
+    needs: [yaml-lint, lint, check-commits, unit-tests, integration-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,7 +153,9 @@ jobs:
         with:
           node-version: 20
       - name: Install semantic-release
-        run: npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/changelog @semantic-release/github @semantic-release/git
+        run: >
+          npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator
+          @semantic-release/changelog @semantic-release/github @semantic-release/git
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
