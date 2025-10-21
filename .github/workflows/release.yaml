@@ -144,6 +144,10 @@ jobs:
         run: poetry run pytest tests/integration -v --cov=app --cov-report=xml
 
   semantic-release:
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     needs: [yaml-lint, lint, unit-tests, integration-tests, check-squash-commit]
     runs-on: ubuntu-latest
     steps:
@@ -160,7 +164,7 @@ jobs:
           @semantic-release/changelog @semantic-release/github @semantic-release/git
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
         run: npx semantic-release
 
   build-and-push-docker:
