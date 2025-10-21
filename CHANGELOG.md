@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/randomnanastya/media-tracker/compare/v0.1.1...v0.1.2) (2025-10-21)
+
+
+### Bug Fixes
+
+* update docker build version ([a9a3fc9](https://github.com/randomnanastya/media-tracker/commit/a9a3fc966adaa04f4de632f9564e1ed66db8c2d3))
+
 ## [0.1.1](https://github.com/randomnanastya/media-tracker/compare/v0.1.0...v0.1.1) (2025-10-21)
 
 
