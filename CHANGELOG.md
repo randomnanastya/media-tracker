@@ -1,3 +1,11 @@
+## [0.1.3](https://github.com/randomnanastya/media-tracker/compare/v0.1.2...v0.1.3) (2025-10-21)
+
+
+### Bug Fixes
+
+* fix postgres health-retries syntax ([62713e6](https://github.com/randomnanastya/media-tracker/commit/62713e6de7df2739c756dd8c46b3d5badec266b6))
+* shorten docker tags for yamllint ([b25edd0](https://github.com/randomnanastya/media-tracker/commit/b25edd022f64b174fa7076bca8552393c32e5979))
+
 ## [0.1.2](https://github.com/randomnanastya/media-tracker/compare/v0.1.1...v0.1.2) (2025-10-21)
 
 
