@@ -1,25 +1,20 @@
 FROM python:3.12
 
-# Системные зависимости
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Poetry
 RUN pip install --no-cache-dir poetry
 
 WORKDIR /app
 
-# Копируем зависимости
 COPY pyproject.toml poetry.lock* ./
 
 RUN poetry install --no-root --no-interaction --no-ansi
 
-# Копируем код
 COPY . .
 
-# Entry point
 RUN chmod +x docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 

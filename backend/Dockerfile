@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.12-slim
 
 RUN pip install --no-cache-dir poetry
 
@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry install --no-dev --no-root --no-interaction --no-ansi
+RUN poetry install --no-root --no-interaction --no-ansi
 
 COPY . .
 
