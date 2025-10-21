@@ -47,18 +47,20 @@ jobs:
   # -------------------------------
   # 1. commit rules
   # ----------------------------
-  check-commits:
+  check-squash-commit:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - name: Check commit messages
+          fetch-depth: 1  # Достаточно последнего коммита
+      - name: Check squash commit message
         uses: gsactions/commit-message-checker@v2
         with:
-          pattern: '^(feat|fix|docs|chore|test|style|refactor)($$ .+ $$)?: .+$'
-          error: 'Commit message must follow Conventional Commits format (e.g., "feat: add new endpoint")'
+          pattern: '^(feat|fix|docs|chore|test|style|refactor)(\([a-z0-9-]+\))?: .+$'
+          error: >
+            'Squash commit message must follow Conventional Commits format
+            (e.g., "feat: add new endpoint" or "fix(api): update logic")'
+          checkLatest: true
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -142,7 +144,7 @@ jobs:
         run: poetry run pytest tests/integration -v --cov=app --cov-report=xml
 
   semantic-release:
-    needs: [yaml-lint, lint, check-commits, unit-tests, integration-tests]
+    needs: [yaml-lint, lint, unit-tests, integration-tests, check-squash-commit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
