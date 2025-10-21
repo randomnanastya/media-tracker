@@ -184,5 +184,5 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ steps.get_version.outputs.VERSION }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            ghcr.io/${{github.repository_owner}}/${{github.event.repository.name}}:${{steps.get_version.outputs.VERSION}}
+            ghcr.io/${{github.repository_owner}}/${{ github.event.repository.name}}:latest
