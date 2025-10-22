@@ -1,3 +1,10 @@
+## [0.1.5](https://github.com/randomnanastya/media-tracker/compare/v0.1.4...v0.1.5) (2025-10-22)
+
+
+### Bug Fixes
+
+* bug in dockerfile prod and env example ([3f76175](https://github.com/randomnanastya/media-tracker/commit/3f76175b9976d1888df5ab93ca92aae967a45747))
+
 ## [0.1.4](https://github.com/randomnanastya/media-tracker/compare/v0.1.3...v0.1.4) (2025-10-21)
 
 
