@@ -1,3 +1,4 @@
+---
 services:
   backend:
     image: ghcr.io/randomnanastya/media-tracker:latest
