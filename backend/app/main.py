@@ -5,7 +5,7 @@ from typing import Any
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
-from app.api import radarr, sonarr
+from app.api import jellyfin, radarr, sonarr
 from app.core.logging import logger
 from app.database import AsyncSessionLocal  # <- импортируем рабочий get_session
 from app.services.radarr_service import import_radarr_movies
@@ -56,7 +56,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(radarr.router)
     app.include_router(sonarr.router)
-
+    app.include_router(jellyfin.router)
     return app
 
 
