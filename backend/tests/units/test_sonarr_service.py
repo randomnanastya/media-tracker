@@ -208,7 +208,7 @@ async def test_import_sonarr_series_skips_invalid(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.warning") as mock_logger_warning,
+        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = invalid_series
         mock_fetch_episodes.return_value = invalid_episodes
@@ -239,7 +239,7 @@ async def test_import_sonarr_series_invalid_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.error") as mock_logger_error,
+        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_invalid_data
         mock_fetch_episodes.return_value = sonarr_episodes_basic
@@ -267,7 +267,7 @@ async def test_import_sonarr_series_no_imdb_id(mock_session, sonarr_series_basic
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.warning") as mock_logger_warning,
+        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = modified_series
         mock_fetch_episodes.return_value = []
@@ -310,7 +310,7 @@ async def test_import_sonarr_series_invalid_episode_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.error") as mock_logger_error,
+        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_basic[:1]
         mock_fetch_episodes.return_value = modified_episodes

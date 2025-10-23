@@ -21,7 +21,7 @@ async def test_import_sonarr_success(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.info") as mock_logger,
+        patch("app.config.logging.Logger.info") as mock_logger,
     ):
         mock_fetch_series.return_value = sonarr_series_basic
 
@@ -52,7 +52,7 @@ async def test_import_sonarr_failure(async_client, mock_session):
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
-        patch("app.core.logging.logger.error") as mock_logger,
+        patch("app.config.logging.Logger.error") as mock_logger,
     ):
         mock_fetch_series.side_effect = Exception("Connection timeout")
 
@@ -108,7 +108,7 @@ async def test_sonarr_import_endpoint_no_api_key(async_client: AsyncClient):
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
-        patch("app.core.logging.logger.error") as mock_logger,
+        patch("app.config.logging.Logger.error") as mock_logger,
         patch.dict(os.environ, {}, clear=True),  # Очищаем окружение
     ):
         mock_fetch_series.side_effect = ValueError("SONARR_API_KEY is not set")
