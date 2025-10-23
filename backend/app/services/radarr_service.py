@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.radarr_client import fetch_radarr_movies
-from app.core.logging import logger
+from app.config import logger
 from app.models import Media, MediaType, Movie
 from app.schemas.error_codes import RadarrErrorCode
 from app.schemas.radarr import RadarrImportResponse

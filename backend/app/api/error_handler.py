@@ -6,7 +6,7 @@ import httpx
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.logging import logger
+from app.config import logger
 
 
 def handle_api_errors(func: Callable[..., Any]) -> Callable[..., Any]:

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
-from app.core.logging import logger
+from app.config import logger
 from app.models import Episode, Media, MediaType, Season, Series
 from app.schemas.error_codes import SonarrErrorCode
 from app.schemas.responses import ErrorDetail

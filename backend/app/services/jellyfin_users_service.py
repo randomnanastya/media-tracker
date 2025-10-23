@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_users
-from app.core.logging import logger
+from app.config import logger
 from app.models import User
 from app.schemas.error_codes import JellyfinErrorCode
 from app.schemas.jellyfin import JellyfinUsersResponse

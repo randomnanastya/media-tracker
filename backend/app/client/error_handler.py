@@ -6,7 +6,7 @@ import httpx
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from app.core.logging import logger
+from app.config import logger
 
 
 def handle_client_errors(func: Callable[..., Any]) -> Callable[..., Any]:

@@ -5,7 +5,7 @@ import httpx
 
 from app.client.endpoints import JELLYFIN_USERS
 from app.client.error_handler import handle_client_errors
-from app.core.logging import logger
+from app.config import logger
 
 JELLYFIN_URL = os.getenv("JELLYFIN_URL")
 JELLYFIN_API_KEY = os.getenv("JELLYFIN_API_KEY")

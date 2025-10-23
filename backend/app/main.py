@@ -6,36 +6,29 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
 from app.api import jellyfin, radarr, sonarr
-from app.core.logging import logger
-from app.database import AsyncSessionLocal  # <- импортируем рабочий get_session
-from app.services.radarr_service import import_radarr_movies
-from app.services.sonarr_service import import_sonarr_series
+from app.config import logger
+from app.services.jobs import jellyfin_import_users_job, radarr_import_job, sonarr_import_job
 
 scheduler = AsyncIOScheduler()
-
-
-async def radarr_import_job() -> None:
-    async with AsyncSessionLocal() as session:
-        await import_radarr_movies(session)
-
-
-async def sonarr_import_job() -> None:
-    async with AsyncSessionLocal() as session:
-        await import_sonarr_series(session)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Startup/shutdown lifecycle with APScheduler."""
     try:
-        scheduler.add_job(radarr_import_job, "cron", hour=3, minute=0)
-        scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=30)
+        scheduler.add_job(
+            jellyfin_import_users_job, "cron", hour=1, minute=0, id="jellyfin_users_import"
+        )
+        scheduler.add_job(radarr_import_job, "cron", hour=1, minute=20, id="radarr_import")
+        scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=0, id="sonarr_import")
         scheduler.start()
-        logger.info("✅ Scheduler started (daily import at 03:00)")
+        logger.info(
+            "✅ Scheduler started (Jellyfin Users at 1:00, Radarr at 01:20, Sonarr at 02:00)"
+        )
     except Exception as e:
         logger.exception("Failed to start scheduler: %s", e)
 
-    yield  # ----> приложение работает
+    yield
 
     try:
         scheduler.shutdown(wait=False)
