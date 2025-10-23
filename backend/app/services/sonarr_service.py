@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import httpx
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,14 +18,24 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
     try:
         sonarr_series = await fetch_sonarr_series()
+    except httpx.RequestError as e:
+        logger.error("Network error fetching Jellyfin users: %s", str(e))
+        raise HTTPException(
+            status_code=502,
+            detail=ErrorDetail(
+                code=SonarrErrorCode.NETWORK_ERROR,
+                message=f"Network error: {e!s}",
+            ).model_dump(),
+        ) from e
     except Exception as e:
         logger.error("Failed to fetch series from Sonarr: %s", str(e))
-        return SonarrImportResponse(
-            error=ErrorDetail(
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorDetail(
                 code=SonarrErrorCode.SONARR_FETCH_FAILED,
                 message=f"Failed to fetch series: {e!s}",
-            )
-        )
+            ).model_dump(),
+        ) from e
 
     total_new_series = 0
     total_updated_series = 0
