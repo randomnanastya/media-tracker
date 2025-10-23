@@ -25,7 +25,7 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
             detail=ErrorDetail(
                 code=RadarrErrorCode.NETWORK_ERROR,
                 message=f"Network error: {e!s}",
-            ),
+            ).model_dump(),
         ) from e
     except Exception as e:
         logger.error("Failed to fetch data from Radarr: %s", str(e))
