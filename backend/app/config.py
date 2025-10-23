@@ -3,7 +3,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 
-def setup_logging():
+def setup_logging() -> logging.Logger:
     logger = logging.getLogger("media_tracker")
     if not logger.handlers:  # Prevent duplicate handlers
         LOG_DIR = Path("/app/logs")
@@ -25,4 +25,4 @@ def setup_logging():
     return logger
 
 
-logger = setup_logging()
+logger: logging.Logger = setup_logging()
