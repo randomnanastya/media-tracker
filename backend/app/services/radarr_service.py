@@ -2,11 +2,12 @@ from datetime import UTC, datetime
 from typing import cast
 
 import httpx
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.radarr_client import fetch_radarr_movies
-from app.core.logging import logger
+from app.config import logger
 from app.models import Media, MediaType, Movie
 from app.schemas.error_codes import RadarrErrorCode
 from app.schemas.radarr import RadarrImportResponse
@@ -19,24 +20,22 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
         movies = await fetch_radarr_movies()
     except httpx.RequestError as e:
         logger.error("Network error fetching Radarr movies: %s", str(e))
-        return RadarrImportResponse(
-            status="error",
-            imported_count=0,
-            error=ErrorDetail(
+        raise HTTPException(
+            status_code=502,
+            detail=ErrorDetail(
                 code=RadarrErrorCode.NETWORK_ERROR,
                 message=f"Network error: {e!s}",
-            ),
-        )
+            ).model_dump(),
+        ) from e
     except Exception as e:
         logger.error("Failed to fetch data from Radarr: %s", str(e))
-        return RadarrImportResponse(
-            status="error",
-            imported_count=0,
-            error=ErrorDetail(
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorDetail(
                 code=RadarrErrorCode.RADARR_FETCH_FAILED,
-                message=f"Failed to fetch movies: {e!s}",
-            ),
-        )
+                message=f"Network error: {e!s}",
+            ).model_dump(),
+        ) from e
 
     imported = 0
 

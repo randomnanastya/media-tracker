@@ -169,21 +169,16 @@ async def test_import_radarr_skip_movie_with_invalid_data(
 async def test_import_radarr_err_on_service_failure(
     async_client, mock_session, mock_exists_result_false
 ):
-    """API должен вернуть 200 с ошибкой в ответе, когда приходит ошибка из radarr"""
+    """API должен вернуть 500 с ошибкой в ответе, когда приходит ошибка из radarr"""
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
     ) as mock_fetch:
         mock_fetch.side_effect = Exception("Service error")
         mock_session.execute.return_value = mock_exists_result_false
         response = await async_client.post("/api/v1/radarr/import")
-        assert response.status_code == 200
+        assert response.status_code == 500
         assert response.json() == {
-            "status": "error",
-            "imported_count": 0,
-            "error": {
-                "code": "RADARR_FETCH_FAILED",
-                "message": "Failed to fetch movies: Service error",
-            },
+            "detail": {"code": "RADARR_FETCH_FAILED", "message": "Network error: Service error"}
         }
 
 
@@ -191,7 +186,7 @@ async def test_import_radarr_err_on_service_failure(
 async def test_radarr_import_returns_network_error(
     async_client, mock_session, mock_exists_result_false
 ):
-    """API должен вернуть 200 с ошибкой сети в ответе"""
+    """API должен вернуть 502 с ошибкой сети в ответе"""
     fake_request = httpx.Request("GET", "http://testserver")
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -199,11 +194,9 @@ async def test_radarr_import_returns_network_error(
         mock_fetch.side_effect = httpx.RequestError("Network error", request=fake_request)
         mock_session.execute.return_value = mock_exists_result_false
         response = await async_client.post("/api/v1/radarr/import")
-        assert response.status_code == 200
+        assert response.status_code == 502
         assert response.json() == {
-            "status": "error",
-            "imported_count": 0,
-            "error": {
+            "detail": {
                 "code": "NETWORK_ERROR",
                 "message": "Network error: Network error",
             },

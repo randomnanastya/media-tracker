@@ -5,7 +5,7 @@ import httpx
 
 from app.client.endpoints import RADARR_MOVIES
 from app.client.error_handler import handle_client_errors
-from app.core.logging import logger
+from app.config import logger
 
 RADARR_URL = os.getenv("RADARR_URL")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")

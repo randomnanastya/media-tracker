@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from fastapi import HTTPException
 
 from app.models import Episode, Season, Series
 from app.schemas.sonarr import SonarrImportResponse
@@ -173,23 +174,17 @@ async def test_import_sonarr_series_failure_connection_timeout(mock_session):
     ) as mock_fetch_series:
         mock_fetch_series.side_effect = Exception("Connection timeout")
 
-        # Act
-        result = await import_sonarr_series(mock_session)
+        # Act & Assert - ожидаем HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        expected_result = {
-            "new_series": 0,
-            "updated_series": 0,
-            "new_episodes": 0,
-            "updated_episodes": 0,
-            "error": {
-                "code": "SONARR_FETCH_FAILED",
-                "message": "Failed to fetch series: Connection timeout",
-            },
+        exception = exc_info.value
+        assert exception.status_code == 500
+        assert exception.detail == {
+            "code": "SONARR_FETCH_FAILED",
+            "message": "Failed to fetch series: Connection timeout",
         }
-
-        assert result.model_dump() == expected_result
 
         mock_session.commit.assert_not_called()
         mock_session.rollback.assert_not_called()
@@ -213,7 +208,7 @@ async def test_import_sonarr_series_skips_invalid(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.warning") as mock_logger_warning,
+        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = invalid_series
         mock_fetch_episodes.return_value = invalid_episodes
@@ -244,7 +239,7 @@ async def test_import_sonarr_series_invalid_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.error") as mock_logger_error,
+        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_invalid_data
         mock_fetch_episodes.return_value = sonarr_episodes_basic
@@ -272,7 +267,7 @@ async def test_import_sonarr_series_no_imdb_id(mock_session, sonarr_series_basic
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.warning") as mock_logger_warning,
+        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = modified_series
         mock_fetch_episodes.return_value = []
@@ -315,7 +310,7 @@ async def test_import_sonarr_series_invalid_episode_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.error") as mock_logger_error,
+        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_basic[:1]
         mock_fetch_episodes.return_value = modified_episodes

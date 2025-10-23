@@ -21,7 +21,7 @@ async def test_import_sonarr_success(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.core.logging.logger.info") as mock_logger,
+        patch("app.config.logging.Logger.info") as mock_logger,
     ):
         mock_fetch_series.return_value = sonarr_series_basic
 
@@ -47,24 +47,20 @@ async def test_import_sonarr_success(
 
 @pytest.mark.asyncio
 async def test_import_sonarr_failure(async_client, mock_session):
-    """API должен вернуть 200 с ошибкой при сбое сервиса."""
+    """API должен вернуть 500 с ошибкой при сбое сервиса."""
     with (
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
-        patch("app.core.logging.logger.error") as mock_logger,
+        patch("app.config.logging.Logger.error") as mock_logger,
     ):
         mock_fetch_series.side_effect = Exception("Connection timeout")
 
         response = await async_client.post("/api/v1/sonarr/import")
 
-        assert response.status_code == 200
+        assert response.status_code == 500
         assert response.json() == {
-            "new_series": 0,
-            "updated_series": 0,
-            "new_episodes": 0,
-            "updated_episodes": 0,
-            "error": {
+            "detail": {
                 "code": "SONARR_FETCH_FAILED",
                 "message": "Failed to fetch series: Connection timeout",
             },
@@ -112,18 +108,14 @@ async def test_sonarr_import_endpoint_no_api_key(async_client: AsyncClient):
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
-        patch("app.core.logging.logger.error") as mock_logger,
+        patch("app.config.logging.Logger.error") as mock_logger,
         patch.dict(os.environ, {}, clear=True),  # Очищаем окружение
     ):
         mock_fetch_series.side_effect = ValueError("SONARR_API_KEY is not set")
         response = await async_client.post("/api/v1/sonarr/import")
-        assert response.status_code == 200
+        assert response.status_code == 500
         assert response.json() == {
-            "new_series": 0,
-            "updated_series": 0,
-            "new_episodes": 0,
-            "updated_episodes": 0,
-            "error": {
+            "detail": {
                 "code": "SONARR_FETCH_FAILED",
                 "message": "Failed to fetch series: SONARR_API_KEY is not set",
             },

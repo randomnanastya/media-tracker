@@ -43,10 +43,8 @@ async def client_with_db(session_for_test):
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_new_movie(
-    client_with_db, session_for_test, monkeypatch  # ← используем правильные названия фикстур
-):
-    client = client_with_db  # ← client_with_db возвращает только client
+async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, monkeypatch):
+    client = client_with_db
 
     # Mock the fetch_radarr_movies function
     mock_movies = [

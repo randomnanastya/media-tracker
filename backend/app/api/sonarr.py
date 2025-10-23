@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.error_handler import handle_api_errors
-from app.core.logging import logger
+from app.config import logger
 from app.database import get_session
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series

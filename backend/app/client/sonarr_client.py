@@ -5,7 +5,7 @@ import httpx
 
 from app.client.endpoints import SONARR_SERIES
 from app.client.error_handler import handle_client_errors
-from app.core.logging import logger
+from app.config import logger
 
 SONARR_URL = os.getenv("SONARR_URL")
 SONARR_API_KEY = os.getenv("SONARR_API_KEY")

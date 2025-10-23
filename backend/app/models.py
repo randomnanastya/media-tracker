@@ -101,7 +101,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    jellyfin_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
 
     watch_history: Mapped[list["WatchHistory"]] = relationship(
         "WatchHistory", back_populates="user"
