@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/randomnanastya/media-tracker/compare/v0.1.5...v0.2.0) (2025-10-23)
+
+
+### Features
+
+* get and create or update jellyfin users by api and cron ([#28](https://github.com/randomnanastya/media-tracker/issues/28)) ([cf3f992](https://github.com/randomnanastya/media-tracker/commit/cf3f99286680c96c5126754089c0f1f408450b3c))
+
 ## [0.1.5](https://github.com/randomnanastya/media-tracker/compare/v0.1.4...v0.1.5) (2025-10-22)
 
 
