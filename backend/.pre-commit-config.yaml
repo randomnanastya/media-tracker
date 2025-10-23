@@ -1,5 +1,25 @@
 ---
 repos:
+  - repo: local  # 🟢 Секция для локальных хуков
+    hooks:
+      - id: check-branch-name
+        name: Check branch name
+        entry: bash -c '
+          [[ "$(git rev-parse --abbrev-ref HEAD)" =~ ^MTB-[0-9]+[A-Za-z0-9-]*$ ]]
+          || (echo "Invalid branch name"; exit 1)'
+        language: system
+        stages: [ pre-commit ]  # Явно указываем стадию
+      - id: fix-migrations-permissions
+        name: Fix migrations permissions
+        entry: >
+          bash -c '
+          if [ -d "backend/migrations" ]; then
+            find backend/migrations/ -type f -name "*.py" -exec chmod 664 {} \;
+            find backend/migrations/ -type d -exec chmod 775 {} \;
+          fi'
+        language: system
+        pass_filenames: false
+        stages: [ pre-commit ]
   - repo: https://github.com/psf/black
     rev: 25.9.0
     hooks:
@@ -21,23 +41,3 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-yaml
-  - repo: local  # 🟢 Секция для локальных хуков
-    hooks:
-      - id: check-branch-name
-        name: Check branch name
-        entry: bash -c '
-          [[ "$(git rev-parse --abbrev-ref HEAD)" =~ ^MTB-[0-9]+[A-Za-z0-9-]*$ ]]
-          || (echo "Invalid branch name"; exit 1)'
-        language: system
-        stages: [ pre-commit ]  # Явно указываем стадию
-      - id: fix-migrations-permissions
-        name: Fix migrations permissions
-        entry: >
-          bash -c '
-          if [ -d "backend/migrations" ]; then
-            find backend/migrations/ -type f -name "*.py" -exec chmod 664 {} \;
-            find backend/migrations/ -type d -exec chmod 775 {} \;
-          fi'
-        language: system
-        pass_filenames: false
-        stages: [ pre-commit ]
