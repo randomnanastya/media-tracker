@@ -38,7 +38,7 @@ class Series(Base):
 
     id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
     sonarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
-    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)  # New field
+    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String)
@@ -58,6 +58,9 @@ class Movie(Base):
 
     id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
     radarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     watched: Mapped[bool] = mapped_column(Boolean, default=False)
     watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

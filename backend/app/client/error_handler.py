@@ -3,8 +3,6 @@ from functools import wraps
 from typing import Any
 
 import httpx
-from fastapi import HTTPException
-from pydantic import ValidationError
 
 from app.config import logger
 
@@ -16,15 +14,17 @@ def handle_client_errors(func: Callable[..., Any]) -> Callable[..., Any]:
             return await func(*args, **kwargs)
         except httpx.RequestError as e:
             logger.error("Network error in client: %s", e)
-            raise ValueError(f"Client network error: {e}") from e
+            raise
         except httpx.HTTPStatusError as e:
-            logger.error("API status error: %s", e.response.status_code)
-            raise ValueError(f"API error: {e.response.text}") from e
-        except ValidationError as e:
-            logger.error("Validation error: %s", str(e))
-            raise HTTPException(status_code=422, detail=str(e.errors())) from e
+            logger.error(
+                "HTTP %s error in %s: %s",
+                e.response.status_code,
+                func.__name__,
+                e.response.text[:500],
+            )
+            raise
         except Exception:
-            logger.exception("Unexpected client error")
+            logger.exception("Unexpected error in %s", func.__name__)
             raise
 
     return wrapper

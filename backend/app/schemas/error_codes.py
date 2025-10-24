@@ -15,3 +15,4 @@ class RadarrErrorCode(str, Enum):
 class JellyfinErrorCode(str, Enum):
     JELLYFIN_FETCH_FAILED = "JELLYFIN_FETCH_FAILED"
     NETWORK_ERROR = "NETWORK_ERROR"
+    SYNC_FAILED = "JELLYFIN_SYNC_FAILED"

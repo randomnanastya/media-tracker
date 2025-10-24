@@ -61,8 +61,6 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                     title,
                     e,
                 )
-                logger.warning("Skipping movie '%s' due to invalid release date", title)
-                continue
 
         from sqlalchemy import exists
 
@@ -80,9 +78,14 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
             session.add(media_obj)
             await session.flush()
 
+            tmdb_id = str(m.get("tmdbId")) if m.get("tmdbId") else None
+            imdb_id = m.get("imdbId") if m.get("imdbId") else None
+
             movie_obj = Movie(
                 id=media_obj.id,
                 radarr_id=radarr_id,
+                tmdb_id=tmdb_id,
+                imdb_id=imdb_id,
                 watched=False,
                 watched_at=None,
             )

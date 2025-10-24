@@ -7,7 +7,12 @@ from fastapi import FastAPI
 
 from app.api import jellyfin, radarr, sonarr
 from app.config import logger
-from app.services.jobs import jellyfin_import_users_job, radarr_import_job, sonarr_import_job
+from app.services.jobs import (
+    jellyfin_import_users_job,
+    jellyfin_sync_movies_job,
+    radarr_import_job,
+    sonarr_import_job,
+)
 
 scheduler = AsyncIOScheduler()
 
@@ -19,12 +24,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         scheduler.add_job(
             jellyfin_import_users_job, "cron", hour=1, minute=0, id="jellyfin_users_import"
         )
-        scheduler.add_job(radarr_import_job, "cron", hour=1, minute=20, id="radarr_import")
+        scheduler.add_job(radarr_import_job, "cron", hour=1, minute=10, id="radarr_import")
+        scheduler.add_job(
+            jellyfin_sync_movies_job, "cron", hour=1, minute=30, id="sync_jellyfin_movies"
+        )
         scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=0, id="sonarr_import")
         scheduler.start()
-        logger.info(
-            "✅ Scheduler started (Jellyfin Users at 1:00, Radarr at 01:20, Sonarr at 02:00)"
-        )
+        logger.info("✅ Scheduler started")
     except Exception as e:
         logger.exception("Failed to start scheduler: %s", e)
 
