@@ -84,7 +84,7 @@ async def sync_jellyfin_movies(session: AsyncSession) -> JellyfinMoviesSyncRespo
         )
 
     except Exception as e:
-        logger.error("Unexpected error in sync_jellyfin_watched_movies: %s", e)
+        logger.error("Unexpected error in sync_jellyfin_movies: %s", e)
         raise HTTPException(
             status_code=500,
             detail=ErrorDetail(
@@ -130,7 +130,7 @@ async def _process_user_movies(
             query = None
 
         movie_obj = None
-        if query:
+        if query is not None:
             result = await session.execute(query)
             movie_obj = result.scalars().first()
 
