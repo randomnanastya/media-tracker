@@ -78,14 +78,14 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
                     )
                     continue
 
-            await session.commit()
-
         except Exception as e:
             logger.error(
                 "Failed to insert user from jellyfin '%s' into the database: %s", user_name, e
             )
             await session.rollback()
             continue
+
+    await session.commit()
 
     logger.info(f"Imported {imported}, updated {updated} users from Jellyfin")
     return JellyfinUsersResponse(status="success", imported_count=imported, updated_count=updated)
