@@ -106,6 +106,15 @@ def mock_httpx_client():
         yield mock_client
 
 
+@pytest.fixture
+def mock_db_result():
+    mock_result = Mock()
+    mock_scalars = Mock()
+    mock_scalars.first.return_value = None
+    mock_result.scalars.return_value = mock_scalars
+    return mock_result
+
+
 # --- Моки фильмов из Radarr ---
 @pytest.fixture
 def radarr_movies_basic():

@@ -22,10 +22,12 @@ from app.schemas.service_errors import SonarrServiceError
 def _get_status_by_code(code_enum) -> int:
     """Определяет HTTP-статус по Enum-объекту ошибки."""
     code_str = code_enum.value  # ← .value — это строка
-    if code_str.endswith("_NETWORK_ERROR") or code_str.endswith("_TIMEOUT_ERROR"):
-        return 502
-    if code_str.endswith("_RATE_LIMIT_ERROR"):
+    if code_str.endswith("RATE_LIMIT_ERROR"):
         return 429
+    if code_str.endswith("NETWORK_ERROR"):
+        return 502
+    if code_str.endswith("TIMEOUT_ERROR"):
+        return 504
     if code_str.startswith(("SONARR_", "RADARR_", "JELLYFIN_")):
         return 400
     return 500
@@ -41,6 +43,25 @@ def _get_service_code(path: str, mapping: dict):
     if "jellyfin" in lower_path:
         return mapping.get("jellyfin")
     return mapping.get("default", ErrorCode.INTERNAL_ERROR)
+
+
+async def handle_generic_error(request: Request, exc: Exception) -> Response:
+    logger.exception("Unexpected error on %s: %s", request.url.path, exc)
+    code = _get_service_code(
+        request.url.path,
+        {
+            "radarr": RadarrErrorCode.INTERNAL_ERROR,
+            "sonarr": SonarrErrorCode.INTERNAL_ERROR,
+            "jellyfin": JellyfinErrorCode.INTERNAL_ERROR,
+            "default": ErrorCode.INTERNAL_ERROR,
+        },
+    )
+    return JSONResponse(
+        status_code=500,
+        content=ErrorDetail(code=code, message="Internal server error").model_dump(
+            exclude_none=True
+        ),
+    )
 
 
 def register_exception_handlers(app: FastAPI):
@@ -209,25 +230,6 @@ def register_exception_handlers(app: FastAPI):
             content=ErrorDetail(
                 code=code, message="Invalid response from external service"
             ).model_dump(exclude_none=True),
-        )
-
-    @app.exception_handler(Exception)
-    async def handle_generic_error(request: Request, exc: Exception) -> Response:
-        logger.exception("Unexpected error on %s: %s", request.url.path, exc)
-        code = _get_service_code(
-            request.url.path,
-            {
-                "radarr": RadarrErrorCode.INTERNAL_ERROR,
-                "sonarr": SonarrErrorCode.INTERNAL_ERROR,
-                "jellyfin": JellyfinErrorCode.INTERNAL_ERROR,
-                "default": ErrorCode.INTERNAL_ERROR,
-            },
-        )
-        return JSONResponse(
-            status_code=500,
-            content=ErrorDetail(code=code, message="Internal server error").model_dump(
-                exclude_none=True
-            ),
         )
 
     @app.exception_handler(SonarrServiceError)

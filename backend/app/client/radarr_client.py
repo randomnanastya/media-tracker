@@ -15,7 +15,10 @@ RADARR_API_KEY = os.getenv("RADARR_API_KEY")
 class RadarrClientError(ClientError):
     """Custom exception for Radarr client errors."""
 
-    pass
+    def __init__(self, code: RadarrErrorCode, message: str):
+        self.code = code
+        self.message = message
+        super().__init__(code=code, message=message)
 
 
 async def fetch_radarr_movies() -> list[dict[str, Any]]:

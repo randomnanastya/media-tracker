@@ -14,14 +14,14 @@ from app.schemas.sonarr import SonarrImportResponse
 
 
 async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
-    try:
-        logger.info("Starting Sonarr series import...")
-        sonarr_series = await fetch_sonarr_series()
+    logger.info("Starting Sonarr series import...")
+    sonarr_series = await fetch_sonarr_series()
 
-        total_new_series = 0
-        total_updated_series = 0
-        total_new_episodes = 0
-        total_updated_episodes = 0
+    total_new_series = 0
+    total_updated_series = 0
+    total_new_episodes = 0
+    total_updated_episodes = 0
+    try:
 
         for s in sonarr_series:
             sonarr_id = s.get("id")
@@ -286,36 +286,8 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
     except SQLAlchemyError as e:
         await session.rollback()
         logger.exception("Database error during Sonarr import: %s", e)
-        return SonarrImportResponse(
-            error=ErrorDetail(
-                code=SonarrErrorCode.DATABASE_ERROR, message="Failed to save data to database"
-            ),
-            new_series=None,
-            updated_series=None,
-            new_episodes=None,
-            updated_episodes=None,
-        ).model_dump(mode="json", exclude_none=True)
-
-    except (ValueError, TypeError) as e:
-        await session.rollback()
-        logger.error("Data parsing error during Sonarr import: %s", e)
-        return SonarrImportResponse(
-            error=ErrorDetail(
-                code=SonarrErrorCode.INTERNAL_ERROR, message="Invalid data format from Sonarr"
-            ),
-            new_series=None,
-            updated_series=None,
-            new_episodes=None,
-            updated_episodes=None,
-        ).model_dump(mode="json", exclude_none=True)
-
+        raise
     except Exception:
         await session.rollback()
         logger.exception("CRITICAL: Unexpected error in Sonarr import")
-        return SonarrImportResponse(
-            error=ErrorDetail(code=SonarrErrorCode.INTERNAL_ERROR, message="Internal server error"),
-            new_series=None,
-            updated_series=None,
-            new_episodes=None,
-            updated_episodes=None,
-        ).model_dump(mode="json", exclude_none=True)
+        raise

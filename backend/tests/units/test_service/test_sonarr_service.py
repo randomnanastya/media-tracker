@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from app.exceptions.client_errors import ClientError
 from app.models import Episode, Season, Series
 from app.schemas.error_codes import SonarrErrorCode
-from app.schemas.responses import ErrorDetail
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series
 
@@ -169,22 +169,22 @@ async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_j
 
 @pytest.mark.asyncio
 async def test_import_sonarr_series_failure_connection_timeout(mock_session):
-    """Test service handles fetch failure correctly."""
+    """Test service raises ClientError on connection timeout."""
     with patch(
         "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
     ) as mock_fetch_series:
-        mock_fetch_series.side_effect = Exception("Connection timeout")
+        mock_fetch_series.side_effect = ClientError(
+            code=SonarrErrorCode.NETWORK_ERROR, message="Failed to connect to Sonarr"
+        )
 
-        # Act
-        result = await import_sonarr_series(mock_session)
+        # Act & Assert
+        with pytest.raises(ClientError) as exc_info:
+            await import_sonarr_series(mock_session)
 
-        # Assert
-        exp_result = SonarrImportResponse(
-            error=ErrorDetail(code=SonarrErrorCode.INTERNAL_ERROR, message="Internal server error"),
-        ).model_dump(mode="json", exclude_none=True)
-        assert result == exp_result
+        assert exc_info.value.code == SonarrErrorCode.NETWORK_ERROR
+        assert "connect" in exc_info.value.message.lower()
 
-        mock_session.rollback.assert_awaited_once()
+        mock_session.rollback.assert_not_called()
         mock_session.commit.assert_not_called()
 
 

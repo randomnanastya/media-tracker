@@ -10,7 +10,10 @@ router = APIRouter(tags=["Jellyfin"], prefix="/api/v1/jellyfin")
 
 
 @router.post(
-    "/import/users", response_model=JellyfinUsersResponse, summary="Import users from Jellyfin"
+    "/import/users",
+    response_model=JellyfinUsersResponse,
+    response_model_exclude_none=True,
+    summary="Import users from Jellyfin",
 )
 async def import_users(
     session: AsyncSession = Depends(get_session),
@@ -23,6 +26,7 @@ async def import_users(
 @router.post(
     "/sync/movies",
     response_model=JellyfinMoviesSyncResponse,
+    response_model_exclude_none=True,
     summary="Sync watched movies from Jellyfin",
 )
 async def sync_movies(

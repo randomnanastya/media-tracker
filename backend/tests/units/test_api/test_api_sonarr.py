@@ -6,6 +6,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.exceptions.client_errors import ClientError
 from app.schemas.error_codes import SonarrErrorCode
+from app.schemas.responses import ErrorDetail
+from app.schemas.sonarr import SonarrImportResponse
 
 
 @pytest.mark.asyncio
@@ -33,13 +35,14 @@ async def test_import_sonarr_success(
         response = await async_client.post("/api/v1/sonarr/import")
 
         assert response.status_code == 200
-        assert response.json() == {
-            "new_series": len(sonarr_series_basic),
-            "updated_series": 0,
-            "new_episodes": len(sonarr_episodes_basic),
-            "updated_episodes": 0,
-            "error": None,
-        }
+
+        exp_resp = SonarrImportResponse(
+            new_series=len(sonarr_series_basic),
+            updated_series=0,
+            new_episodes=len(sonarr_episodes_basic),
+            updated_episodes=0,
+        ).model_dump(mode="json", exclude_none=True)
+        assert response.json() == exp_resp
 
 
 @pytest.mark.asyncio
@@ -48,14 +51,12 @@ async def test_import_sonarr_db_commit_failure(
 ):
     """API должен вернуть 500 при ошибке в session.commit()."""
 
-    # Мокаем commit для ошибки
     mock_session.commit = AsyncMock(side_effect=SQLAlchemyError("DB commit failed"))
     mock_session.rollback = AsyncMock()
     mock_session.flush = AsyncMock()
     mock_session.scalar = AsyncMock(return_value=None)
     mock_session.add = MagicMock()
 
-    # Мокаем Sonarr API вызовы
     with (
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
@@ -79,12 +80,12 @@ async def test_import_sonarr_db_commit_failure(
 
         response = await async_client.post("/api/v1/sonarr/import")
 
-    # Проверяем ответ
     assert response.status_code == 500
-    assert response.json() == {
-        "code": "SONARR_ErrorCode.DATABASE_ERROR",
-        "message": "Database operation failed",
-    }
+
+    exp_res = ErrorDetail(
+        code=SonarrErrorCode.DATABASE_ERROR, message="Database operation failed"
+    ).model_dump(mode="json", exclude_none=True)
+    assert response.json() == exp_res
 
 
 @pytest.mark.asyncio
@@ -97,13 +98,13 @@ async def test_sonarr_import_endpoint_error(async_client: AsyncClient):
         )
 
         response = await async_client.post("/api/v1/sonarr/import")
-        assert response.status_code == 200
-        assert response.json() == {
-            "error": {
-                "code": "SONARR_FETCH_FAILED",
-                "message": "Failed to retrieve series from Sonarr.",
-            }
-        }
+        assert response.status_code == 400
+
+        exp_resp = ErrorDetail(
+            code=SonarrErrorCode.FETCH_FAILED, message="Network error"
+        ).model_dump(mode="json", exclude_none=True)
+
+        assert response.json() == exp_resp
 
 
 @pytest.mark.asyncio

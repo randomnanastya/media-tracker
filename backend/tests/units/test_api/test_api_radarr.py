@@ -161,9 +161,10 @@ async def test_import_radarr_skip_movie_with_invalid_data(
         response = await async_client.post("/api/v1/radarr/import")
 
         assert response.status_code == 200
+
         assert response.json() == {
             "status": "success",
-            "imported_count": len(radarr_movies_invalid_data),
+            "imported_count": 1,
             "error": None,
         }
 
