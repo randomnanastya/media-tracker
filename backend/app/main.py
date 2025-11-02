@@ -4,9 +4,11 @@ from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
+from httpx import Request
 
 from app.api import jellyfin, radarr, sonarr
 from app.config import logger
+from app.exceptions.handlers import register_exception_handlers
 from app.services.jobs import (
     jellyfin_import_users_job,
     jellyfin_sync_movies_job,
@@ -21,16 +23,40 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Startup/shutdown lifecycle with APScheduler."""
     try:
+        jobs = [
+            ("Jellyfin Users", "1:00"),
+            ("Radarr", "1:10"),
+            ("Jellyfin Movies", "1:30"),
+            ("Sonarr", "2:00"),
+        ]
+
+        for name, time in jobs:
+            logger.info(f"📅 Scheduled {name} at {time} UTC")
+
         scheduler.add_job(
-            jellyfin_import_users_job, "cron", hour=1, minute=0, id="jellyfin_users_import"
+            jellyfin_import_users_job,
+            "cron",
+            hour=1,
+            minute=0,
+            id="jellyfin_users_import",
+            misfire_grace_time=300,
+            coalesce=True,
         )
+
         scheduler.add_job(radarr_import_job, "cron", hour=1, minute=10, id="radarr_import")
+
         scheduler.add_job(
             jellyfin_sync_movies_job, "cron", hour=1, minute=30, id="sync_jellyfin_movies"
         )
+
         scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=0, id="sonarr_import")
+
         scheduler.start()
-        logger.info("✅ Scheduler started")
+        logger.info("✅ Scheduler started with misfire_grace_time=300")
+
+        for job in scheduler.get_jobs():
+            logger.info(f"⏰ Next run for {job.id}: {job.next_run_time}")
+
     except Exception as e:
         logger.exception("Failed to start scheduler: %s", e)
 
@@ -56,6 +82,10 @@ def create_app() -> FastAPI:
     app.include_router(radarr.router)
     app.include_router(sonarr.router)
     app.include_router(jellyfin.router)
+
+    # Register exception handlers
+    register_exception_handlers(app)
+
     return app
 
 
@@ -73,3 +103,11 @@ async def root() -> dict[str, str]:
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info("Request to %s: method=%s", request.url.path, request.method)
+    response = await call_next(request)
+    logger.info("Response for %s: status=%s", request.url.path, response.status_code)
+    return response

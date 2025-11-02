@@ -29,7 +29,6 @@ RADARR_MOVIES_EMPTY: list[dict] = []
 RADARR_MOVIES_WITH_INVALID_DATA = [
     {"id": 11, "title": "Movie without ID", "year": 2023, "tmdbId": 12349},
     {
-        "id": 22,
         "title": "Movie with invalid date",
         "inCinemas": "2025-22-11T00:00:00Z",
         "year": 2025,

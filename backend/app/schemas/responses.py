@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 
-from app.schemas.error_codes import JellyfinErrorCode, RadarrErrorCode, SonarrErrorCode
+from app.schemas.error_codes import ErrorCode, JellyfinErrorCode, RadarrErrorCode, SonarrErrorCode
 
 
 class ErrorDetail(BaseModel):
-    code: SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode
+    code: ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode
     message: str
+    details: list[dict] | None = None

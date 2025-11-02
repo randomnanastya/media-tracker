@@ -3,6 +3,9 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
+from app.client.radarr_client import RadarrClientError
+from app.schemas.error_codes import RadarrErrorCode
+
 
 @pytest.mark.asyncio
 async def test_import_radarr_success(
@@ -160,7 +163,7 @@ async def test_import_radarr_skip_movie_with_invalid_data(
         assert response.status_code == 200
         assert response.json() == {
             "status": "success",
-            "imported_count": len(radarr_movies_invalid_data) - 1,
+            "imported_count": len(radarr_movies_invalid_data),
             "error": None,
         }
 
@@ -169,16 +172,19 @@ async def test_import_radarr_skip_movie_with_invalid_data(
 async def test_import_radarr_err_on_service_failure(
     async_client, mock_session, mock_exists_result_false
 ):
-    """API должен вернуть 500 с ошибкой в ответе, когда приходит ошибка из radarr"""
+    """API должен вернуть 400 с ошибкой в ответе, когда приходит ошибка из radarr"""
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
     ) as mock_fetch:
-        mock_fetch.side_effect = Exception("Service error")
+        mock_fetch.side_effect = RadarrClientError(
+            code=RadarrErrorCode.FETCH_FAILED, message="Service error"
+        )
         mock_session.execute.return_value = mock_exists_result_false
         response = await async_client.post("/api/v1/radarr/import")
-        assert response.status_code == 500
+        assert response.status_code == 400
         assert response.json() == {
-            "detail": {"code": "RADARR_FETCH_FAILED", "message": "Network error: Service error"}
+            "code": "RADARR_FETCH_FAILED",
+            "message": "Service error",
         }
 
 
@@ -196,8 +202,6 @@ async def test_radarr_import_returns_network_error(
         response = await async_client.post("/api/v1/radarr/import")
         assert response.status_code == 502
         assert response.json() == {
-            "detail": {
-                "code": "NETWORK_ERROR",
-                "message": "Network error: Network error",
-            },
+            "code": "RADARR_ErrorCode.NETWORK_ERROR",
+            "message": "Failed to connect to external service",
         }

@@ -1,42 +1,18 @@
 from datetime import UTC, datetime
 from typing import cast
 
-import httpx
-from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.radarr_client import fetch_radarr_movies
 from app.config import logger
 from app.models import Media, MediaType, Movie
-from app.schemas.error_codes import RadarrErrorCode
 from app.schemas.radarr import RadarrImportResponse
-from app.schemas.responses import ErrorDetail
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
     """Imports movies from Radarr into the database with logging and aware datetime."""
-    try:
-        movies = await fetch_radarr_movies()
-    except httpx.RequestError as e:
-        logger.error("Network error fetching Radarr movies: %s", str(e))
-        raise HTTPException(
-            status_code=502,
-            detail=ErrorDetail(
-                code=RadarrErrorCode.NETWORK_ERROR,
-                message=f"Network error: {e!s}",
-            ).model_dump(),
-        ) from e
-    except Exception as e:
-        logger.error("Failed to fetch data from Radarr: %s", str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=ErrorDetail(
-                code=RadarrErrorCode.RADARR_FETCH_FAILED,
-                message=f"Network error: {e!s}",
-            ).model_dump(),
-        ) from e
-
+    movies = await fetch_radarr_movies()  # Let RadarrClientError propagate to handlers.py
     imported = 0
 
     for m in movies:
@@ -56,13 +32,7 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                 else:
                     release_date = release_date.astimezone(UTC)
             except Exception as e:
-                logger.error(
-                    "Failed to parse release date for movie '%s': %s",
-                    title,
-                    e,
-                )
-
-        from sqlalchemy import exists
+                logger.error("Failed to parse release date for movie '%s': %s", title, e)
 
         result = await session.execute(select(exists().where(Movie.radarr_id == radarr_id)))
         movie_exists: bool = cast(bool, result.scalar())

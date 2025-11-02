@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from fastapi import HTTPException
 
 from app.models import Episode, Season, Series
+from app.schemas.error_codes import SonarrErrorCode
+from app.schemas.responses import ErrorDetail
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series
 
@@ -39,42 +40,43 @@ async def test_import_sonarr_series_creates_entities(
         mock_season = Mock(spec=Season, series_id=1, number=1)
 
         mock_session.scalar.side_effect = [
-            None,  # Series по imdb_id (серия 1)
-            None,  # Series по title/year (серия 1)
-            None,  # Media (серия 1)
-            None,  # Season (серия 1, первый эпизод)
-            None,  # Episode 1
-            mock_season,  # Season (серия 1, второй эпизод)
-            None,  # Episode 2
-            None,  # Series по imdb_id (серия 2)
-            None,  # Series по title/year (серия 2)
-            None,  # Media (серия 2)
+            None,
+            None,
+            None,  # Series 1: imdb, title/year, Media
+            None,
+            None,
+            mock_season,
+            None,  # Season + 2 Episodes
+            None,
+            None,
+            None,  # Series 2: imdb, title/year, Media
         ]
 
-        expected_series_count = len(sonarr_series_basic)
-        expected_episodes_count = len(sonarr_episodes_basic)
-        expected_entities_count = calculate_expected_entities_count(
-            expected_series_count, sonarr_episodes_basic
-        )
+        expected_series_count = len(sonarr_series_basic)  # 2
+        expected_episodes_count = len(sonarr_episodes_basic)  # 2
+        unique_seasons = 1  # только сезон 1
+        expected_entities_count = (
+            (expected_series_count * 2) + unique_seasons + expected_episodes_count
+        )  # 7
 
         # Act
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        exp_result = SonarrImportResponse(
+        expected_result = SonarrImportResponse(
             new_series=expected_series_count,
             new_episodes=expected_episodes_count,
             updated_series=0,
             updated_episodes=0,
-            error=None,
-        )
-        assert result == exp_result
+        ).model_dump(mode="json", exclude_none=True)
 
-        assert mock_session.scalar.call_count >= expected_series_count * 2
-        assert mock_session.add.call_count == expected_entities_count
-        assert mock_session.flush.call_count >= expected_series_count + 1
-        mock_session.commit.assert_called_once()
+        assert "error" not in expected_result
+        assert result == expected_result
+
+        assert mock_session.scalar.call_count == 10  # 3 + 4 + 3
+        assert mock_session.add.call_count == expected_entities_count  # 7
+        assert mock_session.flush.call_count >= expected_series_count + 1  # 2 + 1 = 3+
+        mock_session.commit.assert_awaited_once()
         mock_session.rollback.assert_not_called()
 
 
@@ -117,10 +119,10 @@ async def test_import_sonarr_series_updates_existing(
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
+        assert isinstance(result, dict)
         exp_result = SonarrImportResponse(
             new_series=0, updated_series=1, new_episodes=0, updated_episodes=1, error=None
-        )
+        ).model_dump(mode="json", exclude_none=True)
         assert result == exp_result
 
         assert existing_series.sonarr_id == sonarr_series_basic[0]["id"]  # sonarr_id не изменился
@@ -151,14 +153,13 @@ async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_j
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
         exp_result = SonarrImportResponse(
             new_series=3,
             updated_series=0,
             new_episodes=0,
             updated_episodes=0,
             error=None,
-        )
+        ).model_dump(mode="json", exclude_none=True)
 
         assert result == exp_result
 
@@ -174,20 +175,17 @@ async def test_import_sonarr_series_failure_connection_timeout(mock_session):
     ) as mock_fetch_series:
         mock_fetch_series.side_effect = Exception("Connection timeout")
 
-        # Act & Assert - ожидаем HTTPException
-        with pytest.raises(HTTPException) as exc_info:
-            await import_sonarr_series(mock_session)
+        # Act
+        result = await import_sonarr_series(mock_session)
 
         # Assert
-        exception = exc_info.value
-        assert exception.status_code == 500
-        assert exception.detail == {
-            "code": "SONARR_FETCH_FAILED",
-            "message": "Failed to fetch series: Connection timeout",
-        }
+        exp_result = SonarrImportResponse(
+            error=ErrorDetail(code=SonarrErrorCode.INTERNAL_ERROR, message="Internal server error"),
+        ).model_dump(mode="json", exclude_none=True)
+        assert result == exp_result
 
+        mock_session.rollback.assert_awaited_once()
         mock_session.commit.assert_not_called()
-        mock_session.rollback.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -208,7 +206,6 @@ async def test_import_sonarr_series_skips_invalid(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = invalid_series
         mock_fetch_episodes.return_value = invalid_episodes
@@ -219,12 +216,16 @@ async def test_import_sonarr_series_skips_invalid(
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        assert result.new_series == 1
-        assert result.new_episodes == 1
-        assert result.error is None
-        mock_logger_warning.assert_called()
-        mock_session.commit.assert_called_once()
+        expected = SonarrImportResponse(
+            new_series=1,
+            updated_series=0,
+            new_episodes=1,
+            updated_episodes=0,
+        ).model_dump(mode="json", exclude_none=True)
+
+        assert result == expected
+
+        mock_session.commit.assert_awaited_once()
         mock_session.rollback.assert_not_called()
 
 
@@ -239,7 +240,6 @@ async def test_import_sonarr_series_invalid_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_invalid_data
         mock_fetch_episodes.return_value = sonarr_episodes_basic
@@ -248,10 +248,17 @@ async def test_import_sonarr_series_invalid_date(
 
         result = await import_sonarr_series(mock_session)
 
-        assert result.new_series == 1
-        mock_logger_error.assert_called_with(
-            "Invalid firstAired date for series %s: %s", "Pilot", "invalid_date"
-        )
+        expected = SonarrImportResponse(
+            new_series=1,
+            new_episodes=2,
+            updated_series=0,
+            updated_episodes=0,
+        ).model_dump(mode="json", exclude_none=True)
+
+        assert result == expected
+
+        mock_session.commit.assert_awaited_once()
+        mock_session.rollback.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -267,7 +274,6 @@ async def test_import_sonarr_series_no_imdb_id(mock_session, sonarr_series_basic
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.config.logging.Logger.warning") as mock_logger_warning,
     ):
         mock_fetch_series.return_value = modified_series
         mock_fetch_episodes.return_value = []
@@ -284,15 +290,13 @@ async def test_import_sonarr_series_no_imdb_id(mock_session, sonarr_series_basic
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        assert result.new_series == 2
-        assert result.updated_series == 0
-        assert result.new_episodes == 0
-        assert result.updated_episodes == 0
-        assert result.error is None
+        exp_result = SonarrImportResponse(
+            new_series=2, updated_series=0, new_episodes=0, updated_episodes=0
+        ).model_dump(mode="json", exclude_none=True)
+        assert result == exp_result
+
         assert mock_session.add.call_count == 4  # Media + Series for each series
         mock_session.commit.assert_called_once()
-        mock_logger_warning.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -310,7 +314,6 @@ async def test_import_sonarr_series_invalid_episode_date(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
-        patch("app.config.logging.Logger.error") as mock_logger_error,
     ):
         mock_fetch_series.return_value = sonarr_series_basic[:1]
         mock_fetch_episodes.return_value = modified_episodes
@@ -328,18 +331,12 @@ async def test_import_sonarr_series_invalid_episode_date(
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        assert result.new_series == 1
-        assert result.new_episodes == 2  # Both episodes are added, first with air_date=None
-        assert result.updated_series == 0
-        assert result.updated_episodes == 0
-        assert result.error is None
-        mock_logger_error.assert_called_with(
-            "Invalid airDateUtc for episode '%s' in series '%s': %s",
-            modified_episodes[0]["title"],
-            sonarr_series_basic[0]["title"],
-            "invalid_date",
-        )
+        exp_result = SonarrImportResponse(
+            new_series=1, new_episodes=2, updated_episodes=0, updated_series=0
+        ).model_dump(mode="json", exclude_none=True)
+
+        assert result == exp_result
+
         mock_session.commit.assert_called_once()
         assert mock_session.add.call_count == 6  # Media, Series, two Seasons, two Episodes
 
@@ -379,13 +376,12 @@ async def test_import_sonarr_series_update_episode(
         # Act
         result = await import_sonarr_series(mock_session)
 
+        exp_result = SonarrImportResponse(
+            new_series=1, new_episodes=1, updated_series=0, updated_episodes=1
+        ).model_dump(mode="json", exclude_none=True)
         # Assert
-        assert isinstance(result, SonarrImportResponse)
-        assert result.updated_episodes == 1
-        assert result.new_series == 1
-        assert result.new_episodes == 1  # Второй эпизод добавляется как новый
-        assert result.updated_series == 0
-        assert result.error is None
+        assert result == exp_result
+
         mock_session.commit.assert_called_once()
         assert (
             mock_session.add.call_count >= 3

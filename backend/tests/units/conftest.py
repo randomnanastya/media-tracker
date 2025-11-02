@@ -80,6 +80,32 @@ async def async_client(override_session_dependency):
         yield client
 
 
+@pytest.fixture
+def mock_scalar_result():
+    def _mock(first_value=None):
+        mock_result = Mock()
+        mock_scalar = Mock()
+        mock_scalar.first.return_value = first_value
+        mock_result.scalars.return_value = mock_scalar
+        return mock_result
+
+    return _mock
+
+
+@pytest.fixture(autouse=True)
+def clear_env():
+    """Очищаем переменные окружения перед каждым тестом."""
+    with patch.dict(os.environ, {}, clear=True):
+        yield
+
+
+@pytest.fixture
+def mock_httpx_client():
+    """Мокаем httpx.AsyncClient."""
+    with patch("httpx.AsyncClient") as mock_client:
+        yield mock_client
+
+
 # --- Моки фильмов из Radarr ---
 @pytest.fixture
 def radarr_movies_basic():
