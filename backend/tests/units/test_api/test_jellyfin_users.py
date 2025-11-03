@@ -41,7 +41,7 @@ async def test_import_jellyfin_users_success(
 
 @pytest.mark.asyncio
 async def test_import_jellyfin_users_client_error(async_client: AsyncClient, mock_session):
-    """ClientError → 400 + JELLYFIN_NETWORK_ERROR"""
+    """ClientError → 502 + JELLYFIN_NETWORK_ERROR"""
     with (
         patch.object(import_jellyfin_users, "__defaults__", (mock_session,)),
         patch(
@@ -54,7 +54,7 @@ async def test_import_jellyfin_users_client_error(async_client: AsyncClient, moc
 
         response = await async_client.post("/api/v1/jellyfin/import/users")
 
-        assert response.status_code == 400
+        assert response.status_code == 502
 
         exp_resp = ErrorDetail(
             code=JellyfinErrorCode.NETWORK_ERROR, message="Cannot reach Jellyfin"

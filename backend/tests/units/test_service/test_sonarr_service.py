@@ -68,7 +68,7 @@ async def test_import_sonarr_series_creates_entities(
             new_episodes=expected_episodes_count,
             updated_series=0,
             updated_episodes=0,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
         assert "error" not in expected_result
         assert result == expected_result
@@ -119,10 +119,11 @@ async def test_import_sonarr_series_updates_existing(
         result = await import_sonarr_series(mock_session)
 
         # Assert
-        assert isinstance(result, dict)
+        assert isinstance(result, SonarrImportResponse)
         exp_result = SonarrImportResponse(
             new_series=0, updated_series=1, new_episodes=0, updated_episodes=1, error=None
-        ).model_dump(mode="json", exclude_none=True)
+        )
+
         assert result == exp_result
 
         assert existing_series.sonarr_id == sonarr_series_basic[0]["id"]  # sonarr_id не изменился
@@ -159,7 +160,7 @@ async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_j
             new_episodes=0,
             updated_episodes=0,
             error=None,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
         assert result == exp_result
 
@@ -221,7 +222,7 @@ async def test_import_sonarr_series_skips_invalid(
             updated_series=0,
             new_episodes=1,
             updated_episodes=0,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
         assert result == expected
 
@@ -253,7 +254,7 @@ async def test_import_sonarr_series_invalid_date(
             new_episodes=2,
             updated_series=0,
             updated_episodes=0,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
         assert result == expected
 
@@ -292,7 +293,7 @@ async def test_import_sonarr_series_no_imdb_id(mock_session, sonarr_series_basic
         # Assert
         exp_result = SonarrImportResponse(
             new_series=2, updated_series=0, new_episodes=0, updated_episodes=0
-        ).model_dump(mode="json", exclude_none=True)
+        )
         assert result == exp_result
 
         assert mock_session.add.call_count == 4  # Media + Series for each series
@@ -333,7 +334,7 @@ async def test_import_sonarr_series_invalid_episode_date(
         # Assert
         exp_result = SonarrImportResponse(
             new_series=1, new_episodes=2, updated_episodes=0, updated_series=0
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
         assert result == exp_result
 
@@ -378,7 +379,7 @@ async def test_import_sonarr_series_update_episode(
 
         exp_result = SonarrImportResponse(
             new_series=1, new_episodes=1, updated_series=0, updated_episodes=1
-        ).model_dump(mode="json", exclude_none=True)
+        )
         # Assert
         assert result == exp_result
 

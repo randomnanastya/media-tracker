@@ -1,5 +1,7 @@
 import os
+from collections.abc import Callable
 from json import JSONDecodeError
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -75,6 +77,19 @@ async def handle_generic_error(request: Request, exc: Exception) -> Response:
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next: Callable[[Request], Any]) -> Response:
+        """Middleware for logging HTTP requests and responses."""
+        logger.info("Request to %s: method=%s", request.url.path, request.method)
+        try:
+            response = await call_next(request)
+            logger.info("Response for %s: status=%s", request.url.path, response.status_code)
+            return response
+        except Exception as exc:
+            # Логируем и пробрасываем исключение дальше для обработки в exception handlers
+            logger.error("Error during request to %s: %s", request.url.path, exc)
+            raise
+
     @app.exception_handler(ClientError)
     async def handle_client_error(request: Request, exc: ClientError) -> Response:
         logger.error(
@@ -249,3 +264,5 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=500,
             content=ErrorDetail(code=exc.code, message=exc.message).model_dump(exclude_none=True),
         )
+
+    app.exception_handler(Exception)(handle_generic_error)

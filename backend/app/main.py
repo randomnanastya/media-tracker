@@ -1,11 +1,9 @@
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, cast
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
-from fastapi.responses import Response
-from httpx import Request
 
 from app.api import jellyfin, radarr, sonarr
 from app.config import logger
@@ -104,12 +102,3 @@ async def root() -> dict[str, str]:
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
-
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next: Callable[[Request], Any]) -> Response:
-    """Middleware for logging HTTP requests and responses."""
-    logger.info("Request to %s: method=%s", request.url.path, request.method)
-    response = await call_next(request)
-    logger.info("Response for %s: status=%s", request.url.path, response.status_code)
-    return cast(Response, response)

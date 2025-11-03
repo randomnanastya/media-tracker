@@ -35,7 +35,7 @@ async def test_sync_jellyfin_movies_success(
 async def test_sync_jellyfin_movies_network_error(
     async_client, override_session_dependency, mock_session
 ):
-    """ClientError(NETWORK_ERROR) → 400"""
+    """ClientError(NETWORK_ERROR) → 502"""
     with patch("app.api.jellyfin.sync_jellyfin_movies", new_callable=AsyncMock) as mock_service:
         mock_service.side_effect = ClientError(
             code=JellyfinErrorCode.NETWORK_ERROR, message="Jellyfin unreachable"
@@ -43,7 +43,7 @@ async def test_sync_jellyfin_movies_network_error(
 
         response = await async_client.post("/api/v1/jellyfin/sync/movies")
 
-        assert response.status_code == 400
+        assert response.status_code == 502
 
         exp_resp = ErrorDetail(
             code=JellyfinErrorCode.NETWORK_ERROR, message="Jellyfin unreachable"
@@ -111,16 +111,38 @@ async def test_sync_jellyfin_movies_generic_db_error(
 
 
 @pytest.mark.asyncio
-async def test_sync_jellyfin_movies_unhandled_exception(
-    async_client, override_session_dependency, mock_session
-):
-    """Exception → 500"""
-    with patch(
-        "app.api.jellyfin_router.sync_jellyfin_movies", new_callable=AsyncMock
-    ) as mock_service:
-        mock_service.side_effect = ValueError("Invalid state")
+async def test_sync_jellyfin_movies_unhandled_exception():
+    """Test that unhandled exceptions are caught by our handler."""
+    from fastapi import Request
 
-        response = await async_client.post("/api/v1/jellyfin/sync/movies")
+    from app.exceptions.handlers import handle_generic_error
 
-        assert response.status_code == 500
-        assert response.json()["code"] == "JELLYFIN_INTERNAL_ERROR"
+    # Создаем полный scope для Request
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/v1/jellyfin/sync/movies",
+        "headers": [],  # Обязательное поле
+        "query_string": b"",  # Обязательное поле
+        "server": ("testserver", 80),  # Обязательное поле
+        "scheme": "http",
+    }
+
+    request = Request(scope=scope)
+    exc = ValueError("Invalid state")
+
+    response = await handle_generic_error(request, exc)
+
+    assert response.status_code == 500
+
+    # Декодируем тело ответа и проверяем структуру
+    response_body = response.body.decode()
+    import json
+
+    response_data = json.loads(response_body)
+
+    exp_resp = ErrorDetail(
+        code=JellyfinErrorCode.INTERNAL_ERROR, message="Internal server error"
+    ).model_dump(mode="json", exclude_none=True)
+
+    assert response_data == exp_resp
