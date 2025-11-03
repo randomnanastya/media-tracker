@@ -104,16 +104,26 @@ async def _process_user_movies(
             except Exception as e:
                 logger.warning("Failed to parse LastPlayedDate for %s: %s", title, e)
 
-        query = select(Movie).join(Media).where(Media.media_type == MediaType.MOVIE)
-        if tmdb_id:
-            query = query.where(Movie.tmdb_id == tmdb_id)
-        elif imdb_id:
-            query = query.where(Movie.imdb_id == imdb_id)
-        else:
-            query = None
-
+        # Переписанная логика поиска фильма
         movie_obj = None
-        if query is not None:
+
+        # Сначала ищем по tmdb_id
+        if tmdb_id:
+            query = (
+                select(Movie)
+                .join(Media)
+                .where(Media.media_type == MediaType.MOVIE, Movie.tmdb_id == tmdb_id)
+            )
+            result = await session.execute(query)
+            movie_obj = result.scalars().first()
+
+        # Если не нашли по tmdb_id, ищем по imdb_id
+        if not movie_obj and imdb_id:
+            query = (
+                select(Movie)
+                .join(Media)
+                .where(Media.media_type == MediaType.MOVIE, Movie.imdb_id == imdb_id)
+            )
             result = await session.execute(query)
             movie_obj = result.scalars().first()
 

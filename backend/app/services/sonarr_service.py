@@ -78,12 +78,18 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     ),
                     None,
                 )
+
                 if series.poster_url is None and poster:
                     series.poster_url = poster
                     updated = True
+
                 if series.year is None and year:
-                    series.year = year
-                    updated = True
+                    try:
+                        series.year = int(year)
+                        updated = True
+                    except ValueError:
+                        logger.warning("Invalid year is not int for series %s: %s", title, year)
+
                 if series.genres is None:
                     series.genres = s.get("genres")
                     updated = True
@@ -92,10 +98,19 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 if series.rating_value != new_rating_value:
                     series.rating_value = new_rating_value
                     updated = True
+
                 new_rating_votes = s.get("ratings", {}).get("votes")
                 if series.rating_votes != new_rating_votes:
-                    series.rating_votes = new_rating_votes
-                    updated = True
+                    try:
+                        series.rating_votes = int(new_rating_votes)
+                        updated = True
+                    except ValueError:
+                        logger.warning(
+                            "Invalid rating votes is not int for series %s: %s",
+                            title,
+                            new_rating_votes,
+                        )
+
                 new_status = s.get("status")
                 if series.status != new_status:
                     series.status = new_status
@@ -138,10 +153,14 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     imdb_id=imdb_id,
                     status=s.get("status"),
                     poster_url=poster,
-                    year=year,
+                    year=int(year) if year is not None else None,
                     genres=s.get("genres"),
                     rating_value=s.get("ratings", {}).get("value"),
-                    rating_votes=s.get("ratings", {}).get("votes"),
+                    rating_votes=(
+                        int(s.get("ratings", {}).get("votes"))
+                        if s.get("ratings", {}).get("votes") is not None
+                        else None
+                    ),
                 )
                 session.add(series)
                 await session.flush()
@@ -267,7 +286,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
             updated_series=total_updated_series,
             new_episodes=total_new_episodes,
             updated_episodes=total_updated_episodes,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
     except ClientError as e:
         await session.rollback()
@@ -291,7 +310,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
             updated_series=None,
             new_episodes=None,
             updated_episodes=None,
-        ).model_dump(mode="json", exclude_none=True)
+        )
 
     except SQLAlchemyError as e:
         await session.rollback()

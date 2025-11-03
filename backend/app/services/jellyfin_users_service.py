@@ -21,6 +21,14 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
             logger.warning("Skipping user without Jellyfin user ID: %s", u.get("Name"))
             continue
 
+        if not isinstance(user_name, str):
+            logger.warning(
+                "Skipping user with invalid name type: %s (jellyfin_user_id: %s)",
+                type(user_name),
+                user_id,
+            )
+            continue
+
         query = select(User).where(User.jellyfin_user_id == user_id)
         result = await session.execute(query)
         user = result.scalars().first()

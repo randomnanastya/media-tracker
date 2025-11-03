@@ -1,9 +1,10 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
+from fastapi.responses import Response
 from httpx import Request
 
 from app.api import jellyfin, radarr, sonarr
@@ -31,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         ]
 
         for name, time in jobs:
-            logger.info(f"📅 Scheduled {name} at {time} UTC")
+            logger.info("📅 Scheduled %s at %s UTC", name, time)
 
         scheduler.add_job(
             jellyfin_import_users_job,
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         logger.info("✅ Scheduler started with misfire_grace_time=300")
 
         for job in scheduler.get_jobs():
-            logger.info(f"⏰ Next run for {job.id}: {job.next_run_time}")
+            logger.info("⏰ Next run for %s: %s", job.id, job.next_run_time)
 
     except Exception as e:
         logger.exception("Failed to start scheduler: %s", e)
@@ -106,7 +107,8 @@ async def health_check() -> dict[str, str]:
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(request: Request, call_next: Callable[[Request], Any]) -> Response:
+    """Middleware for logging HTTP requests and responses."""
     logger.info("Request to %s: method=%s", request.url.path, request.method)
     response = await call_next(request)
     logger.info("Response for %s: status=%s", request.url.path, response.status_code)

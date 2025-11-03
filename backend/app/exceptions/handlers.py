@@ -1,6 +1,5 @@
 import os
 from json import JSONDecodeError
-from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -37,17 +36,23 @@ def _get_status_by_code(
 
 
 def _get_service_code(
-    path: str, mapping: dict[str, Any]
+    path: str, mapping: dict[str, ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode]
 ) -> ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode:
     """Возвращает Enum-объект по пути."""
     lower_path = path.lower()
     if "radarr" in lower_path:
-        return mapping.get("radarr")
-    if "sonarr" in lower_path:
-        return mapping.get("sonarr")
-    if "jellyfin" in lower_path:
-        return mapping.get("jellyfin")
-    return mapping.get("default", ErrorCode.INTERNAL_ERROR)
+        result = mapping.get("radarr")
+    elif "sonarr" in lower_path:
+        result = mapping.get("sonarr")
+    elif "jellyfin" in lower_path:
+        result = mapping.get("jellyfin")
+    else:
+        result = mapping.get("default", ErrorCode.INTERNAL_ERROR)
+
+    # Гарантируем, что возвращаем правильный тип
+    if result is None:
+        return ErrorCode.INTERNAL_ERROR
+    return result
 
 
 async def handle_generic_error(request: Request, exc: Exception) -> Response:
@@ -238,7 +243,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(SonarrServiceError)
-    async def handle_service_error(request: Request, exc: SonarrServiceError):
+    async def handle_service_error(request: Request, exc: SonarrServiceError) -> Response:
         logger.error("Unhandled service error: %s. Request url %s", exc.message, request.url)
         return JSONResponse(
             status_code=500,

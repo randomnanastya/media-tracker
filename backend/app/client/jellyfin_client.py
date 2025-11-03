@@ -87,12 +87,6 @@ async def fetch_jellyfin_movies_for_user(jellyfin_user_id: str) -> list[dict[str
         )
 
     base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
-    params = {
-        "IncludeItemTypes": "Movie",
-        "Recursive": "true",
-        "Fields": "ProviderIds,UserData",
-        "ImageTypeLimit": 0,
-    }
 
     all_items: list[dict[str, Any]] = []
     start_index = 0
@@ -101,9 +95,14 @@ async def fetch_jellyfin_movies_for_user(jellyfin_user_id: str) -> list[dict[str
     async with httpx.AsyncClient() as client:
         while True:
             try:
-                current_params = dict(params)
-                current_params["StartIndex"] = start_index
-                current_params["Limit"] = limit
+                current_params: dict[str, str | int] = {
+                    "IncludeItemTypes": "Movie",
+                    "Recursive": "true",
+                    "Fields": "ProviderIds,UserData",
+                    "ImageTypeLimit": "0",
+                    "StartIndex": start_index,
+                    "Limit": limit,
+                }
 
                 response = await client.get(
                     url=base_url,
