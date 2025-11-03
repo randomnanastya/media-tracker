@@ -1,11 +1,14 @@
 import asyncio
 import json
 import os
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from _pytest import pathlib
 from httpx import AsyncClient
+
+from app.models import Media, MediaType, Movie
 
 # Устанавливаем тестовое окружение
 os.environ.update(
@@ -34,6 +37,7 @@ with patch("apscheduler.schedulers.asyncio.AsyncIOScheduler") as mock_scheduler:
         RADARR_MOVIES_WITH_INVALID_DATA,
         RADARR_MOVIES_WITH_SPECIAL_CHARACTERS,
         RADARR_MOVIES_WITHOUT_RADARR_ID,
+        RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS,
     )
 
 
@@ -132,6 +136,11 @@ def radarr_movies_invalid_data():
 
 
 @pytest.fixture
+def radarr_movies_without_require_fields():
+    return RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS.copy()
+
+
+@pytest.fixture
 def radarr_movies_without_radarr_id():
     return RADARR_MOVIES_WITHOUT_RADARR_ID.copy()
 
@@ -146,7 +155,53 @@ def radarr_movies_special_chars():
     return RADARR_MOVIES_WITH_SPECIAL_CHARACTERS.copy()
 
 
-# --- Пример мока из JSON (если понадобится позже) ---
+@pytest.fixture
+def existing_movie_complete(mock_session):
+    from datetime import UTC, datetime
+
+    media = Media(
+        id=3,
+        media_type=MediaType.MOVIE,
+        title="Inception",
+        release_date=datetime(2010, 7, 16, tzinfo=UTC),
+    )
+    movie = Movie(id=media.id, radarr_id=123, tmdb_id="27205", imdb_id="tt1375666", media=media)
+
+    return movie
+
+
+@pytest.fixture
+def existing_movie_by_tmdb_in_db(mock_session):
+    media = Media(id=1, media_type=MediaType.MOVIE, title="Inception", release_date=None)
+    movie = Movie(id=1, radarr_id=None, tmdb_id="27205", imdb_id=None)
+    media.movie = movie
+    mock_session.add(media)
+    return movie
+
+
+@pytest.fixture
+def existing_movie_by_imdb_in_db(mock_session):
+    media = Media(id=2, media_type=MediaType.MOVIE, title="The Matrix", release_date=None)
+    movie = Movie(id=2, radarr_id=None, tmdb_id=None, imdb_id="tt0133093")
+    media.movie = movie
+    mock_session.add(media)
+    return movie
+
+
+@pytest.fixture
+def existing_movie_complete_in_db(mock_session):
+    media = Media(
+        id=3,
+        media_type=MediaType.MOVIE,
+        title="Inception",
+        release_date=datetime(2010, 7, 16, tzinfo=UTC),
+    )
+    movie = Movie(id=3, radarr_id=None, tmdb_id="27205", imdb_id="tt1375666")
+    media.movie = movie
+    mock_session.add(media)
+    return movie
+
+
 @pytest.fixture
 def radarr_movies_from_json():
     path = pathlib.Path(__file__).parent / "fixtures" / "data" / "movies.json"

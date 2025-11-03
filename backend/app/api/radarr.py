@@ -8,7 +8,12 @@ from app.services.radarr_service import import_radarr_movies
 router = APIRouter(tags=["Radarr"], prefix="/api/v1/radarr")
 
 
-@router.post("/import", response_model=RadarrImportResponse, summary="Import movies from Radarr")
+@router.post(
+    "/import",
+    response_model=RadarrImportResponse,
+    response_model_exclude_none=True,
+    summary="Import movies from Radarr",
+)
 async def import_radarr(
     session: AsyncSession = Depends(get_session),
 ) -> RadarrImportResponse:
