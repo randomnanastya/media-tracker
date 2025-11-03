@@ -6,4 +6,4 @@ from app.schemas.error_codes import ErrorCode, JellyfinErrorCode, RadarrErrorCod
 class ErrorDetail(BaseModel):
     code: ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode
     message: str
-    details: list[dict] | None = None
+    details: list[dict[str, str]] | None = None

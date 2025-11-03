@@ -1,5 +1,6 @@
 import os
 from json import JSONDecodeError
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -19,7 +20,9 @@ from app.schemas.responses import ErrorDetail
 from app.schemas.service_errors import SonarrServiceError
 
 
-def _get_status_by_code(code_enum) -> int:
+def _get_status_by_code(
+    code_enum: ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode,
+) -> int:
     """Определяет HTTP-статус по Enum-объекту ошибки."""
     code_str = code_enum.value  # ← .value — это строка
     if code_str.endswith("RATE_LIMIT_ERROR"):
@@ -33,7 +36,9 @@ def _get_status_by_code(code_enum) -> int:
     return 500
 
 
-def _get_service_code(path: str, mapping: dict):
+def _get_service_code(
+    path: str, mapping: dict[str, Any]
+) -> ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode:
     """Возвращает Enum-объект по пути."""
     lower_path = path.lower()
     if "radarr" in lower_path:
@@ -64,7 +69,7 @@ async def handle_generic_error(request: Request, exc: Exception) -> Response:
     )
 
 
-def register_exception_handlers(app: FastAPI):
+def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ClientError)
     async def handle_client_error(request: Request, exc: ClientError) -> Response:
         logger.error(
@@ -234,8 +239,7 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(SonarrServiceError)
     async def handle_service_error(request: Request, exc: SonarrServiceError):
-        # Это не должно срабатывать — только если забыли catch в API
-        logger.error("Unhandled service error: %s", exc.message)
+        logger.error("Unhandled service error: %s. Request url %s", exc.message, request.url)
         return JSONResponse(
             status_code=500,
             content=ErrorDetail(code=exc.code, message=exc.message).model_dump(exclude_none=True),

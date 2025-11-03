@@ -25,6 +25,16 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
         for s in sonarr_series:
             sonarr_id = s.get("id")
+
+            if not isinstance(sonarr_id, int):
+                logger.warning(
+                    "Skipping series '%s' with invalid sonarr_id type: %s (value: %s)",
+                    s.get("title"),
+                    type(sonarr_id),
+                    sonarr_id,
+                )
+                continue
+
             imdb_id = s.get("imdbId")
             title = s.get("title")
             if not title:

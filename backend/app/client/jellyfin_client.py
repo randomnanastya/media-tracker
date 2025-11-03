@@ -101,10 +101,14 @@ async def fetch_jellyfin_movies_for_user(jellyfin_user_id: str) -> list[dict[str
     async with httpx.AsyncClient() as client:
         while True:
             try:
+                current_params = dict(params)
+                current_params["StartIndex"] = start_index
+                current_params["Limit"] = limit
+
                 response = await client.get(
                     url=base_url,
                     headers={"X-Emby-Token": JELLYFIN_API_KEY},
-                    params={**params, "StartIndex": start_index, "Limit": limit},
+                    params=current_params,
                     timeout=60.0,
                 )
                 response.raise_for_status()
@@ -145,4 +149,4 @@ async def fetch_jellyfin_movies_for_user(jellyfin_user_id: str) -> list[dict[str
                 ) from e
 
     logger.info("Fetched %d movies for Jellyfin user %s", len(all_items), jellyfin_user_id)
-    return cast(list[dict[str, Any]], all_items)
+    return all_items

@@ -1,10 +1,12 @@
+from typing import Any
+
 from app.schemas.error_codes import SonarrErrorCode
 
 
 class ServiceError(Exception):
     """Base exception for service-layer errors."""
 
-    def __init__(self, code, message: str):
+    def __init__(self, code: Any, message: str):
         self.code = code
         self.message = message
         super().__init__(message)
