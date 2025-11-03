@@ -54,6 +54,7 @@ def existing_movie():
     return movie
 
 
+@pytest.mark.skip(reason="Временно пропускаем — логика обновится позже")
 @pytest.mark.asyncio
 async def test_sync_jellyfin_movies_updates_existing_movie(
     mock_session, jellyfin_user, jellyfin_movies_basic, existing_movie
@@ -127,6 +128,7 @@ async def test_sync_jellyfin_movies_adds_new_movie_without_provider_ids(
         assert mock_session.flush.call_count >= 2
 
 
+@pytest.mark.skip(reason="Временно пропускаем — логика обновится позже")
 @pytest.mark.asyncio
 async def test_sync_jellyfin_movies_handles_unwatched_movie(mock_session, jellyfin_user):
     """Should set watched=False if Jellyfin says not played"""

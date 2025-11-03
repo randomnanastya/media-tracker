@@ -56,7 +56,7 @@ async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, 
     # Call the API endpoint
     response = await client.post("/api/v1/radarr/import")
     assert response.status_code == 200
-    assert response.json() == {"status": "success", "imported_count": 1, "error": None}
+    assert response.json() == {"status": "success", "imported_count": 1, "updated_count": 0}
 
     # Verify data in the database
     media_result = await session_for_test.execute(select(Media).where(Media.title == "Test Movie"))
@@ -81,9 +81,7 @@ async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, 
         expected={
             "id": media.id,
             "radarr_id": mock_movies[0]["id"],
-            "watched": False,
         },
-        exclude={"watched_at"},
     )
 
 
@@ -94,7 +92,7 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     session_for_test.add(existing_media)
     await session_for_test.flush()
 
-    existing_movie = Movie(id=existing_media.id, radarr_id=456, watched=False, watched_at=None)
+    existing_movie = Movie(id=existing_media.id, radarr_id=456)
     session_for_test.add(existing_movie)
     await session_for_test.commit()  # Commit this setup data (will be rolled back after test)
 
@@ -109,7 +107,7 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     assert response.json() == {
         "status": "success",
         "imported_count": 0,
-        "error": None,
+        "updated_count": 0,
     }  # No new import
 
     # Verify no new data was added
@@ -127,7 +125,11 @@ async def test_import_radarr_movies_invalid_data(client_with_db, session_for_tes
     # Call the API endpoint
     response = await client_with_db.post("/api/v1/radarr/import")
     assert response.status_code == 200
-    assert response.json() == {"status": "success", "imported_count": 0, "error": None}  # Skipped
+    assert response.json() == {
+        "status": "success",
+        "imported_count": 0,
+        "updated_count": 0,
+    }  # Skipped
 
     # Verify no data in the database
     media_count = await session_for_test.execute(select(Media))

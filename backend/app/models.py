@@ -61,8 +61,7 @@ class Movie(Base):
     tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    watched: Mapped[bool] = mapped_column(Boolean, default=False)
-    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str | None] = mapped_column(String, nullable=True)
 
     media: Mapped["Media"] = relationship("Media", back_populates="movie")
 

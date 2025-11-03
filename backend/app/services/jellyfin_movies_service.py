@@ -94,15 +94,6 @@ async def _process_user_movies(
 
         user_data = m.get("UserData", {})
         played = bool(user_data.get("Played", False))
-        last_played = user_data.get("LastPlayedDate")
-
-        watched_at = None
-        if played and last_played:
-            try:
-                watched_at = datetime.fromisoformat(last_played.replace("Z", "+00:00"))
-                watched_at = watched_at.astimezone(UTC)
-            except Exception as e:
-                logger.warning("Failed to parse LastPlayedDate for %s: %s", title, e)
 
         # Переписанная логика поиска фильма
         movie_obj = None
@@ -132,10 +123,6 @@ async def _process_user_movies(
             if movie_obj.jellyfin_id != jellyfin_id:
                 movie_obj.jellyfin_id = jellyfin_id
                 needs_update = True
-            if movie_obj.watched != played:
-                movie_obj.watched = played
-                movie_obj.watched_at = watched_at
-                needs_update = True
             if needs_update:
                 session.add(movie_obj)
                 updated += 1
@@ -158,8 +145,6 @@ async def _process_user_movies(
                     tmdb_id=tmdb_id,
                     imdb_id=imdb_id,
                     jellyfin_id=jellyfin_id,
-                    watched=played,
-                    watched_at=watched_at,
                 )
                 session.add(movie_obj)
                 await session.flush()
