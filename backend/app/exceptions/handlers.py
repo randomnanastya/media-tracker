@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 from json import JSONDecodeError
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -84,7 +84,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         try:
             response = await call_next(request)
             logger.info("Response for %s: status=%s", request.url.path, response.status_code)
-            return response
+            # Явно указываем, что возвращаем Response
+            return cast(Response, response)
         except Exception as exc:
             # Логируем и пробрасываем исключение дальше для обработки в exception handlers
             logger.error("Error during request to %s: %s", request.url.path, exc)
