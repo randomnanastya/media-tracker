@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +30,7 @@ async def _find_movie_by_external_ids(
     return result.scalar_one_or_none()
 
 
-def _parse_release_date(movie_data: dict) -> datetime | None:
+def _parse_release_date(movie_data: dict[str, Any]) -> datetime | None:
     """Parsing release date from movies data"""
     release_date_str = movie_data.get("inCinemas")
     if not release_date_str:
