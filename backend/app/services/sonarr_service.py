@@ -180,6 +180,25 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 season_number = ep.get("seasonNumber")
                 episode_number = ep.get("episodeNumber")
                 ep_title = ep.get("title")
+
+                if not isinstance(season_number, int):
+                    logger.warning(
+                        "Skipping episode with invalid season number in series '%s': %s (type: %s)",
+                        title,
+                        season_number,
+                        type(season_number),
+                    )
+                    continue
+
+                if not isinstance(episode_number, int):
+                    logger.warning(
+                        "Skipping episode with invalid episode number in series '%s': %s (type: %s)",
+                        title,
+                        episode_number,
+                        type(episode_number),
+                    )
+                    continue
+
                 if not ep_title:
                     logger.warning(
                         "Skipping episode with missing title in series '%s': %s", title, ep

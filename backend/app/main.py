@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
@@ -112,4 +112,4 @@ async def log_requests(request: Request, call_next: Callable[[Request], Any]) ->
     logger.info("Request to %s: method=%s", request.url.path, request.method)
     response = await call_next(request)
     logger.info("Response for %s: status=%s", request.url.path, response.status_code)
-    return response
+    return cast(Response, response)
