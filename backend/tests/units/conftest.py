@@ -300,6 +300,22 @@ def sonarr_series_invalid_data():
     ]
 
 
+@pytest.fixture
+def mock_exists_false():
+    """select(exists()) → False"""
+    m = Mock()
+    m.scalar.return_value = False
+    return m
+
+
+@pytest.fixture
+def mock_exists_true():
+    """select(exists()) → True"""
+    m = Mock()
+    m.scalar.return_value = True
+    return m
+
+
 # --- Хелперы для моков SQLAlchemy-запросов ---
 @pytest.fixture
 def mock_exists_result_false():
