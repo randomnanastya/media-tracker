@@ -256,6 +256,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 if isinstance(s.get("seasonNumber"), int)
             }
 
+            # Исправление для mypy: явное получение сезонов
             existing_seasons_result = await session.scalars(
                 select(Season).where(Season.series_id == series.id)
             )
@@ -288,11 +289,12 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
             for sn, first_air_str in season_first_air.items():
                 season = existing_seasons.get(sn)
-                if season and season.release_date is None:
+                if season is not None and season.release_date is None:
                     dt = _parse_iso_utc(first_air_str)
                     if dt:
                         season.release_date = dt
 
+            # Исправление для mypy: явное получение эпизодов
             existing_eps_result = await session.scalars(
                 select(Episode).where(
                     Episode.season_id.in_([s.id for s in existing_seasons.values()])
@@ -312,6 +314,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 overview = ep_raw.get("overview")
                 air_str = ep_raw.get("airDateUtc")
 
+                # Исправление для mypy: явные проверки типов
                 if (
                     not isinstance(ep_sonarr_id, int)
                     or not isinstance(season_num, int)
@@ -321,13 +324,13 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     continue
 
                 season = existing_seasons.get(season_num)
-                if not season:
+                if season is None:
                     continue
 
                 air_date = _parse_iso_utc(air_str)
 
                 existing = existing_eps.get(ep_sonarr_id)
-                if existing:
+                if existing is not None:
                     updated = False
                     if existing.number != ep_num:
                         existing.number = ep_num
