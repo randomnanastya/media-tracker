@@ -259,7 +259,9 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
             existing_seasons_result = await session.scalars(
                 select(Season).where(Season.series_id == series.id)
             )
-            existing_seasons = {s.number: s for s in existing_seasons_result}
+            existing_seasons: dict[int, Season] = {}
+            for season in existing_seasons_result:
+                existing_seasons[season.number] = season
 
             for num in sonarr_season_numbers:
                 if num not in existing_seasons:
@@ -296,9 +298,10 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     Episode.season_id.in_([s.id for s in existing_seasons.values()])
                 )
             )
-            existing_eps = {
-                ep.sonarr_id: ep for ep in existing_eps_result if ep.sonarr_id is not None
-            }
+            existing_eps: dict[int, Episode] = {}
+            for episode in existing_eps_result:
+                if episode.sonarr_id is not None:
+                    existing_eps[episode.sonarr_id] = episode
 
             new_ep_cnt = upd_ep_cnt = 0
             for ep_raw in episodes_raw:
@@ -310,7 +313,9 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 air_str = ep_raw.get("airDateUtc")
 
                 if (
-                    not all(isinstance(x, int) for x in [ep_sonarr_id, season_num, ep_num])
+                    not isinstance(ep_sonarr_id, int)
+                    or not isinstance(season_num, int)
+                    or not isinstance(ep_num, int)
                     or not ep_title
                 ):
                     continue
