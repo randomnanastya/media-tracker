@@ -202,11 +202,11 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
             series: Series | None = None
 
-            # 1. Поиск по sonarr_id (без exists_q)
+            # 1. Поиск по sonarr_id
             if sonarr_id:
                 series = await _find_series_by_sonarr_id(session, sonarr_id)
 
-            # 2. Поиск по tvdb_id или imdb_id
+            # 2. Поиск по внешним ID
             if not series:
                 series = await _find_series_by_external_ids(session, tvdb_id, imdb_id)
 
@@ -228,7 +228,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 ):
                     total_updated_series += 1
             else:
-                # 4. Создание: только если есть sonarr_id ИЛИ (tvdb_id ИЛИ imdb_id)
+                # 4. Создание
                 if sonarr_id or tvdb_id or imdb_id:
                     series = await _create_series(
                         session=session,
@@ -249,34 +249,32 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     logger.warning("Skip series without identifiers: %s", title)
                     continue
 
-            # === Остальная логика (сезоны, эпизоды) ===
+            # === Сезоны и эпизоды ===
             sonarr_season_numbers = {
                 s["seasonNumber"]
                 for s in raw.get("seasons", [])
                 if isinstance(s.get("seasonNumber"), int)
             }
 
-            # Исправление для mypy: явное получение сезонов
             existing_seasons_result = await session.scalars(
                 select(Season).where(Season.series_id == series.id)
             )
             existing_seasons: dict[int, Season] = {}
-            for season in existing_seasons_result:
-                existing_seasons[season.number] = season
+            for season_obj in existing_seasons_result:
+                existing_seasons[season_obj.number] = season_obj
 
             for num in sonarr_season_numbers:
                 if num not in existing_seasons:
-                    season = Season(series_id=series.id, number=num)
-                    session.add(season)
+                    new_season = Season(series_id=series.id, number=num)
+                    session.add(new_season)
                     await session.flush()
-                    existing_seasons[num] = season
+                    existing_seasons[num] = new_season
 
-            # Эпизоды — только если есть sonarr_id
+            season_first_air: dict[int, str] = {}
             episodes_raw = []
             if sonarr_id:
                 episodes_raw = await fetch_sonarr_episodes(sonarr_id)
 
-            season_first_air: dict[int, str] = {}
             for ep in episodes_raw:
                 sn = ep.get("seasonNumber")
                 air = ep.get("airDateUtc")
@@ -294,7 +292,6 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     if dt:
                         season.release_date = dt
 
-            # Исправление для mypy: явное получение эпизодов
             existing_eps_result = await session.scalars(
                 select(Episode).where(
                     Episode.season_id.in_([s.id for s in existing_seasons.values()])
@@ -314,7 +311,6 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 overview = ep_raw.get("overview")
                 air_str = ep_raw.get("airDateUtc")
 
-                # Исправление для mypy: явные проверки типов
                 if (
                     not isinstance(ep_sonarr_id, int)
                     or not isinstance(season_num, int)
