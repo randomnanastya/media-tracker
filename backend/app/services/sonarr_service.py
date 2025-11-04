@@ -256,10 +256,10 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 if isinstance(s.get("seasonNumber"), int)
             }
 
-            existing_seasons = {
-                s.number: s
-                for s in await session.scalars(select(Season).where(Season.series_id == series.id))
-            }
+            existing_seasons_result = await session.scalars(
+                select(Season).where(Season.series_id == series.id)
+            )
+            existing_seasons = {s.number: s for s in existing_seasons_result}
 
             for num in sonarr_season_numbers:
                 if num not in existing_seasons:
@@ -291,14 +291,13 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     if dt:
                         season.release_date = dt
 
-            existing_eps = {
-                ep.sonarr_id: ep
-                for ep in await session.scalars(
-                    select(Episode).where(
-                        Episode.season_id.in_([s.id for s in existing_seasons.values()])
-                    )
+            existing_eps_result = await session.scalars(
+                select(Episode).where(
+                    Episode.season_id.in_([s.id for s in existing_seasons.values()])
                 )
-                if ep.sonarr_id is not None
+            )
+            existing_eps = {
+                ep.sonarr_id: ep for ep in existing_eps_result if ep.sonarr_id is not None
             }
 
             new_ep_cnt = upd_ep_cnt = 0
