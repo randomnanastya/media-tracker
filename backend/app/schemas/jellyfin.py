@@ -15,3 +15,10 @@ class JellyfinMoviesSyncResponse(BaseModel):
     synced_count: int
     updated_count: int
     added_count: int
+
+
+class JellyfinImportMoviesResponse(BaseModel):
+    status: str = "success"
+    imported_count: int = 0
+    updated_count: int = 0
+    error: ErrorDetail | None = None

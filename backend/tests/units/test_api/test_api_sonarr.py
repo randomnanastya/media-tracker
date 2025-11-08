@@ -17,11 +17,22 @@ async def test_import_sonarr_success(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
+        patch(
+            "app.services.sonarr_service._find_series_by_sonarr_id", new_callable=AsyncMock
+        ) as mock_find_sonarr,
+        patch(
+            "app.services.series_utils.find_series_by_external_ids", new_callable=AsyncMock
+        ) as mock_find_external,
+        patch(
+            "app.services.sonarr_service._create_new_series", new_callable=AsyncMock
+        ) as mock_create_series,
     ):
         modified_series = []
         for series in sonarr_series_basic:
             series_copy = series.copy()
-            series_copy["seasons"] = [{"seasonNumber": 1}]  # Add seasons
+            series_copy["seasons"] = [{"seasonNumber": 1}]
+            series_copy["tmdbId"] = 12345 if series["id"] == 1 else 67890
+            series_copy["imdbId"] = "tt1234567" if series["id"] == 1 else "tt7654321"
             modified_series.append(series_copy)
 
         mock_fetch_series.return_value = modified_series
@@ -30,6 +41,20 @@ async def test_import_sonarr_success(
             sonarr_episodes_basic if series_id == 1 else []
             for series_id in [s["id"] for s in modified_series]
         ]
+
+        mock_find_sonarr.return_value = None
+        mock_find_external.return_value = None
+
+        mock_series_list = []
+        for i, series_data in enumerate(modified_series):
+            mock_series = MagicMock()
+            mock_series.id = i + 1
+            mock_media = MagicMock()
+            mock_media.title = series_data["title"]
+            mock_series.media = mock_media
+            mock_series_list.append(mock_series)
+
+        mock_create_series.side_effect = mock_series_list
 
         mock_session.execute.return_value = Mock(
             scalar_one_or_none=Mock(return_value=None), scalars=Mock(return_value=[])

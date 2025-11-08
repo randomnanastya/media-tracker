@@ -39,6 +39,7 @@ class Series(Base):
     id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
     sonarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
     tvdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)

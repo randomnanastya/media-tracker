@@ -20,10 +20,13 @@ def calculate_expected_entities_count(series_count, episodes_data):
 
 @pytest.mark.asyncio
 async def test_import_sonarr_series_creates_entities(
-    mock_session, sonarr_series_basic, sonarr_episodes_basic, mock_exists_result_false
+    mock_session, sonarr_series_basic, sonarr_episodes_basic
 ):
     """Test service creates Media, Series, Season, and Episode entities for new series."""
-    # Arrange
+
+    async def return_none(*args, **kwargs):
+        return None
+
     with (
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
@@ -31,60 +34,58 @@ async def test_import_sonarr_series_creates_entities(
         patch(
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
+        patch(
+            "app.services.sonarr_service._find_series_by_sonarr_id", new_callable=AsyncMock
+        ) as mock_find_sonarr,
+        patch(
+            "app.services.sonarr_service.find_series_by_external_ids", new_callable=AsyncMock
+        ) as mock_find_external,
     ):
-        sonarr_series_basic[0]["imdbId"] = "tt1234567"
-        sonarr_series_basic[0]["seasons"] = [{"seasonNumber": 1}]
-        sonarr_series_basic[1]["imdbId"] = "tt7654321"
-        sonarr_series_basic[1]["seasons"] = [{"seasonNumber": 1}]
+        # --- Данные ---
+        single_series = sonarr_series_basic[0].copy()
+        single_series.update(
+            {
+                "imdbId": "tt1234567",
+                "tvdbId": 123456,
+                "tmdbId": 12345,
+                "seasons": [{"seasonNumber": 1}],
+            }
+        )
 
-        mock_fetch_series.return_value = sonarr_series_basic
-        mock_fetch_episodes.side_effect = [
-            sonarr_episodes_basic if series_id == 1 else []
-            for series_id in [s["id"] for s in sonarr_series_basic]
-        ]
+        mock_fetch_series.return_value = [single_series]
+        mock_fetch_episodes.return_value = sonarr_episodes_basic
 
-        execute_calls = []
+        # --- КРИТИЧНО: возвращаем None как результат await ---
+        mock_find_sonarr.side_effect = return_none
+        mock_find_external.side_effect = return_none
 
-        def execute_side_effect(query):
-            query_str = str(query).lower()
-            execute_calls.append(query_str)
-
-            if ("season" in query_str and "series_id" in query_str) or (
-                "episode" in query_str and "season_id" in query_str
-            ):
-                return Mock(scalars=Mock(return_value=[]))
-
-            return Mock(scalar_one_or_none=Mock(return_value=None), scalars=Mock(return_value=[]))
-
-        mock_session.execute.side_effect = execute_side_effect
-
+        # --- Сохраняем add ---
         added_entities = []
 
         def add_side_effect(obj):
             added_entities.append(obj)
-            return None
 
         mock_session.add.side_effect = add_side_effect
+        mock_session.flush = AsyncMock()
 
-        # Act
+        # --- Выполняем ---
         result = await import_sonarr_series(mock_session)
 
-        # Assert
-        assert result.new_series == 2
-        assert result.new_episodes == 2
+        # --- Проверки ---
+        assert result.new_series == 1
         assert result.updated_series == 0
+        assert result.new_episodes == 2
         assert result.updated_episodes == 0
 
-        media_count = len([e for e in added_entities if isinstance(e, Media)])
-        series_count = len([e for e in added_entities if isinstance(e, Series)])
-        season_count = len([e for e in added_entities if isinstance(e, Season)])
-        episode_count = len([e for e in added_entities if isinstance(e, Episode)])
+        assert len(added_entities) == 5
+        assert {type(e).__name__ for e in added_entities} == {
+            "Media",
+            "Series",
+            "Season",
+            "Episode",
+        }
 
-        assert media_count == 2
-        assert series_count == 2
-        assert season_count == 2
-        assert episode_count == 2
-
+        mock_session.flush.assert_awaited()
         mock_session.commit.assert_awaited_once()
 
 

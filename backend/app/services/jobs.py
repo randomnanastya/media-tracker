@@ -5,10 +5,10 @@ from typing import Any
 
 from app.config import logger
 from app.database import AsyncSessionLocal
-from app.services.jellyfin_movies_service import sync_jellyfin_movies
 from app.services.jellyfin_users_service import import_jellyfin_users
 from app.services.radarr_service import import_radarr_movies
 from app.services.sonarr_service import import_sonarr_series
+from app.services.sync_jellyfin_movies_service import sync_jellyfin_movies
 
 
 def log_job_execution(
