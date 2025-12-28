@@ -14,15 +14,21 @@ for i in {1..60}; do
     sleep 3
 done
 
-# Run migrations in development or if explicitly enabled
-if [ "$APP_ENV" = "development" ] || [ "$RUN_MIGRATIONS" = "true" ]; then
-    echo "🔄 Running Alembic migrations..."
-    alembic upgrade head || {
-        echo "⚠️ Migration failed, but starting app anyway..."
-    }
+if ! PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' >/dev/null 2>&1; then
+    echo "❌ PostgreSQL connection failed after 60 attempts!"
+    exit 1
+fi
+
+# === ВСЕГДА запускаем миграции при старте контейнера ===
+echo "🔄 Running Alembic migrations..."
+if alembic upgrade head; then
+    echo "✅ All migrations applied successfully"
+else
+    echo "⚠️ Some migrations failed — continuing startup (check logs!)"
+    # Не выходим — приложение может работать с частично применёнными миграциями
 fi
 
 echo "✅ Backend initialization complete!"
 
-# Запуск приложения — передаём управление CMD из Dockerfile
+# Передаём управление команде из CMD в Dockerfile
 exec "$@"
