@@ -1,3 +1,10 @@
+## [0.3.6](https://github.com/randomnanastya/media-tracker/compare/v0.3.5...v0.3.6) (2025-12-28)
+
+
+### Bug Fixes
+
+* entrypoint deps ([#49](https://github.com/randomnanastya/media-tracker/issues/49)) ([4c37776](https://github.com/randomnanastya/media-tracker/commit/4c377763ec6ccbb00041323c6c0125abf73decc5))
+
 ## [0.3.5](https://github.com/randomnanastya/media-tracker/compare/v0.3.4...v0.3.5) (2025-12-28)
 
 
