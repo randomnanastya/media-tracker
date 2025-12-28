@@ -17,11 +17,11 @@ async def find_series_by_external_ids(
 
     conditions = []
     if tmdb_id:
-        conditions.append(Series.tmdb_id == tmdb_id)
+        conditions.append(Series.tmdb_id == str(tmdb_id))
     if imdb_id:
-        conditions.append(Series.imdb_id == imdb_id)
+        conditions.append(Series.imdb_id == str(imdb_id))
     if tvdb_id:
-        conditions.append(Series.tvdb_id == tvdb_id)
+        conditions.append(Series.tvdb_id == str(tvdb_id))
 
     query = select(Series).where(or_(*conditions)).options(selectinload(Series.media))
     result = await session.execute(query)

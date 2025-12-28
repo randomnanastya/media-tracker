@@ -41,7 +41,7 @@ class Series(Base):
     tvdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String)
     year: Mapped[int | None] = mapped_column(Integer)
@@ -60,7 +60,7 @@ class Movie(Base):
     radarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
     tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
-    jellyfin_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
 
     media: Mapped["Media"] = relationship("Media", back_populates="movie")
@@ -71,7 +71,7 @@ class Season(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     series_id: Mapped[int] = mapped_column(Integer, ForeignKey("series.id"), nullable=False)
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     release_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -84,8 +84,8 @@ class Episode(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     season_id: Mapped[int] = mapped_column(ForeignKey("seasons.id"))
-    sonarr_id: Mapped[int] = mapped_column(Integer, unique=True)
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    sonarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

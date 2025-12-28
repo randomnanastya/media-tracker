@@ -4,10 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.schemas.jellyfin import (
     JellyfinImportMoviesResponse,
+    JellyfinImportSeriesResponse,
     JellyfinMoviesSyncResponse,
     JellyfinUsersResponse,
 )
 from app.services.import_jellyfin_movies_service import import_jellyfin_movies
+from app.services.import_jellyfin_series_service import import_jellyfin_series
 from app.services.jellyfin_users_service import import_jellyfin_users
 from app.services.sync_jellyfin_movies_service import sync_jellyfin_movies
 
@@ -53,4 +55,18 @@ async def import_movies(
 ) -> JellyfinImportMoviesResponse:
     """Import movies from Jellyfin"""
     result = await import_jellyfin_movies(session)
+    return result
+
+
+@router.post(
+    "/import/series",
+    response_model=JellyfinImportSeriesResponse,
+    response_model_exclude_none=True,
+    summary="Import series from Jellyfin",
+)
+async def import_series(
+    session: AsyncSession = Depends(get_session),
+) -> JellyfinImportSeriesResponse:
+    """Import series from Jellyfin"""
+    result = await import_jellyfin_series(session)
     return result
