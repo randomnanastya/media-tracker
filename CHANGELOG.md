@@ -1,3 +1,10 @@
+## [0.3.8](https://github.com/randomnanastya/media-tracker/compare/v0.3.7...v0.3.8) (2025-12-28)
+
+
+### Bug Fixes
+
+* db in Dockerfile ([#51](https://github.com/randomnanastya/media-tracker/issues/51)) revert ([6d333ab](https://github.com/randomnanastya/media-tracker/commit/6d333ab237e101537b23d52732d1fa37b05dc7f8))
+
 ## [0.3.7](https://github.com/randomnanastya/media-tracker/compare/v0.3.6...v0.3.7) (2025-12-28)
 
 
