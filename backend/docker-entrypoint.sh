@@ -10,7 +10,6 @@ if ! PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT
 fi
 echo "✅ PostgreSQL is ready!"
 
-# Всегда применяем миграции
 echo "🔄 Running Alembic migrations..."
 if alembic upgrade head; then
     echo "✅ All migrations applied successfully"
@@ -20,5 +19,4 @@ fi
 
 echo "✅ Backend initialization complete!"
 
-# Запуск приложения
 exec "$@"
