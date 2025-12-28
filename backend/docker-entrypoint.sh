@@ -3,28 +3,28 @@ set -e
 
 echo "=== Starting FastAPI backend initialization ==="
 
-# Проверка обязательных переменных
-: "${POSTGRES_HOST:?Error: POSTGRES_HOST is not set}"
-: "${POSTGRES_USER:?Error: POSTGRES_USER is not set}"
-: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD is not set}"
-: "${POSTGRES_DB:?Error: POSTGRES_DB is not set}"
+# Install postgresql-client if not present
+if ! command -v psql &> /dev/null; then
+    apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+fi
 
-POSTGRES_PORT=${POSTGRES_PORT:-5432}
-
-# Ждём базу
-echo "⏳ Waiting for PostgreSQL ($POSTGRES_HOST:$POSTGRES_PORT)..."
-while ! PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' >/dev/null 2>&1; do
-    echo "⏳ PostgreSQL not ready yet... sleeping 5s"
-    sleep 5
+# Wait for PostgreSQL
+echo "⏳ Waiting for PostgreSQL..."
+for i in {1..60}; do
+    if PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' 2>/dev/null; then
+        echo "✅ PostgreSQL is ready!"
+        break
+    fi
+    echo "⏳ PostgreSQL not ready yet ($i/60)..."
+    sleep 3
 done
-echo "✅ PostgreSQL is ready!"
 
-# Миграции
-echo "🔄 Running Alembic migrations..."
-if alembic upgrade head; then
-    echo "✅ All migrations applied successfully"
-else
-    echo "⚠️ Some migrations failed — starting app anyway"
+# Run migrations in prod or if explicitly enabled
+if [ "$APP_ENV" = "development" ] || [ "$RUN_MIGRATIONS" = "true" ]; then
+    echo "🔄 Running Alembic migrations..."
+    poetry run alembic upgrade head || {
+        echo "⚠️ Migration failed, but starting app anyway..."
+    }
 fi
 
 echo "✅ Backend initialization complete!"
