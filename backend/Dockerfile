@@ -6,7 +6,11 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
+# Устанавливаем только прод-зависимости (без dev)
+RUN poetry install --only main --no-root --no-interaction --no-ansi
+
+# Генерируем requirements.txt из установленного окружения (надёжнее export)
+RUN poetry run pip freeze > requirements.txt
 
 FROM python:3.12-slim
 
@@ -19,9 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 COPY docker-entrypoint.sh .
-
 RUN chmod +x docker-entrypoint.sh
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
