@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/randomnanastya/media-tracker/compare/v0.3.1...v0.3.2) (2025-12-28)
+
+
+### Bug Fixes
+
+* run alembic without poetry in entrypoint ([#42](https://github.com/randomnanastya/media-tracker/issues/42)) ([911d507](https://github.com/randomnanastya/media-tracker/commit/911d5079056c45e88ea094c1b97967187542d6be))
+
 ## [0.3.1](https://github.com/randomnanastya/media-tracker/compare/v0.3.0...v0.3.1) (2025-12-28)
 
 
