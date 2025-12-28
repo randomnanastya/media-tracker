@@ -11,7 +11,7 @@ RUN poetry run pip freeze > requirements.txt
 
 FROM python:3.12-slim
 
-# Установите PostgreSQL клиент
+# Установите PostgreSQL клиент ← ЭТО ЕСТЬ, но нужно в финальном образе
 RUN apt-get update && \
     apt-get install -y postgresql-client && \
     apt-get clean && \
