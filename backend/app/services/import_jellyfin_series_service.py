@@ -160,7 +160,7 @@ async def _process_seasons_and_episodes(
         select(Episode).where(Episode.season_id.in_([s.id for s in existing_seasons.values()]))
     )
     existing_eps: dict[str, Episode] = {
-        str(ep.jellyfin_id): ep for ep in existing_eps_result if ep.jellyfin_id is not None
+        ep.jellyfin_id: ep for ep in existing_eps_result if ep.jellyfin_id is not None
     }
 
     new_ep_cnt = upd_ep_cnt = 0
@@ -168,16 +168,23 @@ async def _process_seasons_and_episodes(
 
     for ep_raw in episodes_raw:
         ep_jellyfin_id = ep_raw.get("Id")
-        season_num = ep_raw.get("ParentIndexNumber")
-        ep_num = ep_raw.get("IndexNumber")
+        season_num_raw = ep_raw.get("ParentIndexNumber")
+        ep_num_raw = ep_raw.get("IndexNumber")
         ep_title = ep_raw.get("Name")
         air_str = ep_raw.get("PremiereDate")
         season_jellyfin_id = ep_raw.get("SeasonId")
 
-        if not all(
-            [ep_jellyfin_id, isinstance(season_num, int), isinstance(ep_num, int), ep_title]
+        # Проверяем типы и наличие обязательных полей
+        if (
+            not ep_jellyfin_id
+            or not isinstance(season_num_raw, int)
+            or not isinstance(ep_num_raw, int)
+            or not ep_title
         ):
             continue
+
+        season_num: int = season_num_raw
+        ep_num: int = ep_num_raw
 
         air_date = _parse_iso_utc(air_str)
         if air_date and (
@@ -192,7 +199,7 @@ async def _process_seasons_and_episodes(
             season = Season(
                 series_id=series.id,
                 number=season_num,
-                jellyfin_id=season_jellyfin_id,  # ← str, не int!
+                jellyfin_id=season_jellyfin_id,
             )
             session.add(season)
             await session.flush()
@@ -220,7 +227,7 @@ async def _process_seasons_and_episodes(
         else:
             episode = Episode(
                 season_id=season.id,
-                jellyfin_id=ep_jellyfin_id,  # ← str, не int!
+                jellyfin_id=ep_jellyfin_id,
                 number=ep_num,
                 title=ep_title,
                 air_date=air_date,
@@ -251,22 +258,14 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
 
     try:
         for raw in jellyfin_series:
-            jellyfin_id = raw.get("Id")
+            jellyfin_id_raw = raw.get("Id")
             title = raw.get("Name")
 
-            logger.debug("Processing Jellyfin series: ID=%s, Title=%s", jellyfin_id, title)
-
-            if jellyfin_id is not None:
-                jellyfin_id = str(jellyfin_id).strip()
-                if not jellyfin_id or jellyfin_id == "0":
-                    jellyfin_id = None
-                elif len(jellyfin_id) > 64:  # Защита от слишком длинных ID
-                    logger.warning("Jellyfin ID too long for series '%s': %s", title, jellyfin_id)
-                    continue
-
-            if not jellyfin_id or not title:
+            if not jellyfin_id_raw or not title:
                 logger.warning("Skipping series - missing Id or Name")
                 continue
+
+            jellyfin_id = str(jellyfin_id_raw)
 
             provider_ids = raw.get("ProviderIds", {})
             tvdb_id = provider_ids.get("Tvdb")
@@ -279,8 +278,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             existing_series = None
 
             # 1. Search by jellyfin_id
-            if jellyfin_id:
-                existing_series = await _find_series_by_jellyfin_id(session, jellyfin_id)
+            existing_series = await _find_series_by_jellyfin_id(session, jellyfin_id)
 
             # 2. Search by external IDs
             if not existing_series:
