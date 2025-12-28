@@ -3,8 +3,6 @@ set -e
 
 echo "=== Starting FastAPI backend initialization ==="
 
-# База уже должна быть готова благодаря depends_on: service_healthy
-# Но на всякий случай делаем одну проверку (если что-то пошло не так)
 echo "🔍 Checking PostgreSQL connection..."
 if ! PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' >/dev/null 2>&1; then
     echo "❌ PostgreSQL is not available! Check db container logs."
