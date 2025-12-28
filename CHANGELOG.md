@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/randomnanastya/media-tracker/compare/v0.3.2...v0.3.3) (2025-12-28)
+
+
+### Bug Fixes
+
+* run alembic always ([#43](https://github.com/randomnanastya/media-tracker/issues/43)) ([852e209](https://github.com/randomnanastya/media-tracker/commit/852e209ccacced911c4db88d06df084dcdd64482))
+
 ## [0.3.2](https://github.com/randomnanastya/media-tracker/compare/v0.3.1...v0.3.2) (2025-12-28)
 
 
