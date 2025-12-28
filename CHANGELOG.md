@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/randomnanastya/media-tracker/compare/v0.3.0...v0.3.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* use pip freeze instead of poetry export for reliable CI build ([d7640e4](https://github.com/randomnanastya/media-tracker/commit/d7640e4440b8a375f131c008e18488ea37ac0819))
+
 # [0.3.0](https://github.com/randomnanastya/media-tracker/compare/v0.2.0...v0.3.0) (2025-12-28)
 
 
