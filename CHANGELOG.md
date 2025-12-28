@@ -1,3 +1,34 @@
+# [0.3.0](https://github.com/randomnanastya/media-tracker/compare/v0.2.0...v0.3.0) (2025-12-28)
+
+
+### Bug Fixes
+
+* fix  linter ([e2139d1](https://github.com/randomnanastya/media-tracker/commit/e2139d19a5ccb92f31996b6c3883fedb972b29b8))
+* fix linter annotations ([682cc0a](https://github.com/randomnanastya/media-tracker/commit/682cc0a709981cffdca740e15ca710dff4ae5f75))
+* fix linter annotations ([88ecb22](https://github.com/randomnanastya/media-tracker/commit/88ecb226cfba9a33fac369d51df4d274fb97a521))
+* fix linter annotations ([c010bee](https://github.com/randomnanastya/media-tracker/commit/c010bee14e75c38d6f8fc103b78d19b213123f9e))
+* fix linter mypy ([7c3df55](https://github.com/randomnanastya/media-tracker/commit/7c3df55b0dabbfe64b55f8d980f6008012d80717))
+* fix linter mypy ([aae8281](https://github.com/randomnanastya/media-tracker/commit/aae82816bbca4a4fd6bba08922a0711391eae955))
+* fix linter mypy ([2be57b5](https://github.com/randomnanastya/media-tracker/commit/2be57b50218e5bc87c4c9a5cb953e83dbddb6d29))
+* fix linter mypy ([3774d01](https://github.com/randomnanastya/media-tracker/commit/3774d01308c26109010e2749abc3bb5fec3bc816))
+* fix mypy linter ([b4e88ed](https://github.com/randomnanastya/media-tracker/commit/b4e88edcb2ee7aa703eb21a709394bcf1f26c62b))
+* fix tests after fix  linter ([98fdae7](https://github.com/randomnanastya/media-tracker/commit/98fdae75b89f6f33b65a8bb8828cdf6f23c85de1))
+* fixed commit users after cycle ([0941bd3](https://github.com/randomnanastya/media-tracker/commit/0941bd32914b0c3afb810f083033a1fce153fdf2))
+* fixed jellyfin movies if query is not none ([7c355f5](https://github.com/randomnanastya/media-tracker/commit/7c355f51d82c8dff144770ab5072274fb9f4f758))
+* linter types ([de633e5](https://github.com/randomnanastya/media-tracker/commit/de633e52cd2ed984213ee091eca466695e7b7c80))
+* optimization docker images ([73dd2d4](https://github.com/randomnanastya/media-tracker/commit/73dd2d4ebfcec49fb0dde81d513460bfd93a7c41))
+* sonarr service ([0bd7c1e](https://github.com/randomnanastya/media-tracker/commit/0bd7c1eca73500766758dfc5d379ad44ab6d6319))
+* sonarr service ([c8dfcf0](https://github.com/randomnanastya/media-tracker/commit/c8dfcf0574da7bdc66ea4285a0f3438029f85e36))
+
+
+### Features
+
+* added feature for update movies with imdb, tmdb and status ([1ea4470](https://github.com/randomnanastya/media-tracker/commit/1ea44703e8e8314942df403cb0ea9085c520f7d3))
+* added migrations imdb_id and tmdb_id ([2e5dfe4](https://github.com/randomnanastya/media-tracker/commit/2e5dfe43bbd23a2d560fa5761764db1e8a66b36a))
+* added movies by tmdb and imdb ids and update status ([3da46ce](https://github.com/randomnanastya/media-tracker/commit/3da46ce28707ed75b202479b76a7f589fc8a3d0c))
+* added sync jellyfin movies ([acb159e](https://github.com/randomnanastya/media-tracker/commit/acb159e6bc4ec65d1e1d00cc414bf72dd294195b))
+* changed update sonarr imports and tests ([1d79db6](https://github.com/randomnanastya/media-tracker/commit/1d79db60d919a9fc9f08bf46c15eb012767bdc14))
+
 # [0.2.0](https://github.com/randomnanastya/media-tracker/compare/v0.1.5...v0.2.0) (2025-10-23)
 
 
