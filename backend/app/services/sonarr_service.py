@@ -1,273 +1,416 @@
-from datetime import datetime
+from __future__ import annotations
 
-import httpx
-from fastapi import HTTPException
+import logging
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
-from app.config import logger
 from app.models import Episode, Media, MediaType, Season, Series
-from app.schemas.error_codes import SonarrErrorCode
-from app.schemas.responses import ErrorDetail
 from app.schemas.sonarr import SonarrImportResponse
+from app.services.series_utils import find_series_by_external_ids
+
+logger = logging.getLogger(__name__)
+
+
+async def _find_series_by_sonarr_id(session: AsyncSession, sonarr_id: int) -> Series | None:
+    """Find series by Sonarr ID."""
+    query = select(Series).where(Series.sonarr_id == sonarr_id).options(selectinload(Series.media))
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
+def _parse_iso_utc(dt_str: str | None) -> datetime | None:
+    """Parse ISO date string to UTC datetime."""
+    if not dt_str:
+        return None
+    try:
+        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+        return dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
+    except (ValueError, TypeError) as exc:
+        logger.warning("Invalid ISO date %s: %s", dt_str, exc)
+        return None
+
+
+def _extract_poster(images: list[dict[str, Any]]) -> str | None:
+    """Extract poster URL from images list."""
+    return next(
+        (img.get("remoteUrl") for img in images if img.get("coverType") == "poster"),
+        None,
+    )
+
+
+def _update_existing_series(
+    series: Series,
+    sonarr_id: int | None,
+    tvdb_id: str | None,
+    imdb_id: str | None,
+    release_date: datetime | None,
+    title: str,
+    poster_url: str | None,
+    year: int | None,
+    genres: list[str] | None,
+    rating_value: float | None,
+    rating_votes: int | None,
+    status: str | None,
+) -> bool:
+    """Update existing series and return True if any changes were made."""
+    was_updated = False
+
+    if sonarr_id and series.sonarr_id is None:
+        series.sonarr_id = sonarr_id
+        was_updated = True
+
+    if tvdb_id and series.tvdb_id is None:
+        series.tvdb_id = tvdb_id
+        was_updated = True
+
+    if imdb_id and series.imdb_id is None:
+        series.imdb_id = imdb_id
+        was_updated = True
+
+    if title and series.media.title != title:
+        series.media.title = title
+        was_updated = True
+
+    if poster_url and series.poster_url is None:
+        series.poster_url = poster_url
+        was_updated = True
+
+    if year is not None and series.year is None:
+        series.year = year
+        was_updated = True
+
+    if genres is not None and series.genres is None:
+        series.genres = genres
+        was_updated = True
+
+    if rating_value is not None and series.rating_value != rating_value:
+        series.rating_value = rating_value
+        was_updated = True
+
+    if rating_votes is not None and series.rating_votes != rating_votes:
+        series.rating_votes = rating_votes
+        was_updated = True
+
+    if status and series.status != status:
+        series.status = status
+        was_updated = True
+
+    if release_date and series.media.release_date is None:
+        series.media.release_date = release_date
+        was_updated = True
+
+    if was_updated:
+        logger.info("Updated series '%s' (sonarr_id=%s)", title, sonarr_id or "—")
+
+    return was_updated
+
+
+async def _create_new_series(
+    session: AsyncSession,
+    title: str,
+    sonarr_id: int | None,
+    tvdb_id: str | None,
+    imdb_id: str | None,
+    release_date: datetime | None,
+    poster_url: str | None,
+    year: int | None,
+    genres: list[str] | None,
+    rating_value: float | None,
+    rating_votes: int | None,
+    status: str | None,
+) -> Series:
+    """Create a new series with associated Media entry."""
+    media = Media(
+        media_type=MediaType.SERIES,
+        title=title,
+        release_date=release_date,
+    )
+    session.add(media)
+    await session.flush()
+
+    series = Series(
+        id=media.id,
+        sonarr_id=sonarr_id,
+        tvdb_id=tvdb_id,
+        imdb_id=imdb_id,
+        poster_url=poster_url,
+        year=year,
+        genres=genres,
+        rating_value=rating_value,
+        rating_votes=rating_votes,
+        status=status,
+    )
+    session.add(series)
+    media.series = series  # Set back_populates to ensure series.media is populated
+    await session.flush()
+
+    ids = []
+    if sonarr_id:
+        ids.append(f"sonarr_id={sonarr_id}")
+    if tvdb_id:
+        ids.append(f"tvdb={tvdb_id}")
+    if imdb_id:
+        ids.append(f"imdb={imdb_id}")
+
+    logger.info("Created new series: %s (%s)", title, ", ".join(ids) or "no IDs")
+    return series
+
+
+async def _process_seasons_and_episodes(
+    session: AsyncSession,
+    series: Series,
+    raw_series_data: dict[str, Any],
+    sonarr_id: int | None,
+) -> tuple[int, int]:
+    """Process seasons and episodes for a series."""
+    if not sonarr_id:
+        return 0, 0
+
+    # Extract season numbers from Sonarr data
+    sonarr_season_numbers = {
+        s["seasonNumber"]
+        for s in raw_series_data.get("seasons", [])
+        if isinstance(s.get("seasonNumber"), int)
+    }
+
+    # Load existing seasons
+    existing_seasons_result = await session.scalars(
+        select(Season).where(Season.series_id == series.id)
+    )
+    existing_seasons: dict[int, Season] = {
+        season_obj.number: season_obj for season_obj in existing_seasons_result
+    }
+
+    # Create missing seasons
+    for num in sonarr_season_numbers:
+        if num not in existing_seasons:
+            new_season = Season(series_id=series.id, number=num)
+            session.add(new_season)
+            await session.flush()
+            existing_seasons[num] = new_season
+
+    # Fetch episodes from Sonarr
+    episodes_raw = await fetch_sonarr_episodes(sonarr_id)
+
+    # Determine earliest air date per season
+    season_first_air: dict[int, str] = {}
+    for ep in episodes_raw:
+        sn = ep.get("seasonNumber")
+        air = ep.get("airDateUtc")
+        if (
+            isinstance(sn, int)
+            and air
+            and (sn not in season_first_air or air < season_first_air[sn])
+        ):
+            season_first_air[sn] = air
+
+    # Update season release dates if missing
+    for sn, first_air_str in season_first_air.items():
+        season = existing_seasons.get(sn)
+        if season and season.release_date is None:
+            dt = _parse_iso_utc(first_air_str)
+            if dt:
+                season.release_date = dt
+
+    # Load existing episodes
+    existing_eps_result = await session.scalars(
+        select(Episode).where(Episode.season_id.in_([s.id for s in existing_seasons.values()]))
+    )
+    existing_eps: dict[int, Episode] = {
+        ep.sonarr_id: ep for ep in existing_eps_result if ep.sonarr_id is not None
+    }
+
+    new_ep_cnt = upd_ep_cnt = 0
+    for ep_raw in episodes_raw:
+        ep_sonarr_id = ep_raw.get("id")
+        season_num = ep_raw.get("seasonNumber")
+        ep_num = ep_raw.get("episodeNumber")
+        ep_title = ep_raw.get("title")
+        overview = ep_raw.get("overview")
+        air_str = ep_raw.get("airDateUtc")
+
+        # Skip invalid episode data
+        if (
+            not isinstance(ep_sonarr_id, int)
+            or not isinstance(season_num, int)
+            or not isinstance(ep_num, int)
+            or not ep_title
+        ):
+            continue
+
+        season = existing_seasons.get(season_num)
+        if not season:
+            continue
+
+        air_date = _parse_iso_utc(air_str)
+
+        # Update or create episode
+        existing = existing_eps.get(ep_sonarr_id)
+        if existing:
+            updated = False
+            if existing.number != ep_num:
+                existing.number = ep_num
+                updated = True
+            if existing.title != ep_title:
+                existing.title = ep_title
+                updated = True
+            if existing.overview != overview:
+                existing.overview = overview
+                updated = True
+            if existing.air_date != air_date:
+                existing.air_date = air_date
+                updated = True
+            if updated:
+                upd_ep_cnt += 1
+        else:
+            episode = Episode(
+                season_id=season.id,
+                sonarr_id=ep_sonarr_id,
+                number=ep_num,
+                title=ep_title,
+                air_date=air_date,
+                overview=overview,
+            )
+            session.add(episode)
+            new_ep_cnt += 1
+            existing_eps[ep_sonarr_id] = episode
+
+    if new_ep_cnt or upd_ep_cnt:
+        await session.flush()
+        logger.info(
+            "Series '%s': +%d episodes, ±%d updates",
+            series.media.title,
+            new_ep_cnt,
+            upd_ep_cnt,
+        )
+
+    return new_ep_cnt, upd_ep_cnt
 
 
 async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
+    """Import series from Sonarr into the database."""
     logger.info("Starting Sonarr series import...")
+    sonarr_series = await fetch_sonarr_series()
+
+    total_new_series = total_updated_series = 0
+    total_new_episodes = total_updated_episodes = 0
 
     try:
-        sonarr_series = await fetch_sonarr_series()
-    except httpx.RequestError as e:
-        logger.error("Network error fetching Jellyfin users: %s", str(e))
-        raise HTTPException(
-            status_code=502,
-            detail=ErrorDetail(
-                code=SonarrErrorCode.NETWORK_ERROR,
-                message=f"Network error: {e!s}",
-            ).model_dump(),
-        ) from e
-    except Exception as e:
-        logger.error("Failed to fetch series from Sonarr: %s", str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=ErrorDetail(
-                code=SonarrErrorCode.SONARR_FETCH_FAILED,
-                message=f"Failed to fetch series: {e!s}",
-            ).model_dump(),
-        ) from e
+        for raw in sonarr_series:
+            # Extract core series data
+            sonarr_id = raw.get("id")
+            tmdb_id = str(raw.get("tmdbId")) if raw.get("tmdbId") else None
+            imdb_id = str(raw.get("imdbId")) if raw.get("imdbId") else None
+            tvdb_id = str(raw.get("tvdbId")) if raw.get("tvdbId") else None
+            title = raw.get("title")
 
-    total_new_series = 0
-    total_updated_series = 0
-    total_new_episodes = 0
-    total_updated_episodes = 0
-
-    for s in sonarr_series:
-        sonarr_id = s.get("id")
-        imdb_id = s.get("imdbId")
-        title = s.get("title")
-        if not title:
-            logger.warning("Skipping series with missing title: %s", s)
-            continue
-
-        release_date_str = s.get("firstAired")
-        try:
-            release_date = datetime.fromisoformat(release_date_str) if release_date_str else None
-        except ValueError:
-            logger.error("Invalid firstAired date for series %s: %s", title, release_date_str)
-            release_date = None
-
-        year = s.get("year")
-
-        # Check for existing series: Prioritize imdb_id, fallback to title + year
-        series = None
-        if imdb_id:
-            series = await session.scalar(select(Series).where(Series.imdb_id == imdb_id))
-        if not series:
-            series = await session.scalar(
-                select(Series).join(Media).where(Media.title == title, Series.year == year)
-            )
-
-        if series:
-            # Existing series: Update sonarr_id if changed, imdb_id if missing
-            updated = False
-            if series.sonarr_id != sonarr_id:
-                series.sonarr_id = sonarr_id
-                updated = True
-            if series.imdb_id is None and imdb_id:
-                series.imdb_id = imdb_id
-                updated = True
-
-            # Supplement metadata if missing
-            poster = next(
-                (
-                    img.get("remoteUrl")
-                    for img in s.get("images", [])
-                    if img.get("coverType") == "poster"
-                ),
-                None,
-            )
-            if series.poster_url is None and poster:
-                series.poster_url = poster
-                updated = True
-            if series.year is None and year:
-                series.year = year
-                updated = True
-            if series.genres is None:
-                series.genres = s.get("genres")
-                updated = True
-
-            # Always update ratings and status
-            new_rating_value = s.get("ratings", {}).get("value")
-            if series.rating_value != new_rating_value:
-                series.rating_value = new_rating_value
-                updated = True
-            new_rating_votes = s.get("ratings", {}).get("votes")
-            if series.rating_votes != new_rating_votes:
-                series.rating_votes = new_rating_votes
-                updated = True
-            new_status = s.get("status")
-            if series.status != new_status:
-                series.status = new_status
-                updated = True
-
-            if updated:
-                await session.flush()
-                total_updated_series += 1
-                logger.info(
-                    "Updated existing series '%s' (sonarr_id: %d, imdb_id: %s)",
-                    title,
-                    sonarr_id,
-                    imdb_id,
-                )
-
-        else:
-            # New series: Create media first
-            # Check for existing media by title (fallback, but should be rare if series check failed)
-            media = await session.scalar(
-                select(Media).where(Media.title == title, Media.media_type == MediaType.SERIES)
-            )
-            if not media:
-                media = Media(
-                    media_type=MediaType.SERIES,
-                    title=title,
-                    release_date=release_date,
-                )
-                session.add(media)
-                await session.flush()
-
-            # Create series
-            poster = next(
-                (
-                    img.get("remoteUrl")
-                    for img in s.get("images", [])
-                    if img.get("coverType") == "poster"
-                ),
-                None,
-            )
-            series = Series(
-                id=media.id,
-                sonarr_id=sonarr_id,
-                imdb_id=imdb_id,
-                status=s.get("status"),
-                poster_url=poster,
-                year=year,
-                genres=s.get("genres"),
-                rating_value=s.get("ratings", {}).get("value"),
-                rating_votes=s.get("ratings", {}).get("votes"),
-            )
-            session.add(series)
-            await session.flush()
-            total_new_series += 1
-            logger.info(
-                "Created new series '%s' (sonarr_id: %d, imdb_id: %s)", title, sonarr_id, imdb_id
-            )
-
-        # --- Seasons & Episodes ---
-        episodes_data = await fetch_sonarr_episodes(sonarr_id)
-        new_episodes_count = 0
-        updated_episodes_count = 0
-
-        for ep in episodes_data:
-            season_number = ep.get("seasonNumber")
-            episode_number = ep.get("episodeNumber")
-            ep_title = ep.get("title")
-            if not ep_title:
-                logger.warning("Skipping episode with missing title in series '%s': %s", title, ep)
+            # Skip series without title
+            if not title:
+                logger.warning("Skipping series (sonarr_id=%s) - missing title", sonarr_id)
                 continue
 
-            # Create season if not exists (no update, as no new data)
-            season = await session.scalar(
-                select(Season).where(Season.series_id == series.id, Season.number == season_number)
-            )
-            if not season:
-                season = Season(series_id=series.id, number=season_number)
-                session.add(season)
-                await session.flush()
-                logger.debug("Created new season %d for series '%s'", season_number, title)
+            release_date = _parse_iso_utc(raw.get("firstAired"))
+            poster_url = _extract_poster(raw.get("images", []))
+            year = raw.get("year")
+            genres = raw.get("genres")
+            rating_value = raw.get("ratings", {}).get("value")
+            rating_votes = raw.get("ratings", {}).get("votes")
+            status = raw.get("status")
 
-            # Episode: Create or update
-            ep_sonarr_id = ep["id"]
-            existing_ep = await session.scalar(
-                select(Episode).where(Episode.sonarr_id == ep_sonarr_id)
-            )
+            existing_series = None
 
-            air_date_str = ep.get("airDateUtc")
-            try:
-                air_date = (
-                    datetime.fromisoformat(air_date_str.replace("Z", "+00:00"))
-                    if air_date_str
-                    else None
+            # 1. Search by sonarr_id
+            if sonarr_id:
+                existing_series = await _find_series_by_sonarr_id(session, sonarr_id)
+
+            # 2. Search by external IDs
+            if not existing_series:
+                existing_series = await find_series_by_external_ids(
+                    session, tmdb_id, imdb_id, tvdb_id
                 )
-            except ValueError:
-                logger.error(
-                    "Invalid airDateUtc for episode '%s' in series '%s': %s",
-                    ep_title,
+
+            # 3. Update existing series
+            if existing_series:
+                if _update_existing_series(
+                    existing_series,
+                    sonarr_id,
+                    tvdb_id,
+                    imdb_id,
+                    release_date,
                     title,
-                    air_date_str,
+                    poster_url,
+                    year,
+                    genres,
+                    rating_value,
+                    rating_votes,
+                    status,
+                ):
+                    total_updated_series += 1
+
+                new_eps, updated_eps = await _process_seasons_and_episodes(
+                    session, existing_series, raw, sonarr_id
                 )
-                air_date = None
+                total_new_episodes += new_eps
+                total_updated_episodes += updated_eps
+                continue
 
-            overview = ep.get("overview")
-
-            if existing_ep:
-                # Update if changed
-                updated_ep = False
-                if existing_ep.number != episode_number:
-                    existing_ep.number = episode_number
-                    updated_ep = True
-                if existing_ep.title != ep_title:
-                    existing_ep.title = ep_title
-                    updated_ep = True
-                if existing_ep.overview != overview:
-                    existing_ep.overview = overview
-                    updated_ep = True
-                if existing_ep.air_date != air_date:
-                    existing_ep.air_date = air_date
-                    updated_ep = True
-                if updated_ep:
-                    updated_episodes_count += 1
-            else:
-                # New episode
-                episode = Episode(
-                    season_id=season.id,
-                    sonarr_id=ep_sonarr_id,
-                    number=episode_number,
-                    title=ep_title,
-                    overview=overview,
-                    air_date=air_date,
+            # 4. Skip if no identifiers
+            if not (sonarr_id or tvdb_id or imdb_id):
+                logger.warning(
+                    "Skipping series '%s' (sonarr_id=%s, tvdb_id=%s, imdb_id=%s) - no identifiers",
+                    title,
+                    sonarr_id,
+                    tvdb_id,
+                    imdb_id,
                 )
-                session.add(episode)
-                new_episodes_count += 1
+                continue
 
-        if new_episodes_count > 0 or updated_episodes_count > 0:
-            await session.flush()
-            if new_episodes_count > 0:
-                logger.info("Added %d new episodes for series '%s'", new_episodes_count, title)
-            if updated_episodes_count > 0:
-                logger.info("Updated %d episodes for series '%s'", updated_episodes_count, title)
-        else:
-            logger.info(
-                "No changes to episodes for series '%s' (total in Sonarr: %d)",
+            # 5. Create new series
+            new_series = await _create_new_series(
+                session,
                 title,
-                len(episodes_data),
+                sonarr_id,
+                tvdb_id,
+                imdb_id,
+                release_date,
+                poster_url,
+                year,
+                genres,
+                rating_value,
+                rating_votes,
+                status,
             )
+            total_new_series += 1
 
-        total_new_episodes += new_episodes_count
-        total_updated_episodes += updated_episodes_count
+            # Process episodes for new series
+            new_eps, updated_eps = await _process_seasons_and_episodes(
+                session, new_series, raw, sonarr_id
+            )
+            total_new_episodes += new_eps
+            total_updated_episodes += updated_eps
 
-    await session.commit()
-    logger.info(
-        "Sonarr import completed: %d new series, %d updated series, %d new episodes, %d updated episodes",
-        total_new_series,
-        total_updated_series,
-        total_new_episodes,
-        total_updated_episodes,
-    )
+        await session.commit()
+        logger.info(
+            "Sonarr import completed: %d new series, %d updated, %d new episodes, %d updated",
+            total_new_series,
+            total_updated_series,
+            total_new_episodes,
+            total_updated_episodes,
+        )
 
-    return SonarrImportResponse(
-        new_series=total_new_series,
-        updated_series=total_updated_series,
-        new_episodes=total_new_episodes,
-        updated_episodes=total_updated_episodes,
-    )
+        return SonarrImportResponse(
+            new_series=total_new_series,
+            updated_series=total_updated_series,
+            new_episodes=total_new_episodes,
+            updated_episodes=total_updated_episodes,
+        )
+
+    except Exception as e:
+        logger.error("Sonarr import failed: %s", e)
+        await session.rollback()
+        raise

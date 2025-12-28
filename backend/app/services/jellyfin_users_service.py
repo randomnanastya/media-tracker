@@ -1,39 +1,15 @@
-import httpx
-from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_users
 from app.config import logger
 from app.models import User
-from app.schemas.error_codes import JellyfinErrorCode
 from app.schemas.jellyfin import JellyfinUsersResponse
-from app.schemas.responses import ErrorDetail
 
 
 async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
     """Imports users from Radarr into the database with logging."""
-    try:
-        users = await fetch_jellyfin_users()
-    except httpx.RequestError as e:
-        logger.error("Network error fetching Jellyfin users: %s", str(e))
-        raise HTTPException(
-            status_code=502,
-            detail=ErrorDetail(
-                code=JellyfinErrorCode.NETWORK_ERROR,
-                message=f"Network error: {e!s}",
-            ).model_dump(),
-        ) from e
-    except Exception as e:
-        logger.error("Failed to fetch users from Jellyfin: %s", str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=ErrorDetail(
-                code=JellyfinErrorCode.JELLYFIN_FETCH_FAILED,
-                message=f"Failed to fetch users: {e!s}",
-            ).model_dump(),
-        ) from e
-
+    users = await fetch_jellyfin_users()
     imported = 0
     updated = 0
 
@@ -43,6 +19,14 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
 
         if not user_id:
             logger.warning("Skipping user without Jellyfin user ID: %s", u.get("Name"))
+            continue
+
+        if not isinstance(user_name, str):
+            logger.warning(
+                "Skipping user with invalid name type: %s (jellyfin_user_id: %s)",
+                type(user_name),
+                user_id,
+            )
             continue
 
         query = select(User).where(User.jellyfin_user_id == user_id)
@@ -78,14 +62,19 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
                     )
                     continue
 
-            await session.commit()
-
         except Exception as e:
             logger.error(
                 "Failed to insert user from jellyfin '%s' into the database: %s", user_name, e
             )
             await session.rollback()
             continue
+
+    try:
+        await session.commit()
+    except Exception as e:
+        logger.error("Failed to commit session: %s", e)
+        await session.rollback()
+        raise
 
     logger.info(f"Imported {imported}, updated {updated} users from Jellyfin")
     return JellyfinUsersResponse(status="success", imported_count=imported, updated_count=updated)

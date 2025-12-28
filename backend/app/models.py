@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -38,16 +38,16 @@ class Series(Base):
 
     id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
     sonarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
-    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)  # New field
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    tvdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String)
     year: Mapped[int | None] = mapped_column(Integer)
     genres: Mapped[list[str] | None] = mapped_column(JSON)
     rating_value: Mapped[float | None] = mapped_column(Float)
     rating_votes: Mapped[int | None] = mapped_column(Integer)
-    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     media: Mapped["Media"] = relationship("Media", back_populates="series")
     seasons: Mapped[list["Season"]] = relationship("Season", back_populates="series")
@@ -58,8 +58,10 @@ class Movie(Base):
 
     id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), primary_key=True)
     radarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
-    watched: Mapped[bool] = mapped_column(Boolean, default=False)
-    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    status: Mapped[str | None] = mapped_column(String, nullable=True)
 
     media: Mapped["Media"] = relationship("Media", back_populates="movie")
 
@@ -69,11 +71,9 @@ class Season(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     series_id: Mapped[int] = mapped_column(Integer, ForeignKey("series.id"), nullable=False)
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     release_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     series: Mapped["Series"] = relationship("Series", back_populates="seasons")
     episodes: Mapped[list["Episode"]] = relationship("Episode", back_populates="season")
@@ -84,14 +84,12 @@ class Episode(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     season_id: Mapped[int] = mapped_column(ForeignKey("seasons.id"))
-    sonarr_id: Mapped[int] = mapped_column(Integer, unique=True)
-    jellyfin_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    sonarr_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     overview: Mapped[str | None] = mapped_column(String)
-    watched: Mapped[bool] = mapped_column(Boolean, default=False)
-    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     season: Mapped["Season"] = relationship("Season", back_populates="episodes")
 
