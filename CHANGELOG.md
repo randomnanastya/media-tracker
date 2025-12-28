@@ -1,3 +1,10 @@
+## [0.3.4](https://github.com/randomnanastya/media-tracker/compare/v0.3.3...v0.3.4) (2025-12-28)
+
+
+### Bug Fixes
+
+* run alembic migrations without poetry in container ([5c18c62](https://github.com/randomnanastya/media-tracker/commit/5c18c62845469fd63d4e18e191fed7adf68f2c56))
+
 ## [0.3.3](https://github.com/randomnanastya/media-tracker/compare/v0.3.2...v0.3.3) (2025-12-28)
 
 
