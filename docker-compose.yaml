@@ -13,6 +13,17 @@ services:
       db:
         condition: service_healthy
     restart: always
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:15
