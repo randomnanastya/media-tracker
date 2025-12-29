@@ -1,3 +1,10 @@
+## [0.3.9](https://github.com/randomnanastya/media-tracker/compare/v0.3.8...v0.3.9) (2025-12-29)
+
+
+### Bug Fixes
+
+* slim build ([#52](https://github.com/randomnanastya/media-tracker/issues/52)) ([f5da967](https://github.com/randomnanastya/media-tracker/commit/f5da967a070e80e6b37f267b9e515fecc7c67cf1))
+
 ## [0.3.8](https://github.com/randomnanastya/media-tracker/compare/v0.3.7...v0.3.8) (2025-12-28)
 
 
