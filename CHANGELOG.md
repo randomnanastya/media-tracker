@@ -1,3 +1,10 @@
+## [0.3.10](https://github.com/randomnanastya/media-tracker/compare/v0.3.9...v0.3.10) (2025-12-29)
+
+
+### Bug Fixes
+
+* linter dockerfile cmd ([#54](https://github.com/randomnanastya/media-tracker/issues/54)) ([d7a7c32](https://github.com/randomnanastya/media-tracker/commit/d7a7c3280748d493d759e8eb5c633c2bdf528732))
+
 ## [0.3.9](https://github.com/randomnanastya/media-tracker/compare/v0.3.8...v0.3.9) (2025-12-29)
 
 
