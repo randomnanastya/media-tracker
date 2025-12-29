@@ -98,7 +98,7 @@ async def root() -> dict[str, str]:
     return {"message": "Media Tracker API is running"}
 
 
-@app.get("/health")
+@app.get("/health", include_in_schema=False)
 async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy"}
