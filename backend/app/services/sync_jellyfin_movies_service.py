@@ -10,6 +10,7 @@ from app.models import Media, MediaType, Movie, User
 from app.schemas.jellyfin import JellyfinMoviesSyncResponse
 
 
+# TODO delete unknown
 def _parse_jellyfin_date(date_str: str | None) -> datetime | None:
     """Safely parse Jellyfin ISO date (with Z or timezone)."""
     if not date_str or not isinstance(date_str, str):

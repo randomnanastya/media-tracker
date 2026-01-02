@@ -10,6 +10,7 @@ from app.config import logger
 from app.exceptions.handlers import register_exception_handlers
 from app.services.jobs import (
     jellyfin_import_users_job,
+    jellyfin_sync_movie_watch_history_job,
     jellyfin_sync_movies_job,
     radarr_import_job,
     sonarr_import_job,
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
             ("Radarr", "1:10"),
             ("Jellyfin Movies", "1:30"),
             ("Sonarr", "2:00"),
+            ("Jellyfin Sync Watch Movies", "2:30"),
         ]
 
         for name, time in jobs:
@@ -49,6 +51,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         )
 
         scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=0, id="sonarr_import")
+
+        scheduler.add_job(
+            jellyfin_sync_movie_watch_history_job,
+            "cron",
+            hour=2,
+            minute=20,
+            id="jellyfin_movie_watch_history",
+        )
 
         scheduler.start()
         logger.info("✅ Scheduler started with misfire_grace_time=300")

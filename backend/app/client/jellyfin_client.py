@@ -463,3 +463,83 @@ async def fetch_jellyfin_episodes(serials_id: str) -> list[dict[str, Any]]:
                 ) from e
         logger.info("Fetched %d episodes from Jellyfin", len(all_items))
         return all_items
+
+
+async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
+    """Fetches ALL movies for a user from Jellyfin (both watched and unwatched)."""
+    if JELLYFIN_API_KEY is None:
+        logger.error("JELLYFIN_API_KEY is not set")
+        raise JellyfinClientError(
+            code=JellyfinErrorCode.INTERNAL_ERROR,
+            message="Jellyfin API key is not configured",
+        )
+    if JELLYFIN_URL is None:
+        logger.error("JELLYFIN_URL is not set")
+        raise JellyfinClientError(
+            code=JellyfinErrorCode.INTERNAL_ERROR,
+            message="Jellyfin URL is not configured",
+        )
+
+    base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
+
+    all_items: list[dict[str, Any]] = []
+    start_index = 0
+    limit = 100
+
+    async with httpx.AsyncClient() as client:
+        while True:
+            try:
+                current_params: dict[str, str | int] = {
+                    "IncludeItemTypes": "Movie",
+                    "Recursive": "true",
+                    "Fields": "ProviderIds,UserData",
+                    "ImageTypeLimit": "0",
+                    "StartIndex": start_index,
+                    "Limit": limit,
+                }
+
+                response = await client.get(
+                    url=base_url,
+                    headers={"X-Emby-Token": JELLYFIN_API_KEY},
+                    params=current_params,
+                    timeout=60.0,
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                items = data.get("Items", [])
+                all_items.extend(items)
+
+                total = data.get("TotalRecordCount", 0)
+                fetched = len(all_items)
+
+                if fetched >= total or len(items) < limit:
+                    break
+
+                start_index += limit
+                logger.debug("Fetched %d/%d movies for user %s", fetched, total, jellyfin_user_id)
+            except httpx.RequestError as e:
+                logger.error("Network error while requesting Jellyfin movies API: %s", e)
+                raise JellyfinClientError(
+                    code=JellyfinErrorCode.NETWORK_ERROR,
+                    message="Failed to connect to Jellyfin",
+                ) from e
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    "Jellyfin movies API returned an unsuccessful status code %s for URL %s",
+                    e.response.status_code,
+                    e.request.url,
+                )
+                raise JellyfinClientError(
+                    code=JellyfinErrorCode.FETCH_FAILED,
+                    message=f"Jellyfin API error: {e.response.text}",
+                ) from e
+            except Exception as e:
+                logger.error("Unexpected error while fetching movies from Jellyfin: %s", e)
+                raise JellyfinClientError(
+                    code=JellyfinErrorCode.INTERNAL_ERROR,
+                    message="Unexpected error occurred while fetching movies",
+                ) from e
+
+    logger.info("Fetched %d movies for Jellyfin user %s", len(all_items), jellyfin_user_id)
+    return all_items

@@ -30,3 +30,11 @@ class JellyfinImportSeriesResponse(BaseModel):
     new_episodes: int | None = None
     updated_episodes: int | None = None
     error: ErrorDetail | None = None
+
+
+class JellyfinWatchedMoviesResponse(BaseModel):
+    total_users: int
+    total_movies_processed: int
+    watched_added: int
+    watched_updated: int
+    unwatched_marked: int
