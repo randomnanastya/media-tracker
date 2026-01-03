@@ -13,6 +13,7 @@ from app.services.jobs import (
     jellyfin_import_series_job,
     jellyfin_import_users_job,
     jellyfin_sync_movie_watch_history_job,
+    jellyfin_sync_series_watch_history_job,
     radarr_import_job,
     sonarr_import_job,
 )
@@ -31,6 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
             ("Jellyfin Sync Watch Movies", "1:30"),
             ("Sonarr", "1:40"),
             ("Jellyfin Series", "1:50"),
+            ("Jellyfin Sync Watch Series", "2:00"),
         ]
 
         for name, time in jobs:
@@ -64,6 +66,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
 
         scheduler.add_job(
             jellyfin_import_series_job, "cron", hour=1, minute=50, id="jellyfin_import_series"
+        )
+
+        scheduler.add_job(
+            jellyfin_sync_series_watch_history_job,
+            "cron",
+            hour=2,
+            minute=0,
+            id="jellyfin_series_watch_history",
         )
 
         scheduler.start()

@@ -7,11 +7,13 @@ from app.schemas.jellyfin import (
     JellyfinImportSeriesResponse,
     JellyfinUsersResponse,
     JellyfinWatchedMoviesResponse,
+    JellyfinWatchedSeriesResponse,
 )
 from app.services.import_jellyfin_movies_service import import_jellyfin_movies
 from app.services.import_jellyfin_series_service import import_jellyfin_series
 from app.services.jellyfin_users_service import import_jellyfin_users
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
+from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
 
 router = APIRouter(tags=["Jellyfin"], prefix="/api/v1/jellyfin")
 
@@ -69,4 +71,18 @@ async def watched_movies(
 ) -> JellyfinWatchedMoviesResponse:
     """Sync watched movies from Jellyfin by all users"""
     result = await sync_jellyfin_watched_movies(session)
+    return result
+
+
+@router.post(
+    "/series/watched",
+    response_model=JellyfinWatchedSeriesResponse,
+    response_model_exclude_none=True,
+    summary="Sync watched series from Jellyfin by all users",
+)
+async def watched_series(
+    session: AsyncSession = Depends(get_session),
+) -> JellyfinWatchedSeriesResponse:
+    """Sync watched series from Jellyfin by all users"""
+    result = await sync_jellyfin_watched_series(session)
     return result
