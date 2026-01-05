@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/randomnanastya/media-tracker/compare/v0.3.10...v0.4.0) (2026-01-05)
+
+
+### Features
+
+* watch history movies and series for all users ([95ed7e5](https://github.com/randomnanastya/media-tracker/commit/95ed7e543404246a66caa5efae08b74a7529e2f8))
+
 ## [0.3.10](https://github.com/randomnanastya/media-tracker/compare/v0.3.9...v0.3.10) (2025-12-29)
 
 
