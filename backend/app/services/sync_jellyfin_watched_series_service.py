@@ -95,17 +95,19 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
                     user_added += 1
                     watched_added += 1
 
-                elif existing and existing.is_watched != played:
+                elif existing:
                     if played:
                         last_played_date = parse_datetime(last_played_date_str)
-                        existing.is_watched = True
-                        existing.watched_at = last_played_date
-                        user_updated += 1
-                        watched_updated += 1
+                        if existing.is_watched != played or last_played_date != existing.watched_at:
+                            existing.is_watched = True
+                            existing.watched_at = last_played_date
+                            user_updated += 1
+                            watched_updated += 1
                     else:
-                        existing.is_watched = False
-                        user_unwatched += 1
-                        unwatched_marked += 1
+                        if existing.is_watched != played:
+                            existing.is_watched = False
+                            user_unwatched += 1
+                            unwatched_marked += 1
 
                 total_episodes_processed += 1
                 logger.info(
