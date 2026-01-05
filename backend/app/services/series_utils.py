@@ -12,17 +12,19 @@ async def find_series_by_external_ids(
     tvdb_id: str | None,
 ) -> Series | None:
     """Finding movie by tmdbID or ImdbID with media loaded"""
-    if not tmdb_id and not imdb_id:
+    conditions = []
+
+    if tmdb_id:
+        conditions.append(Series.tmdb_id == tmdb_id)
+    if imdb_id:
+        conditions.append(Series.imdb_id == imdb_id)
+    if tvdb_id:
+        conditions.append(Series.tvdb_id == tvdb_id)
+
+    if not conditions:
         return None
 
-    conditions = []
-    if tmdb_id:
-        conditions.append(Series.tmdb_id == str(tmdb_id))
-    if imdb_id:
-        conditions.append(Series.imdb_id == str(imdb_id))
-    if tvdb_id:
-        conditions.append(Series.tvdb_id == str(tvdb_id))
-
-    query = select(Series).where(or_(*conditions)).options(selectinload(Series.media))
-    result = await session.execute(query)
+    result = await session.execute(
+        select(Series).options(selectinload(Series.media)).where(or_(*conditions))
+    )
     return result.scalar_one_or_none()

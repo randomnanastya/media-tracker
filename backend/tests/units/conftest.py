@@ -8,7 +8,7 @@ import pytest
 from _pytest import pathlib
 from httpx import AsyncClient
 
-from app.models import Media, MediaType, Movie
+from app.models import Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
 
 # Устанавливаем тестовое окружение
 os.environ.update(
@@ -171,6 +171,26 @@ def existing_movie_complete(mock_session):
 
 
 @pytest.fixture
+def existing_movie_without_ids():
+    media = Media(
+        id=1,
+        media_type=MediaType.MOVIE,
+        title="Inception",
+        release_date=None,
+    )
+
+    movie = Movie(
+        id=1,
+        jellyfin_id=None,
+        tmdb_id=None,
+        imdb_id=None,
+        media=media,
+    )
+
+    return movie
+
+
+@pytest.fixture
 def existing_movie_by_tmdb_in_db(mock_session):
     media = Media(id=1, media_type=MediaType.MOVIE, title="Inception", release_date=None)
     movie = Movie(id=1, radarr_id=None, tmdb_id="27205", imdb_id=None)
@@ -207,6 +227,28 @@ def radarr_movies_from_json():
     path = pathlib.Path(__file__).parent / "fixtures" / "data" / "movies.json"
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+@pytest.fixture
+def movie():
+    movie = Movie(
+        id=10,
+        jellyfin_id="jf-movie-1",
+        tmdb_id="123",
+        imdb_id="tt123",
+    )
+    return movie
+
+
+@pytest.fixture
+def existing_watch(movie, user):
+    return WatchHistory(
+        user_id=user.id,
+        media_id=movie.id,
+        episode_id=None,
+        is_watched=True,
+        watched_at=None,
+    )
 
 
 @pytest.fixture
@@ -298,6 +340,83 @@ def sonarr_series_invalid_data():
             "overview": "The pilot episode.",
         }
     ]
+
+
+@pytest.fixture
+def existing_series_without_ids():
+    media = Media(
+        id=1,
+        media_type=MediaType.SERIES,
+        title="Old title",
+        release_date=None,
+    )
+
+    series = Series(
+        id=1,
+        jellyfin_id=None,
+        tvdb_id=None,
+        imdb_id=None,
+        tmdb_id=None,
+        status=None,
+        year=None,
+        media=media,
+    )
+
+    return series
+
+
+@pytest.fixture
+def series():
+    media = Media(
+        id=1,
+        media_type=MediaType.SERIES,
+        title="Test Series",
+    )
+    series = Series(
+        id=1,
+        jellyfin_id="jf-series",
+        media=media,
+    )
+    return series
+
+
+@pytest.fixture
+def season(series):
+    return Season(
+        id=10,
+        number=1,
+        series_id=series.id,
+        series=series,
+    )
+
+
+@pytest.fixture
+def episode(season):
+    return Episode(
+        id=100,
+        jellyfin_id="jf-episode-1",
+        title="Test Episode",
+        season_id=season.id,
+        season=season,
+    )
+
+
+@pytest.fixture
+def empty_scalars():
+    async def _scalars(*args, **kwargs):
+        return []
+
+    return _scalars
+
+
+@pytest.fixture
+def user():
+    user = User(
+        id=1,
+        username="test_user",
+        jellyfin_user_id="jf-user-1",
+    )
+    return user
 
 
 @pytest.fixture

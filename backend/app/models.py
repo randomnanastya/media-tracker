@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -110,12 +110,26 @@ class WatchHistory(Base):
     __tablename__ = "watch_history"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    media_id: Mapped[int] = mapped_column(Integer, ForeignKey("media.id"), nullable=False)
-    episode_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("episodes.id"), nullable=True
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
     )
-    watched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    media_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("media.id"), nullable=False, index=True
+    )
+    episode_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("episodes.id"),
+        nullable=True,
+        index=True,
+    )
+    is_watched: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),  # Автоматическое обновление при изменении
+    )
 
     user: Mapped["User"] = relationship("User", back_populates="watch_history")
     media: Mapped["Media"] = relationship("Media")

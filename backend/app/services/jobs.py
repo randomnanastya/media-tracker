@@ -5,10 +5,13 @@ from typing import Any
 
 from app.config import logger
 from app.database import AsyncSessionLocal
+from app.services.import_jellyfin_movies_service import import_jellyfin_movies
+from app.services.import_jellyfin_series_service import import_jellyfin_series
 from app.services.jellyfin_users_service import import_jellyfin_users
 from app.services.radarr_service import import_radarr_movies
 from app.services.sonarr_service import import_sonarr_series
-from app.services.sync_jellyfin_movies_service import sync_jellyfin_movies
+from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
+from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
 
 
 def log_job_execution(
@@ -53,7 +56,28 @@ async def jellyfin_import_users_job() -> None:
 
 
 @log_job_execution
-async def jellyfin_sync_movies_job() -> None:
+async def jellyfin_import_movies_job() -> None:
     async with AsyncSessionLocal() as session:
-        logger.debug("Processing Jellyfin sync movies data...")
-        await sync_jellyfin_movies(session)
+        logger.debug("Processing Jellyfin Users data...")
+        await import_jellyfin_movies(session)
+
+
+@log_job_execution
+async def jellyfin_import_series_job() -> None:
+    async with AsyncSessionLocal() as session:
+        logger.debug("Processing Jellyfin Users data...")
+        await import_jellyfin_series(session)
+
+
+@log_job_execution
+async def jellyfin_sync_movie_watch_history_job() -> None:
+    async with AsyncSessionLocal() as session:
+        logger.debug("Processing Jellyfin movie watch history...")
+        await sync_jellyfin_watched_movies(session)
+
+
+@log_job_execution
+async def jellyfin_sync_series_watch_history_job() -> None:
+    async with AsyncSessionLocal() as session:
+        logger.debug("Processing Jellyfin series watch history...")
+        await sync_jellyfin_watched_series(session)

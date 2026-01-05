@@ -9,8 +9,11 @@ from app.api import jellyfin, radarr, sonarr
 from app.config import logger
 from app.exceptions.handlers import register_exception_handlers
 from app.services.jobs import (
+    jellyfin_import_movies_job,
+    jellyfin_import_series_job,
     jellyfin_import_users_job,
-    jellyfin_sync_movies_job,
+    jellyfin_sync_movie_watch_history_job,
+    jellyfin_sync_series_watch_history_job,
     radarr_import_job,
     sonarr_import_job,
 )
@@ -25,8 +28,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         jobs = [
             ("Jellyfin Users", "1:00"),
             ("Radarr", "1:10"),
-            ("Jellyfin Movies", "1:30"),
-            ("Sonarr", "2:00"),
+            ("Jellyfin Movies", "1:20"),
+            ("Jellyfin Sync Watch Movies", "1:30"),
+            ("Sonarr", "1:40"),
+            ("Jellyfin Series", "1:50"),
+            ("Jellyfin Sync Watch Series", "2:00"),
         ]
 
         for name, time in jobs:
@@ -45,10 +51,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         scheduler.add_job(radarr_import_job, "cron", hour=1, minute=10, id="radarr_import")
 
         scheduler.add_job(
-            jellyfin_sync_movies_job, "cron", hour=1, minute=30, id="sync_jellyfin_movies"
+            jellyfin_import_movies_job, "cron", hour=1, minute=20, id="jellyfin_import_movies"
         )
 
-        scheduler.add_job(sonarr_import_job, "cron", hour=2, minute=0, id="sonarr_import")
+        scheduler.add_job(
+            jellyfin_sync_movie_watch_history_job,
+            "cron",
+            hour=1,
+            minute=30,
+            id="jellyfin_movie_watch_history",
+        )
+
+        scheduler.add_job(sonarr_import_job, "cron", hour=1, minute=40, id="sonarr_import")
+
+        scheduler.add_job(
+            jellyfin_import_series_job, "cron", hour=1, minute=50, id="jellyfin_import_series"
+        )
+
+        scheduler.add_job(
+            jellyfin_sync_series_watch_history_job,
+            "cron",
+            hour=2,
+            minute=0,
+            id="jellyfin_series_watch_history",
+        )
 
         scheduler.start()
         logger.info("✅ Scheduler started with misfire_grace_time=300")

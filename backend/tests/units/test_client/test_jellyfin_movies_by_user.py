@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from app.client.jellyfin_client import JellyfinClientError, fetch_jellyfin_movies
+from app.client.jellyfin_client import JellyfinClientError, fetch_jellyfin_movies_for_user_all
 from app.schemas.error_codes import JellyfinErrorCode
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_pagination(mock_httpx_client):
+async def test_fetch_jellyfin_movies_by_user_pagination(mock_httpx_client):
     """Пагинация: 2 страницы → все фильмы."""
     # Страница 1: 100 элементов, total = 150 → продолжить
     page1 = {
@@ -37,7 +37,7 @@ async def test_fetch_jellyfin_movies_pagination(mock_httpx_client):
         patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
         patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
     ):
-        result = await fetch_jellyfin_movies()
+        result = await fetch_jellyfin_movies_for_user_all("user1")
 
         assert len(result) == 150
         assert result[0]["Name"] == "Movie 1"
@@ -47,7 +47,7 @@ async def test_fetch_jellyfin_movies_pagination(mock_httpx_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_single_page(mock_httpx_client):
+async def test_fetch_jellyfin_movies_by_user_single_page(mock_httpx_client):
     """Одна страница — всё ок."""
     data = {
         "Items": [{"Id": "m1", "Name": "Single Movie"}],
@@ -65,14 +65,14 @@ async def test_fetch_jellyfin_movies_single_page(mock_httpx_client):
         patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
         patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
     ):
-        result = await fetch_jellyfin_movies()
+        result = await fetch_jellyfin_movies_for_user_all("user1")
 
         assert len(result) == 1
         assert mock_client_instance.get.call_count == 1
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_network_error(mock_httpx_client):
+async def test_fetch_jellyfin_movies_by_user_network_error(mock_httpx_client):
     """Сетевая ошибка → NETWORK_ERROR."""
     mock_client_instance = AsyncMock()
     mock_client_instance.get.side_effect = httpx.RequestError("Timeout")
@@ -81,15 +81,15 @@ async def test_fetch_jellyfin_movies_network_error(mock_httpx_client):
     with (
         patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
         patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
+        pytest.raises(JellyfinClientError) as exc_info,
     ):
-        with pytest.raises(JellyfinClientError) as exc_info:
-            await fetch_jellyfin_movies()
+        await fetch_jellyfin_movies_for_user_all("user1")
 
         assert exc_info.value.code == JellyfinErrorCode.NETWORK_ERROR
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_http_404(mock_httpx_client):
+async def test_fetch_jellyfin_movies_by_user_http_404(mock_httpx_client):
     """404 → FETCH_FAILED."""
     mock_response = Mock()
     mock_response.status_code = 404
@@ -105,9 +105,20 @@ async def test_fetch_jellyfin_movies_http_404(mock_httpx_client):
     with (
         patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
         patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
+        pytest.raises(JellyfinClientError) as exc_info,
     ):
-        with pytest.raises(JellyfinClientError) as exc_info:
-            await fetch_jellyfin_movies()
-
+        await fetch_jellyfin_movies_for_user_all("user1")
         assert exc_info.value.code == JellyfinErrorCode.FETCH_FAILED
         assert "Not Found" in exc_info.value.message
+
+
+@pytest.mark.asyncio
+async def test_fetch_jellyfin_movies_by_user_no_api_key():
+    with (
+        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", None),
+        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
+        pytest.raises(JellyfinClientError) as exc,
+    ):
+        await fetch_jellyfin_movies_for_user_all("user1")
+
+    assert exc.value.code == JellyfinErrorCode.INTERNAL_ERROR
