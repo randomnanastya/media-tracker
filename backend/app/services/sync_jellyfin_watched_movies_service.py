@@ -78,32 +78,32 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                 movies_result = await session.execute(
                     select(Movie).where(Movie.jellyfin_id.in_(jellyfin_ids))
                 )
-                for movie in movies_result.scalars():
-                    if movie.jellyfin_id:
-                        movies_by_jellyfin_id[movie.jellyfin_id] = movie
+                for db_movie in movies_result.scalars():
+                    if db_movie.jellyfin_id:
+                        movies_by_jellyfin_id[db_movie.jellyfin_id] = db_movie
 
             if tmdb_ids:
                 movies_result = await session.execute(
                     select(Movie).where(Movie.tmdb_id.in_(tmdb_ids))
                 )
-                for movie in movies_result.scalars():
-                    if movie.tmdb_id:
-                        movies_by_tmdb_id[movie.tmdb_id] = movie
+                for db_movie in movies_result.scalars():
+                    if db_movie.tmdb_id:
+                        movies_by_tmdb_id[db_movie.tmdb_id] = db_movie
 
             if imdb_ids:
                 movies_result = await session.execute(
                     select(Movie).where(Movie.imdb_id.in_(imdb_ids))
                 )
-                for movie in movies_result.scalars():
-                    if movie.imdb_id:
-                        movies_by_imdb_id[movie.imdb_id] = movie
+                for db_movie in movies_result.scalars():
+                    if db_movie.imdb_id:
+                        movies_by_imdb_id[db_movie.imdb_id] = db_movie
 
             # 4. Processed movies
             for movie_data in movies_data:
                 total_movies_processed += 1
 
                 # Find movie into saved data
-                movie = None
+                movie: Movie | None = None
                 jellyfin_id = str(movie_data.get("Id")) if movie_data.get("Id") else None
 
                 if jellyfin_id and jellyfin_id in movies_by_jellyfin_id:
