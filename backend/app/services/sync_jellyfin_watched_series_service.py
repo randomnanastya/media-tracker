@@ -107,6 +107,7 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
                         user_unwatched += 1
                         unwatched_marked += 1
 
+                total_episodes_processed += 1
                 logger.info(
                     "User %s: added=%d updated=%d unwatched=%d",
                     user.username,
