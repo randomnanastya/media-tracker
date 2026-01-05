@@ -1,45 +1,10 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from httpx import AsyncClient
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from app.database import get_session
-from app.main import app
-from app.models import Base, Media, MediaType, Movie
+from app.models import Media, MediaType, Movie
 from tests.utils.db_asserts import assert_model_matches
-
-TEST_DATABASE_URL = "postgresql+asyncpg://test:test@localhost:5432/test"
-
-
-@pytest.fixture
-async def engine_for_test():
-    """Function-scoped engine"""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=True)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield engine
-    await engine.dispose()
-
-
-@pytest.fixture
-async def session_for_test(engine_for_test):
-    async with AsyncSession(engine_for_test) as session:
-        yield session
-
-
-@pytest.fixture
-async def client_with_db(session_for_test):
-    async def override_get_session():
-        yield session_for_test
-
-    app.dependency_overrides[get_session] = override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio

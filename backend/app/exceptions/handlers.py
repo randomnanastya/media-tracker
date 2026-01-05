@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import logger
 from app.exceptions.client_errors import ClientError
@@ -25,7 +26,7 @@ def _get_status_by_code(
     code_enum: ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode,
 ) -> int:
     """Определяет HTTP-статус по Enum-объекту ошибки."""
-    code_str = code_enum.value  # ← .value — это строка
+    code_str = code_enum.value
     if code_str.endswith("RATE_LIMIT_ERROR"):
         return 429
     if code_str.endswith("NETWORK_ERROR"):
@@ -38,7 +39,8 @@ def _get_status_by_code(
 
 
 def _get_service_code(
-    path: str, mapping: dict[str, ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode]
+    path: str,
+    mapping: dict[str, ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode],
 ) -> ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode:
     """Возвращает Enum-объект по пути."""
     lower_path = path.lower()
@@ -51,14 +53,12 @@ def _get_service_code(
     else:
         result = mapping.get("default", ErrorCode.INTERNAL_ERROR)
 
-    # Гарантируем, что возвращаем правильный тип
-    if result is None:
-        return ErrorCode.INTERNAL_ERROR
-    return result
+    return result or ErrorCode.INTERNAL_ERROR
 
 
 async def handle_generic_error(request: Request, exc: Exception) -> Response:
     logger.exception("Unexpected error on %s: %s", request.url.path, exc)
+
     code = _get_service_code(
         request.url.path,
         {
@@ -68,40 +68,78 @@ async def handle_generic_error(request: Request, exc: Exception) -> Response:
             "default": ErrorCode.INTERNAL_ERROR,
         },
     )
+
     return JSONResponse(
         status_code=500,
-        content=ErrorDetail(code=code, message="Internal server error").model_dump(
-            exclude_none=True
-        ),
+        content=ErrorDetail(
+            code=code,
+            message="Internal server error",
+        ).model_dump(exclude_none=True),
     )
 
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.middleware("http")
-    async def log_requests(request: Request, call_next: Callable[[Request], Any]) -> Response:
+    async def log_requests(
+        request: Request,
+        call_next: Callable[[Request], Any],
+    ) -> Response:
         """Middleware for logging HTTP requests and responses."""
         logger.info("Request to %s: method=%s", request.url.path, request.method)
+
         try:
             response = await call_next(request)
-            logger.info("Response for %s: status=%s", request.url.path, response.status_code)
-            # Явно указываем, что возвращаем Response
+            logger.info(
+                "Response for %s: status=%s",
+                request.url.path,
+                response.status_code,
+            )
             return cast(Response, response)
-        except Exception as exc:
-            # Логируем и пробрасываем исключение дальше для обработки в exception handlers
-            logger.error("Error during request to %s: %s", request.url.path, exc)
+
+        except StarletteHTTPException:
             raise
+
+        except Exception as exc:
+            logger.error(
+                "Unhandled error during request to %s: %s",
+                request.url.path,
+                exc,
+                exc_info=True,
+            )
+
+            code = _get_service_code(
+                request.url.path,
+                {
+                    "radarr": RadarrErrorCode.INTERNAL_ERROR,
+                    "sonarr": SonarrErrorCode.INTERNAL_ERROR,
+                    "jellyfin": JellyfinErrorCode.INTERNAL_ERROR,
+                    "default": ErrorCode.INTERNAL_ERROR,
+                },
+            )
+
+            return JSONResponse(
+                status_code=500,
+                content=ErrorDetail(
+                    code=code,
+                    message="Internal server error",
+                ).model_dump(exclude_none=True),
+            )
 
     @app.exception_handler(ClientError)
     async def handle_client_error(request: Request, exc: ClientError) -> Response:
         logger.error(
-            "%s client error on %s: %s", exc.__class__.__name__, request.url.path, exc.message
+            "%s client error on %s: %s",
+            exc.__class__.__name__,
+            request.url.path,
+            exc.message,
         )
-        status_code = _get_status_by_code(exc.code)  # ← передаём Enum
+        status_code = _get_status_by_code(exc.code)
         return JSONResponse(
             status_code=status_code,
-            content=ErrorDetail(code=exc.code, message=exc.message).model_dump(
-                exclude_none=True
-            ),  # ← Enum
+            content=ErrorDetail(
+                code=exc.code,
+                message=exc.message,
+            ).model_dump(exclude_none=True),
         )
 
     @app.exception_handler(RequestError)
@@ -119,7 +157,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=502,
             content=ErrorDetail(
-                code=code, message="Failed to connect to external service"
+                code=code,
+                message="Failed to connect to external service",
             ).model_dump(exclude_none=True),
         )
 
@@ -138,7 +177,8 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=504,
             content=ErrorDetail(
-                code=code, message="Request to external service timed out"
+                code=code,
+                message="Request to external service timed out",
             ).model_dump(exclude_none=True),
         )
 
@@ -186,48 +226,50 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=status_code,
-            content=ErrorDetail(code=code, message=message).model_dump(exclude_none=True),
+            content=ErrorDetail(
+                code=code,
+                message=message,
+            ).model_dump(exclude_none=True),
         )
 
     @app.exception_handler(SQLAlchemyError)
     async def handle_db_error(request: Request, exc: SQLAlchemyError) -> Response:
         logger.error("Database error on %s: %s", request.url.path, exc)
 
+        code = _get_service_code(
+            request.url.path,
+            {
+                "radarr": RadarrErrorCode.DATABASE_ERROR,
+                "sonarr": SonarrErrorCode.DATABASE_ERROR,
+                "jellyfin": JellyfinErrorCode.DATABASE_ERROR,
+                "default": ErrorCode.DATABASE_ERROR,
+            },
+        )
+
         if isinstance(exc, IntegrityError):
-            code = _get_service_code(
-                request.url.path,
-                {
-                    "radarr": RadarrErrorCode.DATABASE_ERROR,
-                    "sonarr": SonarrErrorCode.DATABASE_ERROR,
-                    "jellyfin": JellyfinErrorCode.DATABASE_ERROR,
-                    "default": ErrorCode.DATABASE_ERROR,
-                },
-            )
             message = "Database conflict: duplicate or invalid data"
             status_code = 409
         else:
-            code = _get_service_code(
-                request.url.path,
-                {
-                    "radarr": RadarrErrorCode.DATABASE_ERROR,
-                    "sonarr": SonarrErrorCode.DATABASE_ERROR,
-                    "jellyfin": JellyfinErrorCode.DATABASE_ERROR,
-                    "default": ErrorCode.DATABASE_ERROR,
-                },
-            )
             message = "Database operation failed"
             status_code = 500
 
         return JSONResponse(
             status_code=status_code,
-            content=ErrorDetail(code=code, message=message).model_dump(exclude_none=True),
+            content=ErrorDetail(
+                code=code,
+                message=message,
+            ).model_dump(exclude_none=True),
         )
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError) -> Response:
         logger.warning("Validation error on %s: %s", request.url.path, exc.errors())
         details = [
-            {"loc": " → ".join(map(str, err["loc"])), "msg": err["msg"], "type": err["type"]}
+            {
+                "loc": " → ".join(map(str, err["loc"])),
+                "msg": err["msg"],
+                "type": err["type"],
+            }
             for err in exc.errors()
         ]
         return JSONResponse(
@@ -254,16 +296,24 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=502,
             content=ErrorDetail(
-                code=code, message="Invalid response from external service"
+                code=code,
+                message="Invalid response from external service",
             ).model_dump(exclude_none=True),
         )
 
     @app.exception_handler(SonarrServiceError)
     async def handle_service_error(request: Request, exc: SonarrServiceError) -> Response:
-        logger.error("Unhandled service error: %s. Request url %s", exc.message, request.url)
+        logger.error(
+            "Unhandled service error: %s. Request url %s",
+            exc.message,
+            request.url,
+        )
         return JSONResponse(
             status_code=500,
-            content=ErrorDetail(code=exc.code, message=exc.message).model_dump(exclude_none=True),
+            content=ErrorDetail(
+                code=exc.code,
+                message=exc.message,
+            ).model_dump(exclude_none=True),
         )
 
     app.exception_handler(Exception)(handle_generic_error)
