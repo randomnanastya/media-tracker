@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 import httpx
 
@@ -12,6 +12,8 @@ from app.schemas.error_codes import JellyfinErrorCode
 
 JELLYFIN_URL = os.getenv("JELLYFIN_URL")
 JELLYFIN_API_KEY = os.getenv("JELLYFIN_API_KEY")
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class JellyfinClientError(ClientError):
@@ -35,7 +37,7 @@ def validate_jellyfin_config(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    async def wrapper(*args, **kwargs) -> Any:
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         if JELLYFIN_API_KEY is None:
             logger.error("JELLYFIN_API_KEY is not set")
             raise JellyfinClientError(
@@ -50,7 +52,7 @@ def validate_jellyfin_config(func: Callable) -> Callable:
             )
         return await func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
 @validate_jellyfin_config

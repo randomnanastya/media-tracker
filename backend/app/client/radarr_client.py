@@ -1,7 +1,7 @@
 import os
 from collections.abc import Callable
 from functools import wraps
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 import httpx
 
@@ -13,6 +13,8 @@ from app.schemas.error_codes import RadarrErrorCode
 RADARR_URL = os.getenv("RADARR_URL")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")
 
+F = TypeVar("F", bound=Callable[..., Any])
+
 
 class RadarrClientError(ClientError):
     """Custom exception for Radarr client errors."""
@@ -23,7 +25,7 @@ class RadarrClientError(ClientError):
         super().__init__(code=code, message=message)
 
 
-def validate_jellyfin_config(func: Callable) -> Callable:
+def validate_radarr_config[T: Callable[..., Any]](func: T) -> T:
     """
     Decorator that validates Jellyfin configuration before executing the function.
 
@@ -35,7 +37,7 @@ def validate_jellyfin_config(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    async def wrapper(*args, **kwargs) -> Any:
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
         if RADARR_API_KEY is None:
             logger.error("RADARR_API_KEY is not set")
             raise RadarrClientError(
@@ -50,10 +52,10 @@ def validate_jellyfin_config(func: Callable) -> Callable:
             )
         return await func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]
 
 
-@validate_jellyfin_config
+@validate_radarr_config
 async def fetch_radarr_movies() -> list[dict[str, Any]]:
     """Fetches the list of movies from the Radarr API."""
     async with httpx.AsyncClient() as client:
