@@ -1,89 +1,15 @@
-from datetime import datetime
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies
 from app.config import logger
-from app.models import Media, MediaType, Movie
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from app.services.movie_utils import (
+    create_new_movie,
     find_movie_by_external_ids,
     find_movie_by_jellyfin_id,
     parse_release_date,
+    update_existing_movie,
 )
-
-
-def _update_existing_movie(
-    movie: Movie,
-    jellyfin_id: str | None,
-    tmdb_id: str | None,
-    imdb_id: str | None,
-    release_date: datetime | None,
-    title: str,
-) -> bool:
-    """Update existing movie and return True if any changes were made."""
-    was_updated = False
-
-    # Update jellyfin_id only if present and different
-    if jellyfin_id and movie.jellyfin_id != jellyfin_id:
-        movie.jellyfin_id = jellyfin_id
-        was_updated = True
-
-    # Update tmdb_id only if not already set
-    if tmdb_id and not movie.tmdb_id:
-        movie.tmdb_id = tmdb_id
-        was_updated = True
-
-    # Update imdb_id only if not already set
-    if imdb_id and not movie.imdb_id:
-        movie.imdb_id = imdb_id
-        was_updated = True
-
-    # Update release_date only if media exists and release_date is missing
-    if release_date and movie.media and movie.media.release_date is None:
-        movie.media.release_date = release_date
-        was_updated = True
-
-    if was_updated:
-        logger.info("Updated movie '%s' with new data from Jellyfin", title)
-
-    return was_updated
-
-
-async def _create_new_movie(
-    session: AsyncSession,
-    title: str,
-    jellyfin_id: str | None,
-    tmdb_id: str | None,
-    imdb_id: str | None,
-    release_date: datetime | None,
-) -> None:
-    """Create a new movie with associated Media entry."""
-    media_obj = Media(
-        media_type=MediaType.MOVIE,
-        title=title,
-        release_date=release_date,
-    )
-    session.add(media_obj)
-    await session.flush()
-
-    movie_obj = Movie(
-        id=media_obj.id,
-        jellyfin_id=jellyfin_id,
-        tmdb_id=tmdb_id,
-        imdb_id=imdb_id,
-    )
-    session.add(movie_obj)
-
-    id_info = []
-    if jellyfin_id:
-        id_info.append(f"jellyfin_id={jellyfin_id}")
-    if tmdb_id:
-        id_info.append(f"tmdb={tmdb_id}")
-    if imdb_id:
-        id_info.append(f"imdb={imdb_id}")
-
-    logger.info("Added new movie: %s (%s) from Jellyfin", title, ", ".join(id_info))
 
 
 async def import_jellyfin_movies(session: AsyncSession) -> JellyfinImportMoviesResponse:
@@ -120,24 +46,30 @@ async def import_jellyfin_movies(session: AsyncSession) -> JellyfinImportMoviesR
 
             # 3. Update existing movie
             if existing_movie:
-                if _update_existing_movie(
-                    existing_movie,
-                    jellyfin_id,
-                    tmdb_id,
-                    imdb_id,
-                    release_date,
-                    title,
+                if update_existing_movie(
+                    movie=existing_movie,
+                    radarr_id=None,
+                    jellyfin_id=jellyfin_id,
+                    tmdb_id=tmdb_id,
+                    imdb_id=imdb_id,
+                    release_date=release_date,
+                    title=title,
+                    status=None,
+                    source="Jellyfin",
                 ):
                     updated += 1
             else:
                 # 4. Create new movie
-                await _create_new_movie(
-                    session,
-                    title,
-                    jellyfin_id,
-                    tmdb_id,
-                    imdb_id,
-                    release_date,
+                await create_new_movie(
+                    session=session,
+                    title=title,
+                    radarr_id=None,
+                    jellyfin_id=jellyfin_id,
+                    tmdb_id=tmdb_id,
+                    imdb_id=imdb_id,
+                    release_date=release_date,
+                    status=None,
+                    source="Jellyfin",
                 )
                 imported += 1
 

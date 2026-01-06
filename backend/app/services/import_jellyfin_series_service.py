@@ -11,9 +11,13 @@ from app.client.jellyfin_client import (
     fetch_jellyfin_episodes,
     fetch_jellyfin_series,
 )
-from app.models import Episode, Media, MediaType, Season, Series
+from app.models import Episode, Season, Series
 from app.schemas.jellyfin import JellyfinImportSeriesResponse
-from app.services.series_utils import find_series_by_external_ids
+from app.services.series_utils import (
+    create_new_series,
+    find_series_by_external_ids,
+    update_existing_series,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,104 +41,6 @@ def _parse_iso_utc(dt_str: str | None) -> datetime | None:
     except (ValueError, TypeError) as exc:
         logger.warning("Invalid ISO date %s: %s", dt_str, exc)
         return None
-
-
-def _update_existing_series(
-    series: Series,
-    jellyfin_id: str,
-    tvdb_id: str | None,
-    imdb_id: str | None,
-    tmdb_id: str | None,
-    release_date: datetime | None,
-    title: str,
-    status: str | None,
-    year: int | None,
-) -> bool:
-    """Update series only if field is missing."""
-    was_updated = False
-
-    # Always set jellyfin_id if not set
-    if series.jellyfin_id is None:
-        series.jellyfin_id = jellyfin_id
-        was_updated = True
-
-    if tvdb_id and series.tvdb_id is None:
-        series.tvdb_id = tvdb_id
-        was_updated = True
-
-    if imdb_id and series.imdb_id is None:
-        series.imdb_id = imdb_id
-        was_updated = True
-
-    if tmdb_id and series.tmdb_id is None:
-        series.tmdb_id = tmdb_id
-        was_updated = True
-
-    if title and series.media.title != title:
-        series.media.title = title
-        was_updated = True
-
-    if status and series.status is None:
-        series.status = status
-        was_updated = True
-
-    if year is not None and series.year is None:
-        series.year = year
-        was_updated = True
-
-    if release_date and series.media.release_date is None:
-        series.media.release_date = release_date
-        was_updated = True
-
-    if was_updated:
-        logger.info("Updated series '%s' (jellyfin_id=%s)", title, jellyfin_id)
-
-    return was_updated
-
-
-async def _create_new_series(
-    session: AsyncSession,
-    title: str,
-    jellyfin_id: str,
-    tvdb_id: str | None,
-    imdb_id: str | None,
-    tmdb_id: str | None,
-    release_date: datetime | None,
-    status: str | None,
-    year: int | None,
-) -> Series:
-    """Create new series with Media."""
-    media = Media(
-        media_type=MediaType.SERIES,
-        title=title,
-        release_date=release_date,
-    )
-    session.add(media)
-    await session.flush()
-
-    series = Series(
-        id=media.id,
-        jellyfin_id=jellyfin_id,
-        tvdb_id=tvdb_id,
-        imdb_id=imdb_id,
-        tmdb_id=tmdb_id,
-        status=status,
-        year=year,
-    )
-    session.add(series)
-    media.series = series
-    await session.flush()
-
-    ids = [f"jellyfin_id={jellyfin_id}"]
-    if tvdb_id:
-        ids.append(f"tvdb={tvdb_id}")
-    if imdb_id:
-        ids.append(f"imdb={imdb_id}")
-    if tmdb_id:
-        ids.append(f"tmdb={tmdb_id}")
-
-    logger.info("Created new series: %s (%s)", title, ", ".join(ids))
-    return series
 
 
 async def _process_seasons_and_episodes(
@@ -270,12 +176,10 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             provider_ids = raw.get("ProviderIds", {})
             tvdb_id = provider_ids.get("Tvdb")
             imdb_id = provider_ids.get("Imdb")
-            tmdb_id = provider_ids.get("Tmdb")
+            tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
             release_date = _parse_iso_utc(raw.get("PremiereDate"))
             status = raw.get("Status")
             year = raw.get("ProductionYear")
-
-            existing_series = None
 
             # 1. Search by jellyfin_id
             existing_series = await _find_series_by_jellyfin_id(session, jellyfin_id)
@@ -288,16 +192,17 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
 
             # 3. Update existing
             if existing_series:
-                if _update_existing_series(
-                    existing_series,
-                    jellyfin_id,
-                    tvdb_id,
-                    imdb_id,
-                    tmdb_id,
-                    release_date,
-                    title,
-                    status,
-                    year,
+                if update_existing_series(
+                    series=existing_series,
+                    title=title,
+                    jellyfin_id=jellyfin_id,
+                    tvdb_id=tvdb_id,
+                    imdb_id=imdb_id,
+                    tmdb_id=tmdb_id,
+                    release_date=release_date,
+                    status=status,
+                    year=year,
+                    source="Jellyfin",
                 ):
                     total_updated_series += 1
 
@@ -314,16 +219,22 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
                 continue
 
             # 5. Create new
-            new_series = await _create_new_series(
-                session,
-                title,
-                jellyfin_id,
-                tvdb_id,
-                imdb_id,
-                tmdb_id,
-                release_date,
-                status,
-                year,
+            new_series = await create_new_series(
+                session=session,
+                title=title,
+                sonarr_id=None,
+                jellyfin_id=jellyfin_id,
+                tvdb_id=tvdb_id,
+                imdb_id=imdb_id,
+                tmdb_id=tmdb_id,
+                release_date=release_date,
+                status=status,
+                year=year,
+                poster_url=None,
+                genres=None,
+                rating_value=None,
+                rating_votes=None,
+                source="Jellyfin",
             )
             total_new_series += 1
 

@@ -9,9 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
-from app.models import Episode, Media, MediaType, Season, Series
+from app.models import Episode, Season, Series
 from app.schemas.sonarr import SonarrImportResponse
-from app.services.series_utils import find_series_by_external_ids
+from app.services.series_utils import (
+    create_new_series,
+    find_series_by_external_ids,
+    update_existing_series,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,124 +45,6 @@ def _extract_poster(images: list[dict[str, Any]]) -> str | None:
         (img.get("remoteUrl") for img in images if img.get("coverType") == "poster"),
         None,
     )
-
-
-def _update_existing_series(
-    series: Series,
-    sonarr_id: int | None,
-    tvdb_id: str | None,
-    imdb_id: str | None,
-    release_date: datetime | None,
-    title: str,
-    poster_url: str | None,
-    year: int | None,
-    genres: list[str] | None,
-    rating_value: float | None,
-    rating_votes: int | None,
-    status: str | None,
-) -> bool:
-    """Update existing series and return True if any changes were made."""
-    was_updated = False
-
-    if sonarr_id and series.sonarr_id is None:
-        series.sonarr_id = sonarr_id
-        was_updated = True
-
-    if tvdb_id and series.tvdb_id is None:
-        series.tvdb_id = tvdb_id
-        was_updated = True
-
-    if imdb_id and series.imdb_id is None:
-        series.imdb_id = imdb_id
-        was_updated = True
-
-    if title and series.media.title != title:
-        series.media.title = title
-        was_updated = True
-
-    if poster_url and series.poster_url is None:
-        series.poster_url = poster_url
-        was_updated = True
-
-    if year is not None and series.year is None:
-        series.year = year
-        was_updated = True
-
-    if genres is not None and series.genres is None:
-        series.genres = genres
-        was_updated = True
-
-    if rating_value is not None and series.rating_value != rating_value:
-        series.rating_value = rating_value
-        was_updated = True
-
-    if rating_votes is not None and series.rating_votes != rating_votes:
-        series.rating_votes = rating_votes
-        was_updated = True
-
-    if status and series.status != status:
-        series.status = status
-        was_updated = True
-
-    if release_date and series.media.release_date is None:
-        series.media.release_date = release_date
-        was_updated = True
-
-    if was_updated:
-        logger.info("Updated series '%s' (sonarr_id=%s)", title, sonarr_id or "—")
-
-    return was_updated
-
-
-async def _create_new_series(
-    session: AsyncSession,
-    title: str,
-    sonarr_id: int | None,
-    tvdb_id: str | None,
-    imdb_id: str | None,
-    release_date: datetime | None,
-    poster_url: str | None,
-    year: int | None,
-    genres: list[str] | None,
-    rating_value: float | None,
-    rating_votes: int | None,
-    status: str | None,
-) -> Series:
-    """Create a new series with associated Media entry."""
-    media = Media(
-        media_type=MediaType.SERIES,
-        title=title,
-        release_date=release_date,
-    )
-    session.add(media)
-    await session.flush()
-
-    series = Series(
-        id=media.id,
-        sonarr_id=sonarr_id,
-        tvdb_id=tvdb_id,
-        imdb_id=imdb_id,
-        poster_url=poster_url,
-        year=year,
-        genres=genres,
-        rating_value=rating_value,
-        rating_votes=rating_votes,
-        status=status,
-    )
-    session.add(series)
-    media.series = series  # Set back_populates to ensure series.media is populated
-    await session.flush()
-
-    ids = []
-    if sonarr_id:
-        ids.append(f"sonarr_id={sonarr_id}")
-    if tvdb_id:
-        ids.append(f"tvdb={tvdb_id}")
-    if imdb_id:
-        ids.append(f"imdb={imdb_id}")
-
-    logger.info("Created new series: %s (%s)", title, ", ".join(ids) or "no IDs")
-    return series
 
 
 async def _process_seasons_and_episodes(
@@ -336,19 +222,20 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
             # 3. Update existing series
             if existing_series:
-                if _update_existing_series(
-                    existing_series,
-                    sonarr_id,
-                    tvdb_id,
-                    imdb_id,
-                    release_date,
-                    title,
-                    poster_url,
-                    year,
-                    genres,
-                    rating_value,
-                    rating_votes,
-                    status,
+                if update_existing_series(
+                    series=existing_series,
+                    title=title,
+                    sonarr_id=sonarr_id,
+                    tvdb_id=tvdb_id,
+                    imdb_id=imdb_id,
+                    release_date=release_date,
+                    poster_url=poster_url,
+                    year=year,
+                    genres=genres,
+                    rating_value=rating_value,
+                    rating_votes=rating_votes,
+                    status=status,
+                    source="Sonarr",
                 ):
                     total_updated_series += 1
 
@@ -371,19 +258,22 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 continue
 
             # 5. Create new series
-            new_series = await _create_new_series(
-                session,
-                title,
-                sonarr_id,
-                tvdb_id,
-                imdb_id,
-                release_date,
-                poster_url,
-                year,
-                genres,
-                rating_value,
-                rating_votes,
-                status,
+            new_series = await create_new_series(
+                session=session,
+                title=title,
+                sonarr_id=sonarr_id,
+                jellyfin_id=None,
+                tvdb_id=tvdb_id,
+                tmdb_id=None,
+                imdb_id=imdb_id,
+                release_date=release_date,
+                poster_url=poster_url,
+                year=year,
+                genres=genres,
+                rating_value=rating_value,
+                rating_votes=rating_votes,
+                status=status,
+                source="Sonarr",
             )
             total_new_series += 1
 

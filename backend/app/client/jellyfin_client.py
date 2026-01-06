@@ -1,5 +1,7 @@
 import os
-from typing import Any, cast
+from collections.abc import Callable
+from functools import wraps
+from typing import Any, TypeVar, cast
 
 import httpx
 
@@ -11,6 +13,8 @@ from app.schemas.error_codes import JellyfinErrorCode
 JELLYFIN_URL = os.getenv("JELLYFIN_URL")
 JELLYFIN_API_KEY = os.getenv("JELLYFIN_API_KEY")
 
+F = TypeVar("F", bound=Callable[..., Any])
+
 
 class JellyfinClientError(ClientError):
     """Custom exception for Jellyfin client errors."""
@@ -21,20 +25,41 @@ class JellyfinClientError(ClientError):
         super().__init__(code, message)
 
 
+def validate_jellyfin_config[T: Callable[..., Any]](func: T) -> T:
+    """
+    Decorator that validates Jellyfin configuration before executing the function.
+
+    Args:
+        func: The async function to decorate
+
+    Returns:
+        Decorated function that validates config before execution
+    """
+
+    @wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if JELLYFIN_API_KEY is None:
+            logger.error("JELLYFIN_API_KEY is not set")
+            raise JellyfinClientError(
+                code=JellyfinErrorCode.INTERNAL_ERROR,
+                message="Jellyfin API key is not configured",
+            )
+        if JELLYFIN_URL is None:
+            logger.error("JELLYFIN_URL is not set")
+            raise JellyfinClientError(
+                code=JellyfinErrorCode.INTERNAL_ERROR,
+                message="Jellyfin URL is not configured",
+            )
+        return await func(*args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]
+
+
+@validate_jellyfin_config
 async def fetch_jellyfin_users() -> list[dict[str, Any]]:
     """Fetches all users from Jellyfin."""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     async with httpx.AsyncClient() as client:
         try:
@@ -71,20 +96,11 @@ async def fetch_jellyfin_users() -> list[dict[str, Any]]:
             ) from e
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
     """Fetches ALL movies from Jellyfin with pagination."""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Items/?api_key={JELLYFIN_API_KEY}"
 
@@ -151,20 +167,11 @@ async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
         return all_items
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_series() -> list[dict[str, Any]]:
     """Fetches ALL series from Jellyfin with pagination."""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Items/?api_key={JELLYFIN_API_KEY}"
 
@@ -231,20 +238,11 @@ async def fetch_jellyfin_series() -> list[dict[str, Any]]:
         return all_items
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_seasons(serials_id: str) -> list[dict[str, Any]]:
     """Fetches ALL seasons by serial from Jellyfin"""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Shows/{serials_id}/Seasons"
 
@@ -308,20 +306,11 @@ async def fetch_jellyfin_seasons(serials_id: str) -> list[dict[str, Any]]:
         return all_items
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_episodes(serials_id: str) -> list[dict[str, Any]]:
     """Fetches ALL episodes by serial from Jellyfin"""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Shows/{serials_id}/Episodes"
 
@@ -385,20 +374,11 @@ async def fetch_jellyfin_episodes(serials_id: str) -> list[dict[str, Any]]:
         return all_items
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
     """Fetches ALL movies for a user from Jellyfin (both watched and unwatched)."""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
 
@@ -465,20 +445,11 @@ async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict
     return all_items
 
 
+@validate_jellyfin_config
 async def fetch_jellyfin_episodes_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
     """Fetches ALL episodes for a user from Jellyfin (both watched and unwatched)."""
-    if JELLYFIN_API_KEY is None:
-        logger.error("JELLYFIN_API_KEY is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin API key is not configured",
-        )
-    if JELLYFIN_URL is None:
-        logger.error("JELLYFIN_URL is not set")
-        raise JellyfinClientError(
-            code=JellyfinErrorCode.INTERNAL_ERROR,
-            message="Jellyfin URL is not configured",
-        )
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
 
     base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
 

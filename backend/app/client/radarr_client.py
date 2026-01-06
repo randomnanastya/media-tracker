@@ -1,5 +1,7 @@
 import os
-from typing import Any, cast
+from collections.abc import Callable
+from functools import wraps
+from typing import Any, TypeVar, cast
 
 import httpx
 
@@ -11,6 +13,8 @@ from app.schemas.error_codes import RadarrErrorCode
 RADARR_URL = os.getenv("RADARR_URL")
 RADARR_API_KEY = os.getenv("RADARR_API_KEY")
 
+F = TypeVar("F", bound=Callable[..., Any])
+
 
 class RadarrClientError(ClientError):
     """Custom exception for Radarr client errors."""
@@ -21,26 +25,47 @@ class RadarrClientError(ClientError):
         super().__init__(code=code, message=message)
 
 
+def validate_radarr_config[T: Callable[..., Any]](func: T) -> T:
+    """
+    Decorator that validates Radarr configuration before executing the function.
+
+    Args:
+        func: The async function to decorate
+
+    Returns:
+        Decorated function that validates config before execution
+    """
+
+    @wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        if RADARR_API_KEY is None:
+            logger.error("RADARR_API_KEY is not set")
+            raise RadarrClientError(
+                code=RadarrErrorCode.INTERNAL_ERROR,
+                message="Radarr API key is not configured",
+            )
+        if RADARR_URL is None:
+            logger.error("RADARR_URL is not set")
+            raise RadarrClientError(
+                code=RadarrErrorCode.INTERNAL_ERROR,
+                message="Radarr URL is not configured",
+            )
+        return await func(*args, **kwargs)
+
+    return wrapper  # type: ignore[return-value]
+
+
+@validate_radarr_config
 async def fetch_radarr_movies() -> list[dict[str, Any]]:
     """Fetches the list of movies from the Radarr API."""
-    if RADARR_API_KEY is None:
-        logger.error("RADARR_API_KEY is not set")
-        raise RadarrClientError(
-            code=RadarrErrorCode.INTERNAL_ERROR,
-            message="Radarr API key is not configured",
-        )
-    if RADARR_URL is None:
-        logger.error("RADARR_URL is not set")
-        raise RadarrClientError(
-            code=RadarrErrorCode.INTERNAL_ERROR,
-            message="Radarr URL is not configured",
-        )
+    assert RADARR_API_KEY is not None
+    assert RADARR_URL is not None
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
                 f"{RADARR_URL}{RADARR_MOVIES}",
-                headers={"X-Api-Key": RADARR_API_KEY},
+                headers={"X-Api-Key": RADARR_API_KEY},  # Теперь mypy знает, что это str
                 timeout=30.0,
             )
             response.raise_for_status()

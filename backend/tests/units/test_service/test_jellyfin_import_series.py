@@ -42,7 +42,7 @@ async def test_import_jellyfin_series_creates_new_series(mock_session):
             new_callable=AsyncMock,
         ) as mock_find_external,
         patch(
-            "app.services.import_jellyfin_series_service._create_new_series",
+            "app.services.import_jellyfin_series_service.create_new_series",
             new_callable=AsyncMock,
         ) as mock_create,
         patch(
