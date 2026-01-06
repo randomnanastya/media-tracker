@@ -174,14 +174,12 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             jellyfin_id = str(jellyfin_id_raw)
 
             provider_ids = raw.get("ProviderIds", {})
-            tvdb_id = provider_ids.get("Tvdb")
-            imdb_id = provider_ids.get("Imdb")
-            tmdb_id = provider_ids.get("Tmdb")
+            tvdb_id = str(provider_ids.get("Tvdb")) if provider_ids("Tvdb") else None
+            imdb_id = str(provider_ids.get("Imdb")) if provider_ids("Imdb") else None
+            tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
             release_date = _parse_iso_utc(raw.get("PremiereDate"))
             status = raw.get("Status")
             year = raw.get("ProductionYear")
-
-            # existing_series = None
 
             # 1. Search by jellyfin_id
             existing_series = await _find_series_by_jellyfin_id(session, jellyfin_id)
