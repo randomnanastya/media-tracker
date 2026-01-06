@@ -27,7 +27,7 @@ class RadarrClientError(ClientError):
 
 def validate_radarr_config[T: Callable[..., Any]](func: T) -> T:
     """
-    Decorator that validates Jellyfin configuration before executing the function.
+    Decorator that validates Radarr configuration before executing the function.
 
     Args:
         func: The async function to decorate
@@ -58,11 +58,14 @@ def validate_radarr_config[T: Callable[..., Any]](func: T) -> T:
 @validate_radarr_config
 async def fetch_radarr_movies() -> list[dict[str, Any]]:
     """Fetches the list of movies from the Radarr API."""
+    assert RADARR_API_KEY is not None
+    assert RADARR_URL is not None
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
                 f"{RADARR_URL}{RADARR_MOVIES}",
-                headers={"X-Api-Key": RADARR_API_KEY},
+                headers={"X-Api-Key": RADARR_API_KEY},  # Теперь mypy знает, что это str
                 timeout=30.0,
             )
             response.raise_for_status()

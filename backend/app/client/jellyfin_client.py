@@ -25,7 +25,7 @@ class JellyfinClientError(ClientError):
         super().__init__(code, message)
 
 
-def validate_jellyfin_config(func: Callable) -> Callable:
+def validate_jellyfin_config[T: Callable[..., Any]](func: T) -> T:
     """
     Decorator that validates Jellyfin configuration before executing the function.
 
@@ -58,6 +58,9 @@ def validate_jellyfin_config(func: Callable) -> Callable:
 @validate_jellyfin_config
 async def fetch_jellyfin_users() -> list[dict[str, Any]]:
     """Fetches all users from Jellyfin."""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
@@ -96,6 +99,9 @@ async def fetch_jellyfin_users() -> list[dict[str, Any]]:
 @validate_jellyfin_config
 async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
     """Fetches ALL movies from Jellyfin with pagination."""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Items/?api_key={JELLYFIN_API_KEY}"
 
     all_items: list[dict[str, Any]] = []
@@ -164,6 +170,9 @@ async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
 @validate_jellyfin_config
 async def fetch_jellyfin_series() -> list[dict[str, Any]]:
     """Fetches ALL series from Jellyfin with pagination."""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Items/?api_key={JELLYFIN_API_KEY}"
 
     all_items: list[dict[str, Any]] = []
@@ -232,6 +241,9 @@ async def fetch_jellyfin_series() -> list[dict[str, Any]]:
 @validate_jellyfin_config
 async def fetch_jellyfin_seasons(serials_id: str) -> list[dict[str, Any]]:
     """Fetches ALL seasons by serial from Jellyfin"""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Shows/{serials_id}/Seasons"
 
     all_items: list[dict[str, Any]] = []
@@ -297,6 +309,9 @@ async def fetch_jellyfin_seasons(serials_id: str) -> list[dict[str, Any]]:
 @validate_jellyfin_config
 async def fetch_jellyfin_episodes(serials_id: str) -> list[dict[str, Any]]:
     """Fetches ALL episodes by serial from Jellyfin"""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Shows/{serials_id}/Episodes"
 
     all_items: list[dict[str, Any]] = []
@@ -362,6 +377,9 @@ async def fetch_jellyfin_episodes(serials_id: str) -> list[dict[str, Any]]:
 @validate_jellyfin_config
 async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
     """Fetches ALL movies for a user from Jellyfin (both watched and unwatched)."""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
 
     all_items: list[dict[str, Any]] = []
@@ -430,6 +448,9 @@ async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict
 @validate_jellyfin_config
 async def fetch_jellyfin_episodes_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
     """Fetches ALL episodes for a user from Jellyfin (both watched and unwatched)."""
+    assert JELLYFIN_API_KEY is not None
+    assert JELLYFIN_URL is not None
+
     base_url = f"{JELLYFIN_URL}/Users/{jellyfin_user_id}/Items"
 
     all_items: list[dict[str, Any]] = []
