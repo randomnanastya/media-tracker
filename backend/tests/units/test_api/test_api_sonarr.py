@@ -24,7 +24,7 @@ async def test_import_sonarr_success(
             "app.services.series_utils.find_series_by_external_ids", new_callable=AsyncMock
         ) as mock_find_external,
         patch(
-            "app.services.sonarr_service._create_new_series", new_callable=AsyncMock
+            "app.services.series_utils.create_new_series", new_callable=AsyncMock
         ) as mock_create_series,
     ):
         modified_series = []

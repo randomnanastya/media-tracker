@@ -1,4 +1,6 @@
 import os
+from collections.abc import Callable
+from functools import wraps
 from typing import Any, cast
 
 import httpx
@@ -21,21 +23,39 @@ class RadarrClientError(ClientError):
         super().__init__(code=code, message=message)
 
 
+def validate_jellyfin_config(func: Callable) -> Callable:
+    """
+    Decorator that validates Jellyfin configuration before executing the function.
+
+    Args:
+        func: The async function to decorate
+
+    Returns:
+        Decorated function that validates config before execution
+    """
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs) -> Any:
+        if RADARR_API_KEY is None:
+            logger.error("RADARR_API_KEY is not set")
+            raise RadarrClientError(
+                code=RadarrErrorCode.INTERNAL_ERROR,
+                message="Radarr API key is not configured",
+            )
+        if RADARR_URL is None:
+            logger.error("RADARR_URL is not set")
+            raise RadarrClientError(
+                code=RadarrErrorCode.INTERNAL_ERROR,
+                message="Radarr URL is not configured",
+            )
+        return await func(*args, **kwargs)
+
+    return wrapper
+
+
+@validate_jellyfin_config
 async def fetch_radarr_movies() -> list[dict[str, Any]]:
     """Fetches the list of movies from the Radarr API."""
-    if RADARR_API_KEY is None:
-        logger.error("RADARR_API_KEY is not set")
-        raise RadarrClientError(
-            code=RadarrErrorCode.INTERNAL_ERROR,
-            message="Radarr API key is not configured",
-        )
-    if RADARR_URL is None:
-        logger.error("RADARR_URL is not set")
-        raise RadarrClientError(
-            code=RadarrErrorCode.INTERNAL_ERROR,
-            message="Radarr URL is not configured",
-        )
-
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(

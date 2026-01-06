@@ -13,7 +13,7 @@ from app.client.jellyfin_client import (
 )
 from app.models import Episode, Media, MediaType, Season, Series
 from app.schemas.jellyfin import JellyfinImportSeriesResponse
-from app.services.series_utils import find_series_by_external_ids
+from app.services.series_utils import create_new_series, find_series_by_external_ids
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +275,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             status = raw.get("Status")
             year = raw.get("ProductionYear")
 
-            existing_series = None
+            # existing_series = None
 
             # 1. Search by jellyfin_id
             existing_series = await _find_series_by_jellyfin_id(session, jellyfin_id)
@@ -314,16 +314,22 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
                 continue
 
             # 5. Create new
-            new_series = await _create_new_series(
-                session,
-                title,
-                jellyfin_id,
-                tvdb_id,
-                imdb_id,
-                tmdb_id,
-                release_date,
-                status,
-                year,
+            new_series = await create_new_series(
+                session=session,
+                title=title,
+                sonarr_id=None,
+                jellyfin_id=jellyfin_id,
+                tvdb_id=tvdb_id,
+                imdb_id=imdb_id,
+                tmdb_id=tmdb_id,
+                release_date=release_date,
+                status=status,
+                year=year,
+                poster_url=None,
+                genres=None,
+                rating_value=None,
+                rating_votes=None,
+                source="Jellyfin",
             )
             total_new_series += 1
 
