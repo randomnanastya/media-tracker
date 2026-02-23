@@ -92,7 +92,7 @@ async def test_import_sonarr_series_creates_entities(
 @pytest.mark.asyncio
 async def test_episode_update_logic_directly():
     """Test episode update logic directly without full import."""
-    from app.services.sonarr_service import _parse_iso_utc
+    from app.utils.datetime_utils import parse_iso_datetime
 
     # Create test data
     existing_episode = Episode(
@@ -121,7 +121,7 @@ async def test_episode_update_logic_directly():
     ep_num = episode_data["episodeNumber"]
     ep_title = episode_data["title"]
     overview = episode_data["overview"]
-    air_date = _parse_iso_utc(episode_data["airDateUtc"])
+    air_date = parse_iso_datetime(episode_data["airDateUtc"], context=f"Episode {ep_sonarr_id}")
 
     existing = existing_eps.get(ep_sonarr_id)
     updated = False
@@ -195,12 +195,6 @@ async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_j
 
         # Act
         result = await import_sonarr_series(mock_session)
-
-        for i, series in enumerate(sonarr_series_from_json):
-            print(
-                f"DEBUG: Series {i}: id={series.get('id')}, title={series.get('title')}, "
-                f"imdbId={series.get('imdbId')}, tvdbId={series.get('tvdbId')}"
-            )
 
         # Assert
         assert result.new_series == series_count
@@ -510,9 +504,9 @@ async def test_import_sonarr_series_sets_season_release_date_from_first_episode(
     # Assert
     assert mock_session.flush.called
 
-    from app.services.sonarr_service import _parse_iso_utc
+    from app.utils.datetime_utils import parse_iso_datetime
 
-    earliest_date = _parse_iso_utc("2005-03-24T00:00:00Z")
+    earliest_date = parse_iso_datetime("2005-03-24T00:00:00Z")
     assert earliest_date is not None
     assert earliest_date.year == 2005
     assert earliest_date.month == 3
@@ -522,7 +516,7 @@ async def test_import_sonarr_series_sets_season_release_date_from_first_episode(
 @pytest.mark.asyncio
 async def test_episode_comparison_logic():
     """Test episode comparison logic only"""
-    from app.services.sonarr_service import _parse_iso_utc
+    from app.utils.datetime_utils import parse_iso_datetime
 
     existing_episode = Episode(
         id=100,
@@ -548,7 +542,9 @@ async def test_episode_comparison_logic():
     ep_sonarr_id = sonarr_episode_data["id"]
     ep_num = sonarr_episode_data["episodeNumber"]
     ep_title = sonarr_episode_data["title"]
-    air_date = _parse_iso_utc(sonarr_episode_data["airDateUtc"])
+    air_date = parse_iso_datetime(
+        sonarr_episode_data["airDateUtc"], context=f"Episode {ep_sonarr_id}"
+    )
 
     existing = existing_eps.get(ep_sonarr_id)
     updated = False
@@ -658,7 +654,7 @@ async def test_import_sonarr_series_failure_connection_timeout(mock_session):
 
 @pytest.mark.asyncio
 async def test_import_sonarr_series_skips_invalid(
-    mock_session, sonarr_series_basic, sonarr_episodes_basic, mock_exists_result_false
+    mock_session, sonarr_series_basic, sonarr_episodes_basic, mock_exists_false
 ):
     """Test service skips series and episodes with missing titles."""
     # Arrange
@@ -726,9 +722,6 @@ async def test_import_sonarr_series_skips_invalid(
         # Act
         result = await import_sonarr_series(mock_session)
 
-        # Debug
-        print(f"DEBUG: Result: {result}")
-
         # Assert
         expected = SonarrImportResponse(
             new_series=1,
@@ -744,7 +737,7 @@ async def test_import_sonarr_series_skips_invalid(
 
 @pytest.mark.asyncio
 async def test_import_sonarr_series_invalid_date(
-    mock_session, sonarr_series_invalid_data, sonarr_episodes_basic, mock_exists_result_false
+    mock_session, sonarr_series_invalid_data, sonarr_episodes_basic, mock_exists_false
 ):
     with (
         patch(

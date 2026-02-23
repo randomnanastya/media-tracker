@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -16,6 +15,7 @@ from app.services.series_utils import (
     find_series_by_external_ids,
     update_existing_series,
 )
+from app.utils.datetime_utils import parse_iso_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +25,6 @@ async def _find_series_by_sonarr_id(session: AsyncSession, sonarr_id: int) -> Se
     query = select(Series).where(Series.sonarr_id == sonarr_id).options(selectinload(Series.media))
     result = await session.execute(query)
     return result.scalar_one_or_none()
-
-
-def _parse_iso_utc(dt_str: str | None) -> datetime | None:
-    """Parse ISO date string to UTC datetime."""
-    if not dt_str:
-        return None
-    try:
-        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-        return dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
-    except (ValueError, TypeError) as exc:
-        logger.warning("Invalid ISO date %s: %s", dt_str, exc)
-        return None
 
 
 def _extract_poster(images: list[dict[str, Any]]) -> str | None:
@@ -99,7 +87,7 @@ async def _process_seasons_and_episodes(
     for sn, first_air_str in season_first_air.items():
         season = existing_seasons.get(sn)
         if season and season.release_date is None:
-            dt = _parse_iso_utc(first_air_str)
+            dt = parse_iso_datetime(first_air_str, context=f"Season {sn}")
             if dt:
                 season.release_date = dt
 
@@ -133,7 +121,7 @@ async def _process_seasons_and_episodes(
         if not season:
             continue
 
-        air_date = _parse_iso_utc(air_str)
+        air_date = parse_iso_datetime(air_str, context=f"Episode {ep_num}")
 
         # Update or create episode
         existing = existing_eps.get(ep_sonarr_id)
@@ -200,7 +188,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 logger.warning("Skipping series (sonarr_id=%s) - missing title", sonarr_id)
                 continue
 
-            release_date = _parse_iso_utc(raw.get("firstAired"))
+            release_date = parse_iso_datetime(raw.get("firstAired"), context=title)
             poster_url = _extract_poster(raw.get("images", []))
             year = raw.get("year")
             genres = raw.get("genres")

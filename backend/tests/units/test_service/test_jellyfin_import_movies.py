@@ -94,7 +94,7 @@ async def test_import_jellyfin_movie_updates_existing_by_jellyfin_id(
 @pytest.mark.asyncio
 async def test_import_jellyfin_movie_updates_by_external_ids(
     mock_session,
-    existing_movie_by_tmdb_in_db,
+    setup_movie_mocked_tmdb,
 ):
     movie_data = {
         "Id": "jf999",
@@ -119,7 +119,7 @@ async def test_import_jellyfin_movie_updates_by_external_ids(
     ):
         mock_fetch.return_value = [movie_data]
         mock_find_jf.return_value = None
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = setup_movie_mocked_tmdb
 
         result = await import_jellyfin_movies(mock_session)
 

@@ -48,3 +48,9 @@ docker-compose.yaml
 # PyCharm
 .idea/
 *.iml
+
+# AI
+CLAUDE.md
+REFACTORING.md
+PHASE1_COMPLETE.md
+./.claude

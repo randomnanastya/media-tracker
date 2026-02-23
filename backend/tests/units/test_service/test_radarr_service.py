@@ -100,7 +100,7 @@ async def test_import_radarr_movies_creates_both_entities(mock_session, radarr_m
 
 @pytest.mark.asyncio
 async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
-    mock_session, existing_movie_by_tmdb_in_db
+    mock_session, setup_movie_mocked_tmdb
 ):
     """Movie without radarr_id but with tmdb_id → finds and updates."""
     # Arrange
@@ -128,7 +128,7 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
         # radarr_id = None → find_movie_by_radarr_id not called
         mock_find_radarr.return_value = None
         # Found by external_ids
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = setup_movie_mocked_tmdb
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -140,7 +140,7 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
 
 @pytest.mark.asyncio
 async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
-    mock_session, existing_movie_by_imdb_in_db
+    mock_session, setup_movie_mocked_imdb
 ):
     """Movie without radarr_id but with imdb_id → finds and updates."""
     # Arrange
@@ -166,7 +166,7 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
         ]
 
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_by_imdb_in_db
+        mock_find_external.return_value = setup_movie_mocked_imdb
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -178,7 +178,7 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
 
 @pytest.mark.asyncio
 async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(
-    mock_session, existing_movie_by_tmdb_in_db
+    mock_session, setup_movie_mocked_tmdb
 ):
     """Movie with radarr_id but already exists by tmdb → updates radarr_id."""
     # Arrange
@@ -205,7 +205,7 @@ async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(
 
         # Not found by radarr_id, but found by external_ids
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = setup_movie_mocked_tmdb
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -254,7 +254,7 @@ async def test_import_radarr_movie_without_ids_skips_creation(mock_session):
 
 @pytest.mark.asyncio
 async def test_import_radarr_movie_without_radarr_id_already_complete_skips_update(
-    mock_session, existing_movie_complete_in_db
+    mock_session, setup_movie_mocked_complete
 ):
     """Movie without radarr_id, but DB entry is complete → skips update."""
     # Arrange
@@ -280,7 +280,7 @@ async def test_import_radarr_movie_without_radarr_id_already_complete_skips_upda
         ]
 
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_complete_in_db
+        mock_find_external.return_value = setup_movie_mocked_complete
 
         # Act
         result = await import_radarr_movies(mock_session)

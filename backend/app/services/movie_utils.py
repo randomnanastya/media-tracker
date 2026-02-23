@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.config import logger
 from app.models import Media, MediaType, Movie
+from app.utils.datetime_utils import parse_iso_datetime
 
 
 async def find_movie_by_external_ids(
@@ -45,20 +46,8 @@ async def find_movie_by_jellyfin_id(session: AsyncSession, jellyfin_id: str) -> 
 def parse_release_date(
     release_date_str: str | None, movie_title: str = "Unknown"
 ) -> datetime | None:
-    """Parsing release date from string"""
-    if not release_date_str:
-        return None
-
-    try:
-        release_date = datetime.fromisoformat(release_date_str)
-        if release_date.tzinfo is None:
-            release_date = release_date.replace(tzinfo=UTC)
-        else:
-            release_date = release_date.astimezone(UTC)
-        return release_date
-    except (ValueError, TypeError) as e:
-        logger.error("Failed to parse release date for movie '%s': %s", movie_title, e)
-        return None
+    """Parsing release date from string (DEPRECATED: use parse_iso_datetime instead)."""
+    return parse_iso_datetime(release_date_str, context=movie_title)
 
 
 async def create_new_movie(

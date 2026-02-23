@@ -7,7 +7,7 @@ from app.schemas.sonarr import SonarrImportResponse
 
 @pytest.mark.asyncio
 async def test_import_sonarr_success(
-    async_client, mock_session, sonarr_series_basic, sonarr_episodes_basic, mock_exists_result_false
+    async_client, mock_session, sonarr_series_basic, sonarr_episodes_basic, mock_exists_false
 ):
     """Test Sonarr import endpoint returns success response."""
     with (

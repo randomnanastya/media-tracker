@@ -10,6 +10,7 @@ class ErrorCode(str, Enum):
     DATABASE_ERROR = "DATABASE_ERROR"
     INTERNAL_ERROR = "INTERNAL_ERROR"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    CONFIG_ERROR = "CONFIG_ERROR"
 
 
 class SonarrErrorCode(str, Enum):
@@ -24,6 +25,7 @@ class SonarrErrorCode(str, Enum):
     INTERNAL_ERROR = f"SONARR_{ErrorCode.INTERNAL_ERROR}"
     TIMEOUT_ERROR = f"SONARR_{ErrorCode.TIMEOUT_ERROR}"
     RATE_LIMIT_ERROR = f"SONARR_{ErrorCode.RATE_LIMIT_ERROR}"
+    CONFIG_ERROR = f"SONARR_{ErrorCode.CONFIG_ERROR}"
 
 
 class RadarrErrorCode(str, Enum):

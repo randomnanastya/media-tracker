@@ -1,14 +1,25 @@
-import asyncio
 import json
 import os
+from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
 from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from _pytest import pathlib
 from httpx import AsyncClient
 
+from app.main import app
 from app.models import Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
+from tests.units.fixtures.radarr_movies import (
+    RADARR_MOVIES_BASIC,
+    RADARR_MOVIES_EMPTY,
+    RADARR_MOVIES_LARGE_LIST,
+    RADARR_MOVIES_WITH_INVALID_DATA,
+    RADARR_MOVIES_WITH_SPECIAL_CHARACTERS,
+    RADARR_MOVIES_WITHOUT_RADARR_ID,
+    RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS,
+)
 
 # Устанавливаем тестовое окружение
 os.environ.update(
@@ -22,36 +33,26 @@ os.environ.update(
     }
 )
 
-# --- Мокаем APScheduler, чтобы app.main импортировался без запуска реального планировщика ---
-with patch("apscheduler.schedulers.asyncio.AsyncIOScheduler") as mock_scheduler:
-    mock_scheduler_instance = MagicMock()
-    mock_scheduler_instance.start = MagicMock()
-    mock_scheduler.return_value = mock_scheduler_instance
+_scheduler_patcher = patch("apscheduler.schedulers.asyncio.AsyncIOScheduler")
+_mock_scheduler = _scheduler_patcher.start()
+_mock_scheduler_instance = MagicMock()
+_mock_scheduler_instance.start = MagicMock()
+_mock_scheduler.return_value = _mock_scheduler_instance
 
-    # Импорты внутри мока (иначе app.main создаст реальный scheduler)
-    from app.main import app
-    from tests.units.fixtures.radarr_movies import (
-        RADARR_MOVIES_BASIC,
-        RADARR_MOVIES_EMPTY,
-        RADARR_MOVIES_LARGE_LIST,
-        RADARR_MOVIES_WITH_INVALID_DATA,
-        RADARR_MOVIES_WITH_SPECIAL_CHARACTERS,
-        RADARR_MOVIES_WITHOUT_RADARR_ID,
-        RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS,
-    )
+
+# Pytest hook для очистки patcher в конце тестовой сессии
+def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
+    """Останавливаем patcher после завершения всех тестов."""
+    _scheduler_patcher.stop()
 
 
 # --- EVENT LOOP (для pytest-asyncio) ---
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Фикстура удалена: pytest-asyncio в auto mode сам управляет event loop
 
 
 # --- Моки базы данных и зависимостей ---
 @pytest.fixture
-def mock_session():
+def mock_session() -> AsyncMock:
     """Асинхронный мок SQLAlchemy-сессии"""
     mock = AsyncMock()
     mock.add = Mock()
@@ -63,10 +64,10 @@ def mock_session():
 
 
 @pytest.fixture
-def override_session_dependency(mock_session):
+def override_session_dependency(mock_session: AsyncMock) -> Generator[None, None, None]:
     """Переопределение FastAPI зависимости get_session"""
 
-    async def override_get_session():
+    async def override_get_session() -> AsyncGenerator[AsyncMock, None]:
         yield mock_session
 
     from app.database import get_session
@@ -78,15 +79,17 @@ def override_session_dependency(mock_session):
 
 
 @pytest.fixture
-async def async_client(override_session_dependency):
+async def async_client(override_session_dependency: None) -> AsyncGenerator[AsyncClient, None]:
     """HTTP-клиент для тестирования API"""
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
 
 
 @pytest.fixture
-def mock_scalar_result():
-    def _mock(first_value=None):
+def mock_scalar_result() -> Callable[[Any | None], Mock]:
+    """Фабрика для создания моков скалярных результатов запросов."""
+
+    def _mock(first_value: Any | None = None) -> Mock:
         mock_result = Mock()
         mock_scalar = Mock()
         mock_scalar.first.return_value = first_value
@@ -96,22 +99,76 @@ def mock_scalar_result():
     return _mock
 
 
-@pytest.fixture(autouse=True)
-def clear_env():
-    """Очищаем переменные окружения перед каждым тестом."""
-    with patch.dict(os.environ, {}, clear=True):
-        yield
+@pytest.fixture
+def clear_env() -> Generator[None, None, None]:
+    """Очищаем только специфичные переменные окружения приложения.
+
+    Используйте эту фикстуру явно в тестах, где нужна полная изоляция от env vars.
+    autouse=True убран, так как полная очистка os.environ ломает системные переменные.
+    """
+    # Очищаем только переменные приложения, не трогая системные (PATH, HOME, и т.д.)
+    app_env_keys = [
+        "RADARR_URL",
+        "RADARR_API_KEY",
+        "SONARR_URL",
+        "SONARR_API_KEY",
+        "JELLYFIN_URL",
+        "JELLYFIN_API_KEY",
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_DB",
+        "APP_ENV",
+    ]
+
+    original_values: dict[str, str | None] = {key: os.environ.get(key) for key in app_env_keys}
+
+    # Очищаем только переменные приложения
+    for key in app_env_keys:
+        os.environ.pop(key, None)
+
+    yield
+
+    # Восстанавливаем оригинальные значения
+    for key, value in original_values.items():
+        if value is not None:
+            os.environ[key] = value
+        else:
+            os.environ.pop(key, None)
 
 
 @pytest.fixture
-def mock_httpx_client():
+def mock_httpx_client() -> Generator[Mock, None, None]:
     """Мокаем httpx.AsyncClient."""
     with patch("httpx.AsyncClient") as mock_client:
         yield mock_client
 
 
 @pytest.fixture
-def mock_db_result():
+def mock_env_vars() -> Callable[..., Any]:
+    """Мокаем переменные окружения для клиентов API."""
+
+    def _mock(**env_vars: str) -> Any:
+        """
+        Патчит os.getenv для возврата указанных значений.
+
+        Пример использования:
+            with mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"):
+                result = await fetch_jellyfin_movies()
+        """
+
+        def mock_getenv(key: str, default: str | None = None) -> str | None:
+            return env_vars.get(key, default)
+
+        return patch("os.getenv", side_effect=mock_getenv)
+
+    return _mock
+
+
+@pytest.fixture
+def mock_db_result() -> Mock:
+    """Мок результата выполнения DB запроса."""
     mock_result = Mock()
     mock_scalars = Mock()
     mock_scalars.first.return_value = None
@@ -121,44 +178,50 @@ def mock_db_result():
 
 # --- Моки фильмов из Radarr ---
 @pytest.fixture
-def radarr_movies_basic():
+def radarr_movies_basic() -> list[dict[str, Any]]:
+    """Базовый список фильмов из Radarr."""
     return RADARR_MOVIES_BASIC.copy()
 
 
 @pytest.fixture
-def radarr_movies_empty():
+def radarr_movies_empty() -> list[dict[str, Any]]:
+    """Пустой список фильмов из Radarr."""
     return RADARR_MOVIES_EMPTY.copy()
 
 
 @pytest.fixture
-def radarr_movies_invalid_data():
+def radarr_movies_invalid_data() -> list[dict[str, Any]]:
+    """Список фильмов с невалидными данными."""
     return RADARR_MOVIES_WITH_INVALID_DATA.copy()
 
 
 @pytest.fixture
-def radarr_movies_without_require_fields():
+def radarr_movies_without_require_fields() -> list[dict[str, Any]]:
+    """Список фильмов без обязательных полей."""
     return RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS.copy()
 
 
 @pytest.fixture
-def radarr_movies_without_radarr_id():
+def radarr_movies_without_radarr_id() -> list[dict[str, Any]]:
+    """Список фильмов без radarr_id."""
     return RADARR_MOVIES_WITHOUT_RADARR_ID.copy()
 
 
 @pytest.fixture
-def radarr_movies_large_list():
+def radarr_movies_large_list() -> list[dict[str, Any]]:
+    """Большой список фильмов из Radarr."""
     return RADARR_MOVIES_LARGE_LIST.copy()
 
 
 @pytest.fixture
-def radarr_movies_special_chars():
+def radarr_movies_special_chars() -> list[dict[str, Any]]:
+    """Список фильмов со специальными символами."""
     return RADARR_MOVIES_WITH_SPECIAL_CHARACTERS.copy()
 
 
 @pytest.fixture
-def existing_movie_complete(mock_session):
-    from datetime import UTC, datetime
-
+def existing_movie_complete(mock_session: AsyncMock) -> Movie:
+    """Фильм со всеми заполненными ID."""
     media = Media(
         id=3,
         media_type=MediaType.MOVIE,
@@ -171,7 +234,8 @@ def existing_movie_complete(mock_session):
 
 
 @pytest.fixture
-def existing_movie_without_ids():
+def existing_movie_without_ids() -> Movie:
+    """Фильм без ID."""
     media = Media(
         id=1,
         media_type=MediaType.MOVIE,
@@ -191,7 +255,11 @@ def existing_movie_without_ids():
 
 
 @pytest.fixture
-def existing_movie_by_tmdb_in_db(mock_session):
+def setup_movie_mocked_tmdb(mock_session: AsyncMock) -> Movie:
+    """Фильм по TMDB ID добавленный в mock session.
+
+    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
+    """
     media = Media(id=1, media_type=MediaType.MOVIE, title="Inception", release_date=None)
     movie = Movie(id=1, radarr_id=None, tmdb_id="27205", imdb_id=None)
     media.movie = movie
@@ -200,7 +268,11 @@ def existing_movie_by_tmdb_in_db(mock_session):
 
 
 @pytest.fixture
-def existing_movie_by_imdb_in_db(mock_session):
+def setup_movie_mocked_imdb(mock_session: AsyncMock) -> Movie:
+    """Фильм по IMDB ID добавленный в mock session.
+
+    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
+    """
     media = Media(id=2, media_type=MediaType.MOVIE, title="The Matrix", release_date=None)
     movie = Movie(id=2, radarr_id=None, tmdb_id=None, imdb_id="tt0133093")
     media.movie = movie
@@ -209,7 +281,11 @@ def existing_movie_by_imdb_in_db(mock_session):
 
 
 @pytest.fixture
-def existing_movie_complete_in_db(mock_session):
+def setup_movie_mocked_complete(mock_session: AsyncMock) -> Movie:
+    """Фильм со всеми ID добавленный в mock session.
+
+    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
+    """
     media = Media(
         id=3,
         media_type=MediaType.MOVIE,
@@ -223,14 +299,16 @@ def existing_movie_complete_in_db(mock_session):
 
 
 @pytest.fixture
-def radarr_movies_from_json():
+def radarr_movies_from_json() -> list[dict[str, Any]]:
+    """Фильмы из JSON файла."""
     path = pathlib.Path(__file__).parent / "fixtures" / "data" / "movies.json"
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 @pytest.fixture
-def movie():
+def movie() -> Movie:
+    """Базовый объект Movie для тестирования."""
     movie = Movie(
         id=10,
         jellyfin_id="jf-movie-1",
@@ -241,7 +319,8 @@ def movie():
 
 
 @pytest.fixture
-def existing_watch(movie, user):
+def existing_watch(movie: Movie, user: User) -> WatchHistory:
+    """История просмотров фильма для пользователя."""
     return WatchHistory(
         user_id=user.id,
         media_id=movie.id,
@@ -252,14 +331,15 @@ def existing_watch(movie, user):
 
 
 @pytest.fixture
-def sonarr_series_from_json():
+def sonarr_series_from_json() -> list[dict[str, Any]]:
+    """Серии из JSON файла."""
     path = pathlib.Path(__file__).parent / "fixtures" / "data" / "series.json"
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 @pytest.fixture
-def sample_movies_mixed():
+def sample_movies_mixed() -> list[dict[str, Any]]:
     """Mixed movies: existing and new"""
     return [
         {"id": 1, "title": "Existing Movie", "inCinemas": "2023-01-01T00:00:00Z"},
@@ -268,7 +348,7 @@ def sample_movies_mixed():
 
 
 @pytest.fixture
-def sample_movies_basic():
+def sample_movies_basic() -> list[dict[str, Any]]:
     """Basic sample movies for testing"""
     return [
         {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"},
@@ -278,7 +358,7 @@ def sample_movies_basic():
 
 # --- Моки серий и эпизодов из Sonarr ---
 @pytest.fixture
-def sonarr_series_basic():
+def sonarr_series_basic() -> list[dict[str, Any]]:
     """Фикстура для тестовых данных серий из Sonarr."""
     return [
         {
@@ -307,7 +387,8 @@ def sonarr_series_basic():
 
 
 @pytest.fixture
-def sonarr_episodes_basic():
+def sonarr_episodes_basic() -> list[dict[str, Any]]:
+    """Фикстура для тестовых данных эпизодов из Sonarr."""
     return [
         {
             "id": 101,
@@ -331,7 +412,8 @@ def sonarr_episodes_basic():
 
 
 @pytest.fixture
-def sonarr_series_invalid_data():
+def sonarr_series_invalid_data() -> list[dict[str, Any]]:
+    """Фикстура для тестовых данных серий с невалидными данными."""
     return [
         {
             "id": 101,
@@ -343,7 +425,8 @@ def sonarr_series_invalid_data():
 
 
 @pytest.fixture
-def existing_series_without_ids():
+def existing_series_without_ids() -> Series:
+    """Серия без ID."""
     media = Media(
         id=1,
         media_type=MediaType.SERIES,
@@ -366,7 +449,8 @@ def existing_series_without_ids():
 
 
 @pytest.fixture
-def series():
+def series() -> Series:
+    """Базовый объект Series для тестирования."""
     media = Media(
         id=1,
         media_type=MediaType.SERIES,
@@ -381,7 +465,8 @@ def series():
 
 
 @pytest.fixture
-def season(series):
+def season(series: Series) -> Season:
+    """Базовый объект Season для тестирования."""
     return Season(
         id=10,
         number=1,
@@ -391,7 +476,8 @@ def season(series):
 
 
 @pytest.fixture
-def episode(season):
+def episode(season: Season) -> Episode:
+    """Базовый объект Episode для тестирования."""
     return Episode(
         id=100,
         jellyfin_id="jf-episode-1",
@@ -402,15 +488,16 @@ def episode(season):
 
 
 @pytest.fixture
-def empty_scalars():
-    async def _scalars(*args, **kwargs):
+def empty_scalars() -> Callable[..., Coroutine[Any, Any, list[Any]]]:
+    async def _scalars(*args: Any, **kwargs: Any) -> list[Any]:
         return []
 
     return _scalars
 
 
 @pytest.fixture
-def user():
+def user() -> User:
+    """Базовый объект User для тестирования."""
     user = User(
         id=1,
         username="test_user",
@@ -420,45 +507,28 @@ def user():
 
 
 @pytest.fixture
-def mock_exists_false():
-    """select(exists()) → False"""
+def mock_exists_false() -> Mock:
+    """Мок для select(exists()) → False"""
     m = Mock()
     m.scalar.return_value = False
     return m
 
 
 @pytest.fixture
-def mock_exists_true():
-    """select(exists()) → True"""
+def mock_exists_true() -> Mock:
+    """Мок для select(exists()) → True"""
     m = Mock()
     m.scalar.return_value = True
     return m
 
 
-# --- Хелперы для моков SQLAlchemy-запросов ---
-@pytest.fixture
-def mock_exists_result_false():
-    """Мок результата select(exists().where(...)) => False"""
-    mock_result = Mock()
-    mock_result.scalar.return_value = False
-    return mock_result
-
-
-@pytest.fixture
-def mock_exists_result_true():
-    """Мок результата select(exists().where(...)) => True"""
-    mock_result = Mock()
-    mock_result.scalar.return_value = True
-    return mock_result
-
-
 @pytest.fixture
 def setup_mock_session_exists_check(
-    mock_session, mock_exists_result_false, mock_exists_result_true
-):
+    mock_session: AsyncMock, mock_exists_false: Mock, mock_exists_true: Mock
+) -> Callable[[list[bool] | None], AsyncMock]:
     """Фабрика для настройки проверки существования фильмов"""
 
-    def _setup(exists_sequence=None):
+    def _setup(exists_sequence: list[bool] | None = None) -> AsyncMock:
         if exists_sequence is None:
             exists_sequence = [False]
 
@@ -476,7 +546,7 @@ def setup_mock_session_exists_check(
 
 # --- Хелперы для мокирования fetch_radarr_movies и fetch_sonarr_series ---
 @pytest.fixture
-def mock_fetch_radarr_movies():
+def mock_fetch_radarr_movies() -> Generator[AsyncMock, None, None]:
     """Фикстура для мока функции fetch_radarr_movies"""
     with patch(
         "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -485,7 +555,7 @@ def mock_fetch_radarr_movies():
 
 
 @pytest.fixture
-def mock_fetch_sonarr_series():
+def mock_fetch_sonarr_series() -> Generator[AsyncMock, None, None]:
     """Фикстура для мока функции fetch_sonarr_series"""
     with patch(
         "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
@@ -494,7 +564,7 @@ def mock_fetch_sonarr_series():
 
 
 @pytest.fixture
-def mock_fetch_sonarr_episodes():
+def mock_fetch_sonarr_episodes() -> Generator[AsyncMock, None, None]:
     """Фикстура для мока функции fetch_sonarr_episodes"""
     with patch(
         "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock

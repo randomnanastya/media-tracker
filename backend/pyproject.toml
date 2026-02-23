@@ -42,6 +42,7 @@ extend-exclude = ["migrations"]
 [tool.ruff.lint]
 ignore = [
     "E501",
+    "ASYNC109",  # Allow timeout parameter in async functions (used by httpx)
 ]
 select = [
     "E", "F", "I",  # flake8: ошибки, баги, импорт

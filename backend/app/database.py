@@ -18,7 +18,7 @@ DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT
 
 async_engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=os.getenv("APP_ENV") == "development",
 )
 
 AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
