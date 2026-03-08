@@ -33,6 +33,8 @@ async def test_sync_watched_movies_no_movies(mock_session, user):
 
 @pytest.mark.asyncio
 async def test_sync_watched_movies_add_new(mock_session, user, movie):
+    movie.tmdb_id = "123"  # Match movie_data
+
     movie_data = {
         "Id": "jf-movie-1",
         "Name": "Test Movie",
@@ -52,19 +54,25 @@ async def test_sync_watched_movies_add_new(mock_session, user, movie):
     wh_result_mock = MagicMock()
     wh_result_mock.scalars.return_value = wh_scalars_mock
 
+    # Empty result for jellyfin_id search
+    empty_scalars_mock = MagicMock()
+    empty_scalars_mock.__iter__.return_value = iter([])
+    empty_result_mock = MagicMock()
+    empty_result_mock.scalars.return_value = empty_scalars_mock
+
+    # Movie found by tmdb_id
     movies_scalars_mock = MagicMock()
     movies_scalars_mock.__iter__.return_value = iter([movie])
-
     movies_result_mock = MagicMock()
     movies_result_mock.scalars.return_value = movies_scalars_mock
 
     mock_session.execute = AsyncMock(
         side_effect=[
-            users_result_mock,
-            wh_result_mock,
-            movies_result_mock,
-            MagicMock(),
-            MagicMock(),
+            users_result_mock,  # 1. select(User)
+            wh_result_mock,  # 2. select(WatchHistory)
+            empty_result_mock,  # 3. select(Movie).where(jellyfin_id.in_(...))
+            movies_result_mock,  # 4. select(Movie).where(tmdb_id.in_(...))
+            empty_result_mock,  # 5. select(Movie).where(imdb_id.in_(...))
         ]
     )
 
@@ -92,6 +100,8 @@ async def test_sync_watched_movies_add_new(mock_session, user, movie):
 
 @pytest.mark.asyncio
 async def test_sync_watched_movies_update_existing(mock_session, user, movie, existing_watch):
+    movie.tmdb_id = "123"  # Match movie_data
+
     movie_data = {
         "Id": "jf-movie-1",
         "ProviderIds": {"Tmdb": "123"},
@@ -111,6 +121,7 @@ async def test_sync_watched_movies_update_existing(mock_session, user, movie, ex
     wh_result_mock = MagicMock()
     wh_result_mock.scalars.return_value = wh_scalars_mock
 
+    # Movie found by tmdb_id
     movies_scalars_mock = MagicMock()
     movies_scalars_mock.__iter__.return_value = iter([movie])
     movies_result_mock = MagicMock()
@@ -123,11 +134,11 @@ async def test_sync_watched_movies_update_existing(mock_session, user, movie, ex
 
     mock_session.execute = AsyncMock(
         side_effect=[
-            users_result_mock,  # select(User).where(...)
-            wh_result_mock,  # select(WatchHistory).where(...)
-            movies_result_mock,  # select(Movie).where(Movie.jellyfin_id.in_(...))
-            empty_result,  # select(Movie).where(Movie.tmdb_id.in_(...))
-            empty_result,  # select(Movie).where(Movie.imdb_id.in_(...))
+            users_result_mock,  # 1. select(User).where(...)
+            wh_result_mock,  # 2. select(WatchHistory).where(...)
+            empty_result,  # 3. select(Movie).where(jellyfin_id.in_(...))
+            movies_result_mock,  # 4. select(Movie).where(tmdb_id.in_(...))
+            empty_result,  # 5. select(Movie).where(imdb_id.in_(...))
         ]
     )
 
@@ -157,6 +168,7 @@ async def test_sync_watched_movies_update_existing(mock_session, user, movie, ex
 @pytest.mark.asyncio
 async def test_sync_watched_movies_mark_unwatched(mock_session, user, movie, existing_watch):
     existing_watch.is_watched = True
+    movie.tmdb_id = "123"  # Match movie_data
 
     movie_data = {
         "Id": "jf-movie-1",
@@ -191,9 +203,9 @@ async def test_sync_watched_movies_mark_unwatched(mock_session, user, movie, exi
         side_effect=[
             users_result,  # 1. select(User).where(...)
             watch_history_result,  # 2. select(WatchHistory).where(...)
-            movies_result,  # 3. select(Movie).where(Movie.jellyfin_id.in_(...))
-            empty_result,  # 4. select(Movie).where(Movie.tmdb_id.in_(...))
-            empty_result,  # 5. select(Movie).where(Movie.imdb_id.in_(...))
+            empty_result,  # 3. select(Movie).where(jellyfin_id.in_(...))
+            movies_result,  # 4. select(Movie).where(tmdb_id.in_(...))
+            empty_result,  # 5. select(Movie).where(imdb_id.in_(...))
         ]
     )
 
