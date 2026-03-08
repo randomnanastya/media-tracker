@@ -161,7 +161,7 @@ jobs:
             @semantic-release/changelog @semantic-release/github @semantic-release/git
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
       - name: Debug tags
         run: |
