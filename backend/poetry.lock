@@ -374,6 +374,43 @@ files = [
 ]
 
 [[package]]
+name = "factory-boy"
+version = "3.3.3"
+description = "A versatile test fixtures replacement based on thoughtbot's factory_bot for Ruby."
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "factory_boy-3.3.3-py2.py3-none-any.whl", hash = "sha256:1c39e3289f7e667c4285433f305f8d506efc2fe9c73aaea4151ebd5cdea394fc"},
+    {file = "factory_boy-3.3.3.tar.gz", hash = "sha256:866862d226128dfac7f2b4160287e899daf54f2612778327dd03d0e2cb1e3d03"},
+]
+
+[package.dependencies]
+Faker = ">=0.7.0"
+
+[package.extras]
+dev = ["Django", "Pillow", "SQLAlchemy", "coverage", "flake8", "isort", "mongoengine", "mongomock", "mypy", "tox", "wheel (>=0.32.0)", "zest.releaser[recommended]"]
+doc = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
+
+[[package]]
+name = "faker"
+version = "40.4.0"
+description = "Faker is a Python package that generates fake data for you."
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "faker-40.4.0-py3-none-any.whl", hash = "sha256:486d43c67ebbb136bc932406418744f9a0bdf2c07f77703ea78b58b77e9aa443"},
+    {file = "faker-40.4.0.tar.gz", hash = "sha256:76f8e74a3df28c3e2ec2caafa956e19e37a132fdc7ea067bc41783affcfee364"},
+]
+
+[package.dependencies]
+tzdata = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+tzdata = ["tzdata"]
+
+[[package]]
 name = "fastapi"
 version = "0.116.2"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -617,6 +654,18 @@ files = [
 
 [package.extras]
 all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
+
+[[package]]
+name = "inflection"
+version = "0.5.1"
+description = "A port of Ruby on Rails inflector to Python"
+optional = false
+python-versions = ">=3.5"
+groups = ["dev"]
+files = [
+    {file = "inflection-0.5.1-py2.py3-none-any.whl", hash = "sha256:f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2"},
+    {file = "inflection-0.5.1.tar.gz", hash = "sha256:1a29730d366e996aaacffb2f1f1cb9593dc38e2ddd30c91250c6dde09ea9b417"},
+]
 
 [[package]]
 name = "iniconfig"
@@ -1288,6 +1337,25 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-factoryboy"
+version = "2.8.1"
+description = "Factory Boy support for pytest."
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "pytest_factoryboy-2.8.1-py3-none-any.whl", hash = "sha256:91c762cb236bf34b11efdf2e54bafae33114488235621e8b2c4bd9fd77838784"},
+    {file = "pytest_factoryboy-2.8.1.tar.gz", hash = "sha256:2221d48b31b8b8ccaa739c6a162fb50a43a4de6dff6043f249d2807a3462548d"},
+]
+
+[package.dependencies]
+factory_boy = ">=2.10.0"
+inflection = "*"
+packaging = "*"
+pytest = ">=7.0"
+typing_extensions = "*"
+
+[[package]]
 name = "pytest-httpx"
 version = "0.27.0"
 description = "Send responses to httpx."
@@ -1682,7 +1750,7 @@ version = "2025.2"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
-groups = ["main"]
+groups = ["main", "dev"]
 markers = "platform_system == \"Windows\""
 files = [
     {file = "tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8"},
@@ -2042,4 +2110,4 @@ ruyaml = ">=0.91.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "40c65114898c03518f4175bf23f6a834652a1a2589548a3b54f1205a8e29b9c6"
+content-hash = "ea1aecd2caad18e0c2d08a398d2c961040fcaff26504566f79575422a74969a9"

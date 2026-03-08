@@ -65,11 +65,38 @@ async def test_fetch_jellyfin_movies_by_user_single_page(mock_httpx_client, mock
         assert mock_client_instance.get.call_count == 1
 
 
+@pytest.mark.parametrize(
+    "error_type,status_code,error_message,expected_code",
+    [
+        ("network", None, "Timeout", JellyfinErrorCode.NETWORK_ERROR),
+        ("http", 404, "Not Found", JellyfinErrorCode.FETCH_FAILED),
+        ("http", 500, "Internal Server Error", JellyfinErrorCode.FETCH_FAILED),
+    ],
+    ids=["network_error", "http_404", "http_500"],
+)
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_by_user_network_error(mock_httpx_client, mock_env_vars):
-    """Сетевая ошибка → NETWORK_ERROR."""
+async def test_fetch_jellyfin_movies_by_user_errors(
+    mock_httpx_client,
+    mock_env_vars,
+    error_type: str,
+    status_code: int | None,
+    error_message: str,
+    expected_code: JellyfinErrorCode,
+):
+    """Тесты для различных типов ошибок при fetch_jellyfin_movies_for_user_all."""
     mock_client_instance = AsyncMock()
-    mock_client_instance.get.side_effect = httpx.RequestError("Timeout")
+
+    if error_type == "network":
+        mock_client_instance.get.side_effect = httpx.RequestError(error_message)
+    else:
+        mock_response = Mock()
+        mock_response.status_code = status_code
+        mock_response.text = error_message
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            message=str(status_code), request=Mock(), response=mock_response
+        )
+        mock_client_instance.get.return_value = mock_response
+
     mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
 
     with (
@@ -78,30 +105,9 @@ async def test_fetch_jellyfin_movies_by_user_network_error(mock_httpx_client, mo
     ):
         await fetch_jellyfin_movies_for_user_all("user1")
 
-        assert exc_info.value.code == JellyfinErrorCode.NETWORK_ERROR
-
-
-@pytest.mark.asyncio
-async def test_fetch_jellyfin_movies_by_user_http_404(mock_httpx_client, mock_env_vars):
-    """404 → FETCH_FAILED."""
-    mock_response = Mock()
-    mock_response.status_code = 404
-    mock_response.text = "Not Found"
-    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-        message="404", request=Mock(), response=mock_response
-    )
-
-    mock_client_instance = AsyncMock()
-    mock_client_instance.get.return_value = mock_response
-    mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
-
-    with (
-        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),
-        pytest.raises(JellyfinClientError) as exc_info,
-    ):
-        await fetch_jellyfin_movies_for_user_all("user1")
-        assert exc_info.value.code == JellyfinErrorCode.FETCH_FAILED
-        assert "Not Found" in exc_info.value.message
+        assert exc_info.value.code == expected_code
+        if error_type == "http":
+            assert error_message in exc_info.value.message
 
 
 @pytest.mark.asyncio

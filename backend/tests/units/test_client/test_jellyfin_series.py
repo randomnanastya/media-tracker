@@ -84,11 +84,40 @@ async def test_fetch_jellyfin_series_no_url(clear_env) -> None:
     assert exc.value.code == JellyfinErrorCode.INTERNAL_ERROR
 
 
+@pytest.mark.parametrize(
+    "error_type,status_code,error_message,expected_code",
+    [
+        ("network", None, "Timeout", JellyfinErrorCode.NETWORK_ERROR),
+        ("http", 403, "Forbidden", JellyfinErrorCode.FETCH_FAILED),
+        ("http", 404, "Not Found", JellyfinErrorCode.FETCH_FAILED),
+    ],
+    ids=["network_error", "http_403", "http_404"],
+)
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_series_network_error(mock_httpx_client: Mock, mock_env_vars) -> None:
-    """Тест сетевой ошибки."""
+async def test_fetch_jellyfin_series_errors(
+    mock_httpx_client: Mock,
+    mock_env_vars,
+    error_type: str,
+    status_code: int | None,
+    error_message: str,
+    expected_code: JellyfinErrorCode,
+) -> None:
+    """Тесты для различных типов ошибок при fetch_jellyfin_series."""
     client_instance = AsyncMock()
-    client_instance.get.side_effect = httpx.RequestError("Timeout")
+
+    if error_type == "network":
+        client_instance.get.side_effect = httpx.RequestError(error_message)
+    else:
+        resp = Mock()
+        resp.status_code = status_code
+        resp.text = error_message
+        resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            str(status_code),
+            request=Mock(),
+            response=resp,
+        )
+        client_instance.get.return_value = resp
+
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
     with (
@@ -97,29 +126,6 @@ async def test_fetch_jellyfin_series_network_error(mock_httpx_client: Mock, mock
     ):
         await fetch_jellyfin_series()
 
-    assert exc.value.code == JellyfinErrorCode.NETWORK_ERROR
-
-
-@pytest.mark.asyncio
-async def test_fetch_jellyfin_series_http_error(mock_httpx_client: Mock, mock_env_vars) -> None:
-    """Тест HTTP ошибки (например, 403 Forbidden)."""
-    resp = Mock()
-    resp.text = "Forbidden"
-    resp.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "403",
-        request=Mock(),
-        response=resp,
-    )
-
-    client_instance = AsyncMock()
-    client_instance.get.return_value = resp
-    mock_httpx_client.return_value.__aenter__.return_value = client_instance
-
-    with (
-        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="token"),
-        pytest.raises(JellyfinClientError) as exc,
-    ):
-        await fetch_jellyfin_series()
-
-    assert exc.value.code == JellyfinErrorCode.FETCH_FAILED
-    assert "Forbidden" in exc.value.message
+    assert exc.value.code == expected_code
+    if error_type == "http":
+        assert error_message in exc.value.message

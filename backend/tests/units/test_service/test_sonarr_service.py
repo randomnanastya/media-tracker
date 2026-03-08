@@ -10,14 +10,6 @@ from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series
 
 
-def calculate_expected_entities_count(series_count, episodes_data):
-    unique_seasons = len({ep["seasonNumber"] for ep in episodes_data}) if episodes_data else 0
-    episodes_count = len(episodes_data)
-    return (
-        (series_count * 2) + unique_seasons + episodes_count
-    )  # Media + Series + Seasons + Episodes
-
-
 @pytest.mark.asyncio
 async def test_import_sonarr_series_creates_entities(
     mock_session, sonarr_series_basic, sonarr_episodes_basic
@@ -148,9 +140,13 @@ async def test_episode_update_logic_directly():
 
 
 @pytest.mark.asyncio
-async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_json):
-    """Test service with real Sonarr data from serials.json."""
+async def test_import_sonarr_series_real_data(mock_session):
+    """Test service with generated Sonarr series data."""
     # Arrange
+    from tests.factories import SeriesDictFactory
+
+    sonarr_series_data = SeriesDictFactory.build_batch(5)
+
     with (
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
@@ -159,10 +155,10 @@ async def test_import_sonarr_series_real_data(mock_session, sonarr_series_from_j
             "app.services.sonarr_service.fetch_sonarr_episodes", new_callable=AsyncMock
         ) as mock_fetch_episodes,
     ):
-        mock_fetch_series.return_value = sonarr_series_from_json
+        mock_fetch_series.return_value = sonarr_series_data
         mock_fetch_episodes.return_value = []
 
-        series_count = len(sonarr_series_from_json)
+        series_count = len(sonarr_series_data)
 
         processed_series = []
 

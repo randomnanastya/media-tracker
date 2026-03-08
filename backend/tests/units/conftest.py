@@ -1,4 +1,3 @@
-import json
 import os
 from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
 from datetime import UTC, datetime
@@ -6,19 +5,20 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from _pytest import pathlib
 from httpx import AsyncClient
+from pytest_factoryboy import register
 
 from app.main import app
-from app.models import Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
-from tests.units.fixtures.radarr_movies import (
-    RADARR_MOVIES_BASIC,
-    RADARR_MOVIES_EMPTY,
-    RADARR_MOVIES_LARGE_LIST,
-    RADARR_MOVIES_WITH_INVALID_DATA,
-    RADARR_MOVIES_WITH_SPECIAL_CHARACTERS,
-    RADARR_MOVIES_WITHOUT_RADARR_ID,
-    RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS,
+from app.models import Movie, Series, User, WatchHistory
+from tests.factories import (
+    EpisodeFactory,
+    MediaFactory,
+    MovieFactory,
+    RadarrMovieDictFactory,
+    SeasonFactory,
+    SeriesFactory,
+    UserFactory,
+    WatchHistoryFactory,
 )
 
 # Устанавливаем тестовое окружение
@@ -46,8 +46,17 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
     _scheduler_patcher.stop()
 
 
-# --- EVENT LOOP (для pytest-asyncio) ---
-# Фикстура удалена: pytest-asyncio в auto mode сам управляет event loop
+# === pytest-factoryboy регистрация ===
+# Регистрация модельных фабрик для автоматических фикстур
+# После регистрации доступны фикстуры: media_factory, media, movie_factory, movie, и т.д.
+
+register(MediaFactory)
+register(MovieFactory)
+register(SeriesFactory)
+register(SeasonFactory)
+register(EpisodeFactory)
+register(UserFactory)
+register(WatchHistoryFactory)
 
 
 # --- Моки базы данных и зависимостей ---
@@ -176,146 +185,92 @@ def mock_db_result() -> Mock:
     return mock_result
 
 
-# --- Моки фильмов из Radarr ---
 @pytest.fixture
 def radarr_movies_basic() -> list[dict[str, Any]]:
     """Базовый список фильмов из Radarr."""
-    return RADARR_MOVIES_BASIC.copy()
+    movies: list[dict[str, Any]] = [  # type: ignore[return-value]
+        RadarrMovieDictFactory(id=1, inCinemas="2024-01-01T00:00:00Z"),
+        RadarrMovieDictFactory(id=2, inCinemas="2023-02-01T00:00:00Z"),
+        RadarrMovieDictFactory(id=3, no_date=True),
+    ]
+    return movies
 
 
-@pytest.fixture
-def radarr_movies_empty() -> list[dict[str, Any]]:
-    """Пустой список фильмов из Radarr."""
-    return RADARR_MOVIES_EMPTY.copy()
-
-
-@pytest.fixture
-def radarr_movies_invalid_data() -> list[dict[str, Any]]:
-    """Список фильмов с невалидными данными."""
-    return RADARR_MOVIES_WITH_INVALID_DATA.copy()
-
-
-@pytest.fixture
-def radarr_movies_without_require_fields() -> list[dict[str, Any]]:
-    """Список фильмов без обязательных полей."""
-    return RADARR_MOVIES_WITHOUT_REQUIRE_FIELDS.copy()
+# radarr_movies_invalid_data fixture removed - unused
+# For invalid data tests use RadarrMovieDictFactory with traits:
+# RadarrMovieDictFactory.build(missing_id=True, invalid_date=True)
 
 
 @pytest.fixture
 def radarr_movies_without_radarr_id() -> list[dict[str, Any]]:
-    """Список фильмов без radarr_id."""
-    return RADARR_MOVIES_WITHOUT_RADARR_ID.copy()
+    """List of movies - one valid, one without any IDs (will be skipped)."""
+
+    movies: list[dict[str, Any]] = [  # type: ignore[return-value]
+        RadarrMovieDictFactory(id=1, title="Movie with radarr ID"),
+        RadarrMovieDictFactory(id=None, title="Movie without any IDs", no_external_ids=True),
+    ]
+    return movies
 
 
 @pytest.fixture
 def radarr_movies_large_list() -> list[dict[str, Any]]:
-    """Большой список фильмов из Radarr."""
-    return RADARR_MOVIES_LARGE_LIST.copy()
+    return RadarrMovieDictFactory.create_batch(20)
 
 
 @pytest.fixture
-def radarr_movies_special_chars() -> list[dict[str, Any]]:
-    """Список фильмов со специальными символами."""
-    return RADARR_MOVIES_WITH_SPECIAL_CHARACTERS.copy()
-
-
-@pytest.fixture
-def existing_movie_complete(mock_session: AsyncMock) -> Movie:
+def existing_movie_complete() -> Movie:
     """Фильм со всеми заполненными ID."""
-    media = Media(
+    return MovieFactory.build(
         id=3,
-        media_type=MediaType.MOVIE,
-        title="Inception",
-        release_date=datetime(2010, 7, 16, tzinfo=UTC),
+        radarr_id=123,
+        tmdb_id="27205",
+        imdb_id="tt1375666",
+        jellyfin_id="jf-inception",
+        media__id=3,
+        media__title="Inception",
+        media__release_date=datetime(2010, 7, 16, tzinfo=UTC),
     )
-    movie = Movie(id=media.id, radarr_id=123, tmdb_id="27205", imdb_id="tt1375666", media=media)
-
-    return movie
 
 
 @pytest.fixture
 def existing_movie_without_ids() -> Movie:
-    """Фильм без ID."""
-    media = Media(
-        id=1,
-        media_type=MediaType.MOVIE,
-        title="Inception",
-        release_date=None,
-    )
-
-    movie = Movie(
+    """Фильм без внешних ID."""
+    return MovieFactory.build(
         id=1,
         jellyfin_id=None,
         tmdb_id=None,
         imdb_id=None,
-        media=media,
+        radarr_id=None,
+        media__id=1,
+        media__title="Inception",
+        media__release_date=None,
     )
 
-    return movie
+
+# Фикстуры setup_movie_mocked_* удалены - имели побочные эффекты (mock_session.add)
+# Создавайте объекты через MovieFactory и явно добавляйте в session:
+#   movie = MovieFactory.build(...)
+#   mock_session.add(movie.media)
 
 
-@pytest.fixture
-def setup_movie_mocked_tmdb(mock_session: AsyncMock) -> Movie:
-    """Фильм по TMDB ID добавленный в mock session.
-
-    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
-    """
-    media = Media(id=1, media_type=MediaType.MOVIE, title="Inception", release_date=None)
-    movie = Movie(id=1, radarr_id=None, tmdb_id="27205", imdb_id=None)
-    media.movie = movie
-    mock_session.add(media)
-    return movie
+# @pytest.fixture
+# def radarr_movies_from_json() -> list[dict[str, Any]]:
+#     """Фильмы из JSON файла."""
+#     path = pathlib.Path(__file__).parent / "fixtures" / "data" / "movies.json"
+#     with open(path, encoding="utf-8") as f:
+#         return json.load(f)
 
 
-@pytest.fixture
-def setup_movie_mocked_imdb(mock_session: AsyncMock) -> Movie:
-    """Фильм по IMDB ID добавленный в mock session.
-
-    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
-    """
-    media = Media(id=2, media_type=MediaType.MOVIE, title="The Matrix", release_date=None)
-    movie = Movie(id=2, radarr_id=None, tmdb_id=None, imdb_id="tt0133093")
-    media.movie = movie
-    mock_session.add(media)
-    return movie
-
-
-@pytest.fixture
-def setup_movie_mocked_complete(mock_session: AsyncMock) -> Movie:
-    """Фильм со всеми ID добавленный в mock session.
-
-    ВАЖНО: Эта фикстура имеет побочный эффект - вызывает mock_session.add()!
-    """
-    media = Media(
-        id=3,
-        media_type=MediaType.MOVIE,
-        title="Inception",
-        release_date=datetime(2010, 7, 16, tzinfo=UTC),
-    )
-    movie = Movie(id=3, radarr_id=None, tmdb_id="27205", imdb_id="tt1375666")
-    media.movie = movie
-    mock_session.add(media)
-    return movie
-
-
-@pytest.fixture
-def radarr_movies_from_json() -> list[dict[str, Any]]:
-    """Фильмы из JSON файла."""
-    path = pathlib.Path(__file__).parent / "fixtures" / "data" / "movies.json"
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-@pytest.fixture
-def movie() -> Movie:
-    """Базовый объект Movie для тестирования."""
-    movie = Movie(
-        id=10,
-        jellyfin_id="jf-movie-1",
-        tmdb_id="123",
-        imdb_id="tt123",
-    )
-    return movie
+# @pytest.fixture
+# def movie() -> Movie:
+#     """Базовый объект Movie для тестирования."""
+#     movie = Movie(
+#         id=10,
+#         jellyfin_id="jf-movie-1",
+#         tmdb_id="123",
+#         imdb_id="tt123",
+#     )
+#     return movie
 
 
 @pytest.fixture
@@ -330,161 +285,106 @@ def existing_watch(movie: Movie, user: User) -> WatchHistory:
     )
 
 
-@pytest.fixture
-def sonarr_series_from_json() -> list[dict[str, Any]]:
-    """Серии из JSON файла."""
-    path = pathlib.Path(__file__).parent / "fixtures" / "data" / "series.json"
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
+# Фикстура sonarr_series_from_json удалена - используйте SeriesDictFactory.build_batch()
 
 
-@pytest.fixture
-def sample_movies_mixed() -> list[dict[str, Any]]:
-    """Mixed movies: existing and new"""
-    return [
-        {"id": 1, "title": "Existing Movie", "inCinemas": "2023-01-01T00:00:00Z"},
-        {"id": 2, "title": "New Movie", "inCinemas": "2023-02-01T00:00:00Z"},
-    ]
-
-
-@pytest.fixture
-def sample_movies_basic() -> list[dict[str, Any]]:
-    """Basic sample movies for testing"""
-    return [
-        {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z"},
-        {"id": 2, "title": "Movie 2", "inCinemas": "2023-02-01T00:00:00Z"},
-    ]
+# sample_movies_* fixtures removed - use RadarrMovieDictFactory.build() instead
+# Example: RadarrMovieDictFactory.build(id=1, title="Movie", inCinemas="2023-01-01T00:00:00Z")
 
 
 # --- Моки серий и эпизодов из Sonarr ---
 @pytest.fixture
 def sonarr_series_basic() -> list[dict[str, Any]]:
-    """Фикстура для тестовых данных серий из Sonarr."""
+    """Базовые серии из Sonarr API."""
+    from tests.factories import SeriesDictFactory
+
     return [
-        {
-            "id": 1,
-            "title": "Test Series 1",
-            "imdbId": "tt1234567",
-            "firstAired": "2020-01-01",
-            "year": 2020,
-            "status": "continuing",
-            "images": [{"coverType": "poster", "remoteUrl": "http://example.com/poster.jpg"}],
-            "genres": ["Drama", "Sci-Fi"],
-            "ratings": {"value": 8.5, "votes": 1000},
-        },
-        {
-            "id": 2,
-            "title": "Test Series 2",
-            "imdbId": "tt7654321",
-            "firstAired": "2021-02-01",
-            "year": 2021,
-            "status": "ended",
-            "images": [],
-            "genres": ["Comedy"],
-            "ratings": {"value": 7.0, "votes": 500},
-        },
+        SeriesDictFactory.build(
+            id=1,
+            title="Test Series 1",
+            imdbId="tt1234567",
+            firstAired="2020-01-01",
+            year=2020,
+            status="continuing",
+            images=[{"coverType": "poster", "remoteUrl": "http://example.com/poster.jpg"}],
+            genres=["Drama", "Sci-Fi"],
+            rating={"value": 8.5, "votes": 1000},
+        ),
+        SeriesDictFactory.build(
+            id=2,
+            title="Test Series 2",
+            imdbId="tt7654321",
+            firstAired="2021-02-01",
+            year=2021,
+            status="ended",  # ended
+            images=[],
+            genres=["Comedy"],
+            rating={"value": 7.0, "votes": 500},
+        ),
     ]
 
 
 @pytest.fixture
 def sonarr_episodes_basic() -> list[dict[str, Any]]:
-    """Фикстура для тестовых данных эпизодов из Sonarr."""
+    """Базовые эпизоды из Sonarr API."""
+    from tests.factories import SonarrEpisodeDictFactory
+
     return [
-        {
-            "id": 101,
-            "seriesId": 1,
-            "seasonNumber": 1,  # Одинаковый seasonNumber
-            "episodeNumber": 1,
-            "title": "Pilot",
-            "airDateUtc": "2020-01-01T00:00:00Z",
-            "overview": "The pilot episode.",
-        },
-        {
-            "id": 102,
-            "seriesId": 1,
-            "seasonNumber": 1,  # Одинаковый seasonNumber
-            "episodeNumber": 2,
-            "title": "Episode 2",
-            "airDateUtc": "2020-01-08T00:00:00Z",
-            "overview": "The second episode.",
-        },
+        SonarrEpisodeDictFactory.build(
+            id=101,
+            seriesId=1,
+            seasonNumber=1,
+            episodeNumber=1,
+            title="Pilot",
+            airDateUtc="2020-01-01T00:00:00Z",
+            overview="The pilot episode.",
+        ),
+        SonarrEpisodeDictFactory.build(
+            id=102,
+            seriesId=1,
+            seasonNumber=1,
+            episodeNumber=2,
+            title="Episode 2",
+            airDateUtc="2020-01-08T00:00:00Z",
+            overview="The second episode.",
+        ),
     ]
 
 
 @pytest.fixture
 def sonarr_series_invalid_data() -> list[dict[str, Any]]:
-    """Фикстура для тестовых данных серий с невалидными данными."""
+    """Серии с невалидными данными."""
+    from tests.factories import SeriesDictFactory
+
     return [
-        {
-            "id": 101,
-            "title": "Pilot",
-            "firstAired": "invalid_date",
-            "overview": "The pilot episode.",
-        }
+        SeriesDictFactory.build(
+            id=101,
+            title="Pilot",
+            invalid_date=True,  # использует trait invalid_date
+        )
     ]
 
 
 @pytest.fixture
 def existing_series_without_ids() -> Series:
-    """Серия без ID."""
-    media = Media(
-        id=1,
-        media_type=MediaType.SERIES,
-        title="Old title",
-        release_date=None,
-    )
-
-    series = Series(
+    """Серия без внешних ID."""
+    return SeriesFactory.build(
         id=1,
         jellyfin_id=None,
         tvdb_id=None,
         imdb_id=None,
         tmdb_id=None,
+        sonarr_id=None,
         status=None,
         year=None,
-        media=media,
-    )
-
-    return series
-
-
-@pytest.fixture
-def series() -> Series:
-    """Базовый объект Series для тестирования."""
-    media = Media(
-        id=1,
-        media_type=MediaType.SERIES,
-        title="Test Series",
-    )
-    series = Series(
-        id=1,
-        jellyfin_id="jf-series",
-        media=media,
-    )
-    return series
-
-
-@pytest.fixture
-def season(series: Series) -> Season:
-    """Базовый объект Season для тестирования."""
-    return Season(
-        id=10,
-        number=1,
-        series_id=series.id,
-        series=series,
+        media__id=1,
+        media__title="Old title",
+        media__release_date=None,
     )
 
 
-@pytest.fixture
-def episode(season: Season) -> Episode:
-    """Базовый объект Episode для тестирования."""
-    return Episode(
-        id=100,
-        jellyfin_id="jf-episode-1",
-        title="Test Episode",
-        season_id=season.id,
-        season=season,
-    )
+# Фикстуры series, season, episode удалены - используйте автофикстуры pytest-factoryboy
+# Доступны: series, season, episode (instance) и series_factory, season_factory, episode_factory
 
 
 @pytest.fixture
@@ -495,15 +395,8 @@ def empty_scalars() -> Callable[..., Coroutine[Any, Any, list[Any]]]:
     return _scalars
 
 
-@pytest.fixture
-def user() -> User:
-    """Базовый объект User для тестирования."""
-    user = User(
-        id=1,
-        username="test_user",
-        jellyfin_user_id="jf-user-1",
-    )
-    return user
+# Фикстура user удалена - используйте автофикстуру pytest-factoryboy
+# Доступны: user (instance) и user_factory
 
 
 @pytest.fixture

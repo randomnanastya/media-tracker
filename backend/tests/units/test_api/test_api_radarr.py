@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -7,6 +8,7 @@ from app.client.radarr_client import RadarrClientError
 from app.schemas.error_codes import RadarrErrorCode
 from app.schemas.radarr import RadarrImportResponse
 from app.schemas.responses import ErrorDetail
+from tests.factories import RadarrMovieDictFactory
 
 
 @pytest.mark.asyncio
@@ -31,14 +33,18 @@ async def test_import_radarr_success_basic(async_client, radarr_movies_basic):
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_success_complex_cases(
-    async_client, radarr_movies_large_list, radarr_movies_special_chars
-):
+async def test_import_radarr_success_complex_cases(async_client, radarr_movies_large_list):
     """API должен вернуть 200 для сложных случаев: большие списки и спецсимволы"""
+    movies: list[dict[str, Any]] = [  # type: ignore[return-value]
+        *radarr_movies_large_list,
+        RadarrMovieDictFactory(title="Movie with spéciål chàrs"),
+        RadarrMovieDictFactory(title="Фильм с русскими символами"),
+    ]
+
     with patch("app.api.radarr.import_radarr_movies", new_callable=AsyncMock) as mock_import:
         # Тестируем большой список
         mock_import.return_value = RadarrImportResponse(
-            status="success", imported_count=len(radarr_movies_large_list), updated_count=0
+            status="success", imported_count=len(movies), updated_count=0
         )
 
         response = await async_client.post("/api/v1/radarr/import")
@@ -46,7 +52,7 @@ async def test_import_radarr_success_complex_cases(
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_empty_success(async_client, radarr_movies_empty):
+async def test_import_radarr_empty_success(async_client):
     """API должен вернуть 200 при пустом массиве от radarr"""
     with patch("app.api.radarr.import_radarr_movies", new_callable=AsyncMock) as mock_import:
         mock_import.return_value = RadarrImportResponse(
@@ -88,9 +94,7 @@ async def test_import_radarr_updates_existing_movies(async_client):
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_skips_invalid_movies(
-    async_client, radarr_movies_without_radarr_id, radarr_movies_invalid_data
-):
+async def test_import_radarr_skips_invalid_movies(async_client, radarr_movies_without_radarr_id):
     """API должен пропускать фильмы без ID или с невалидными данными"""
     with patch("app.api.radarr.import_radarr_movies", new_callable=AsyncMock) as mock_import:
         # Пропускаем фильмы без radarr_id (только 1 валидный из 2)
