@@ -53,4 +53,5 @@ docker-compose.yaml
 CLAUDE.md
 REFACTORING.md
 PHASE1_COMPLETE.md
-./.claude
+./.claude/*
+./.tasks/*
