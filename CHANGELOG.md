@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/randomnanastya/media-tracker/compare/v0.4.0...v0.4.1) (2026-03-08)
+
+
+### Bug Fixes
+
+* pipline release ([18fefac](https://github.com/randomnanastya/media-tracker/commit/18fefac838f68f8f8d20f2a1d2591e5a8ecb2dee))
+
 # [0.4.0](https://github.com/randomnanastya/media-tracker/compare/v0.3.10...v0.4.0) (2026-01-05)
 
 
