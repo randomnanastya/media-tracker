@@ -8,19 +8,15 @@ from app.services.import_jellyfin_movies_service import import_jellyfin_movies
 @pytest.mark.asyncio
 async def test_import_jellyfin_movies_creates_new_movies(mock_session):
     """Создаёт Media + Movie для каждого фильма."""
+    from tests.factories import JellyfinMovieDictFactory
+
     movies = [
-        {
-            "Id": "jf1",
-            "Name": "Inception",
-            "PremiereDate": "2010-07-16T00:00:00Z",
-            "ProviderIds": {"Tmdb": "27205", "Imdb": "tt1375666"},
-        },
-        {
-            "Id": "jf2",
-            "Name": "Matrix",
-            "PremiereDate": "1999-03-31",
-            "ProviderIds": {"Tmdb": "603", "Imdb": "tt0133093"},
-        },
+        JellyfinMovieDictFactory.build(
+            Id="jf1", Name="Inception", ProviderIds={"Tmdb": "27205", "Imdb": "tt1375666"}
+        ),
+        JellyfinMovieDictFactory.build(
+            Id="jf2", Name="Matrix", ProviderIds={"Tmdb": "603", "Imdb": "tt0133093"}
+        ),
     ]
 
     with (
@@ -59,12 +55,11 @@ async def test_import_jellyfin_movie_updates_existing_by_jellyfin_id(
     existing_movie_without_ids,
 ):
     """Обновляет существующий фильм, найденный по jellyfin_id."""
-    movie_data = {
-        "Id": "jf123",
-        "Name": "Inception",
-        "PremiereDate": "2010-07-16",
-        "ProviderIds": {"Tmdb": "27205", "Imdb": "tt1375666"},
-    }
+    from tests.factories import JellyfinMovieDictFactory
+
+    movie_data = JellyfinMovieDictFactory.build(
+        Id="jf123", Name="Inception", ProviderIds={"Tmdb": "27205", "Imdb": "tt1375666"}
+    )
 
     with (
         patch(
@@ -92,16 +87,19 @@ async def test_import_jellyfin_movie_updates_existing_by_jellyfin_id(
 
 
 @pytest.mark.asyncio
-async def test_import_jellyfin_movie_updates_by_external_ids(
-    mock_session,
-    existing_movie_by_tmdb_in_db,
-):
-    movie_data = {
-        "Id": "jf999",
-        "Name": "Inception",
-        "PremiereDate": "2010-07-16",
-        "ProviderIds": {"Tmdb": "27205"},
-    }
+async def test_import_jellyfin_movie_updates_by_external_ids(mock_session):
+    """Test updating existing movie found by external IDs."""
+    from tests.factories import JellyfinMovieDictFactory, MovieFactory
+
+    # Create existing movie in DB
+    existing_movie = MovieFactory.build(
+        id=1, radarr_id=None, tmdb_id="27205", imdb_id=None, media__title="Inception"
+    )
+    mock_session.add(existing_movie.media)
+
+    movie_data = JellyfinMovieDictFactory.build(
+        Id="jf999", Name="Inception", ProviderIds={"Tmdb": "27205"}
+    )
 
     with (
         patch(
@@ -119,7 +117,7 @@ async def test_import_jellyfin_movie_updates_by_external_ids(
     ):
         mock_fetch.return_value = [movie_data]
         mock_find_jf.return_value = None
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = existing_movie
 
         result = await import_jellyfin_movies(mock_session)
 
@@ -129,11 +127,9 @@ async def test_import_jellyfin_movie_updates_by_external_ids(
 
 @pytest.mark.asyncio
 async def test_import_jellyfin_movie_without_any_ids_skipped(mock_session):
-    movie_data = {
-        "Id": None,
-        "Name": "Unknown Movie",
-        "ProviderIds": {},
-    }
+    from tests.factories import JellyfinMovieDictFactory
+
+    movie_data = JellyfinMovieDictFactory.build(Id=None, Name="Unknown Movie", ProviderIds={})
 
     with (
         patch(
@@ -152,11 +148,9 @@ async def test_import_jellyfin_movie_without_any_ids_skipped(mock_session):
 
 @pytest.mark.asyncio
 async def test_import_jellyfin_movies_flush_failure_rollbacks(mock_session):
-    movie_data = {
-        "Id": "jf1",
-        "Name": "Movie",
-        "ProviderIds": {"Tmdb": "1"},
-    }
+    from tests.factories import JellyfinMovieDictFactory
+
+    movie_data = JellyfinMovieDictFactory.build(Id="jf1", Name="Movie", ProviderIds={"Tmdb": "1"})
 
     with (
         patch(
@@ -187,11 +181,9 @@ async def test_import_jellyfin_movies_flush_failure_rollbacks(mock_session):
 
 @pytest.mark.asyncio
 async def test_import_jellyfin_movies_commit_failure(mock_session):
-    movie_data = {
-        "Id": "jf1",
-        "Name": "Movie",
-        "ProviderIds": {"Tmdb": "1"},
-    }
+    from tests.factories import JellyfinMovieDictFactory
+
+    movie_data = JellyfinMovieDictFactory.build(Id="jf1", Name="Movie", ProviderIds={"Tmdb": "1"})
 
     with (
         patch(

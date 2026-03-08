@@ -1,52 +1,8 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from app.services.radarr_service import import_radarr_movies
-
-
-def count_movies_without_id(movies):
-    """Helper to count movies without Radarr ID."""
-    return sum(1 for movie in movies if "id" not in movie)
-
-
-def count_valid_movies(movies):
-    """Count movies with valid ID and parseable inCinemas date."""
-    valid_movies = []
-    for m in movies:
-        if not m.get("id"):
-            continue
-        date_str = m.get("inCinemas")
-        if date_str:
-            try:
-                datetime.fromisoformat(date_str)
-            except ValueError:
-                continue  # Skip invalid date
-        valid_movies.append(m)
-    return len(valid_movies)
-
-
-def count_invalid_movies(movies):
-    """Return number of movies that would be skipped (no ID or invalid date)."""
-    invalid_count = 0
-    for m in movies:
-        if not m.get("id"):
-            invalid_count += 1
-            continue
-        date_str = m.get("inCinemas")
-        if date_str:
-            try:
-                datetime.fromisoformat(date_str)
-            except ValueError:
-                invalid_count += 1
-                continue
-    return invalid_count
-
-
-def calculate_expected_entities_count(movies_count):
-    """Calculate expected number of entities created (Media + Movie per film)."""
-    return movies_count * 2
 
 
 @pytest.mark.asyncio
@@ -99,11 +55,15 @@ async def test_import_radarr_movies_creates_both_entities(mock_session, radarr_m
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
-    mock_session, existing_movie_by_tmdb_in_db
-):
+async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(mock_session):
     """Movie without radarr_id but with tmdb_id → finds and updates."""
     # Arrange
+    from tests.factories import MovieFactory, RadarrMovieDictFactory
+
+    # Create existing movie in DB
+    existing_movie = MovieFactory.build(id=1, radarr_id=None, tmdb_id="27205", imdb_id=None)
+    mock_session.add(existing_movie.media)
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -116,19 +76,15 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
         ) as mock_find_external,
     ):
         mock_fetch.return_value = [
-            {
-                "id": None,
-                "title": "Inception",
-                "tmdbId": 27205,
-                "imdbId": "tt1375666",
-                "inCinemas": "2010-07-16T00:00:00Z",
-            }
+            RadarrMovieDictFactory.build(
+                id=None, title="Inception", tmdbId=27205, imdbId="tt1375666"
+            )
         ]
 
         # radarr_id = None → find_movie_by_radarr_id not called
         mock_find_radarr.return_value = None
         # Found by external_ids
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = existing_movie
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -139,11 +95,17 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
-    mock_session, existing_movie_by_imdb_in_db
-):
+async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(mock_session):
     """Movie without radarr_id but with imdb_id → finds and updates."""
     # Arrange
+    from tests.factories import MovieFactory, RadarrMovieDictFactory
+
+    # Create existing movie in DB
+    existing_movie = MovieFactory.build(
+        id=2, radarr_id=None, tmdb_id=None, imdb_id="tt0133093", media__title="The Matrix"
+    )
+    mock_session.add(existing_movie.media)
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -156,17 +118,13 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
         ) as mock_find_external,
     ):
         mock_fetch.return_value = [
-            {
-                "id": None,
-                "title": "The Matrix",
-                "tmdbId": 603,
-                "imdbId": "tt0133093",
-                "inCinemas": "1999-03-31",
-            }
+            RadarrMovieDictFactory.build(
+                id=None, title="The Matrix", tmdbId=603, imdbId="tt0133093"
+            )
         ]
 
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_by_imdb_in_db
+        mock_find_external.return_value = existing_movie
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -177,11 +135,17 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(
-    mock_session, existing_movie_by_tmdb_in_db
-):
+async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(mock_session):
     """Movie with radarr_id but already exists by tmdb → updates radarr_id."""
     # Arrange
+    from tests.factories import MovieFactory, RadarrMovieDictFactory
+
+    # Create existing movie in DB (without radarr_id but with tmdb_id)
+    existing_movie = MovieFactory.build(
+        id=1, radarr_id=None, tmdb_id="27205", imdb_id=None, media__title="Inception"
+    )
+    mock_session.add(existing_movie.media)
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -194,18 +158,14 @@ async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(
         ) as mock_find_external,
     ):
         mock_fetch.return_value = [
-            {
-                "id": 123,
-                "title": "Inception",
-                "tmdbId": 27205,
-                "imdbId": "tt1375666",
-                "inCinemas": "2010-07-16",
-            }
+            RadarrMovieDictFactory.build(
+                id=123, title="Inception", tmdbId=27205, imdbId="tt1375666"
+            )
         ]
 
         # Not found by radarr_id, but found by external_ids
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_by_tmdb_in_db
+        mock_find_external.return_value = existing_movie
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -219,6 +179,8 @@ async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(
 async def test_import_radarr_movie_without_ids_skips_creation(mock_session):
     """Movie without radarr_id and without tmdb/imdb → skips creation."""
     # Arrange
+    from tests.factories import RadarrMovieDictFactory
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -231,13 +193,9 @@ async def test_import_radarr_movie_without_ids_skips_creation(mock_session):
         ) as mock_find_external,
     ):
         mock_fetch.return_value = [
-            {
-                "id": None,
-                "title": "Unknown Movie",
-                "tmdbId": None,
-                "imdbId": None,
-                "inCinemas": None,
-            }
+            RadarrMovieDictFactory.build(
+                id=None, title="Unknown Movie", no_external_ids=True, no_date=True
+            )
         ]
 
         mock_find_radarr.return_value = None
@@ -253,11 +211,24 @@ async def test_import_radarr_movie_without_ids_skips_creation(mock_session):
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movie_without_radarr_id_already_complete_skips_update(
-    mock_session, existing_movie_complete_in_db
-):
+async def test_import_radarr_movie_without_radarr_id_already_complete_skips_update(mock_session):
     """Movie without radarr_id, but DB entry is complete → skips update."""
     # Arrange
+    from datetime import UTC, datetime
+
+    from tests.factories import MovieFactory, RadarrMovieDictFactory
+
+    # Create existing movie in DB with all IDs already set
+    existing_movie = MovieFactory.build(
+        id=3,
+        radarr_id=None,
+        tmdb_id="27205",
+        imdb_id="tt1375666",
+        media__title="Inception",
+        media__release_date=datetime(2010, 7, 16, tzinfo=UTC),
+    )
+    mock_session.add(existing_movie.media)
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -270,17 +241,13 @@ async def test_import_radarr_movie_without_radarr_id_already_complete_skips_upda
         ) as mock_find_external,
     ):
         mock_fetch.return_value = [
-            {
-                "id": None,
-                "title": "Inception",
-                "tmdbId": 27205,
-                "imdbId": "tt1375666",
-                "inCinemas": "2010-07-16",
-            }
+            RadarrMovieDictFactory.build(
+                id=None, title="Inception", tmdbId=27205, imdbId="tt1375666"
+            )
         ]
 
         mock_find_radarr.return_value = None
-        mock_find_external.return_value = existing_movie_complete_in_db
+        mock_find_external.return_value = existing_movie
 
         # Act
         result = await import_radarr_movies(mock_session)
@@ -291,9 +258,16 @@ async def test_import_radarr_movie_without_radarr_id_already_complete_skips_upda
 
 
 @pytest.mark.asyncio
-async def test_import_radarr_movies_skips_existing_movies(mock_session, sample_movies_mixed):
+async def test_import_radarr_movies_skips_existing_movies(mock_session):
     """Test service skips movies that already exist in database."""
     # Arrange
+    from tests.factories import RadarrMovieDictFactory
+
+    sample_movies_mixed = [
+        RadarrMovieDictFactory.build(id=1, title="Existing Movie"),
+        RadarrMovieDictFactory.build(id=2, title="New Movie"),
+    ]
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -324,9 +298,11 @@ async def test_import_radarr_movies_skips_existing_movies(mock_session, sample_m
 async def test_import_radarr_movies_handles_partial_insert_failure(mock_session):
     """Test service performs transaction rollback when flush fails during movie import."""
     # Arrange
+    from tests.factories import RadarrMovieDictFactory
+
     movies_with_tmdb = [
-        {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z", "tmdbId": 1001},
-        {"id": 2, "title": "Movie 2", "inCinemas": "2023-02-01T00:00:00Z", "tmdbId": 1002},
+        RadarrMovieDictFactory.build(id=1, title="Movie 1", tmdbId=1001),
+        RadarrMovieDictFactory.build(id=2, title="Movie 2", tmdbId=1002),
     ]
 
     with (
@@ -370,6 +346,8 @@ async def test_import_radarr_movies_handles_partial_insert_failure(mock_session)
 async def test_import_radarr_movies_handles_commit_failure(mock_session):
     """Test service handles commit failure."""
     # Arrange
+    from tests.factories import RadarrMovieDictFactory
+
     with (
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
@@ -381,9 +359,7 @@ async def test_import_radarr_movies_handles_commit_failure(mock_session):
             "app.services.radarr_service.find_movie_by_external_ids", new_callable=AsyncMock
         ) as mock_find_external,
     ):
-        mock_fetch.return_value = [
-            {"id": 1, "title": "Movie 1", "inCinemas": "2023-01-01T00:00:00Z", "tmdbId": 1001}
-        ]
+        mock_fetch.return_value = [RadarrMovieDictFactory.build(id=1, title="Movie 1", tmdbId=1001)]
 
         mock_find_radarr.return_value = None
         mock_find_external.return_value = None
@@ -401,7 +377,7 @@ async def test_import_radarr_movies_handles_commit_failure(mock_session):
 @pytest.mark.asyncio
 async def test_import_radarr_movies_skips_movies_without_id(
     mock_session,
-    radarr_movies_without_require_fields,
+    radarr_movies_without_radarr_id,
 ):
     """Test service skips movies without Radarr ID or with invalid data."""
     # Arrange
@@ -416,7 +392,7 @@ async def test_import_radarr_movies_skips_movies_without_id(
             "app.services.radarr_service.find_movie_by_external_ids", new_callable=AsyncMock
         ) as mock_find_external,
     ):
-        mock_fetch.return_value = radarr_movies_without_require_fields
+        mock_fetch.return_value = radarr_movies_without_radarr_id
 
         mock_find_radarr.return_value = None
         mock_find_external.return_value = None
@@ -427,7 +403,7 @@ async def test_import_radarr_movies_skips_movies_without_id(
         # Assert
         assert result.imported_count == 1, (
             f"Expected 1 imported movie, got {result.imported_count}. "
-            f"Movies data: {radarr_movies_without_require_fields}"
+            f"Movies data: {radarr_movies_without_radarr_id}"
         )
         assert result.updated_count == 0
 

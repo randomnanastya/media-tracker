@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +18,7 @@ from app.services.series_utils import (
     find_series_by_external_ids,
     update_existing_series,
 )
+from app.utils.datetime_utils import parse_iso_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -29,18 +30,6 @@ async def _find_series_by_jellyfin_id(session: AsyncSession, jellyfin_id: str) -
     )
     result = await session.execute(query)
     return result.scalar_one_or_none()
-
-
-def _parse_iso_utc(dt_str: str | None) -> datetime | None:
-    """Parse ISO date string to UTC datetime."""
-    if not dt_str:
-        return None
-    try:
-        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-        return dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
-    except (ValueError, TypeError) as exc:
-        logger.warning("Invalid ISO date %s: %s", dt_str, exc)
-        return None
 
 
 async def _process_seasons_and_episodes(
@@ -92,7 +81,7 @@ async def _process_seasons_and_episodes(
         season_num: int = season_num_raw
         ep_num: int = ep_num_raw
 
-        air_date = _parse_iso_utc(air_str)
+        air_date = parse_iso_datetime(air_str)
         if air_date and (
             season_num not in season_first_air or air_date < season_first_air[season_num]
         ):
@@ -177,7 +166,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             tvdb_id = provider_ids.get("Tvdb")
             imdb_id = provider_ids.get("Imdb")
             tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
-            release_date = _parse_iso_utc(raw.get("PremiereDate"))
+            release_date = parse_iso_datetime(raw.get("PremiereDate"))
             status = raw.get("Status")
             year = raw.get("ProductionYear")
 

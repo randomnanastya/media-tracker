@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Base error codes shared across services."""
 
     NETWORK_ERROR = "NETWORK_ERROR"
@@ -10,9 +10,10 @@ class ErrorCode(str, Enum):
     DATABASE_ERROR = "DATABASE_ERROR"
     INTERNAL_ERROR = "INTERNAL_ERROR"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    CONFIG_ERROR = "CONFIG_ERROR"
 
 
-class SonarrErrorCode(str, Enum):
+class SonarrErrorCode(StrEnum):
     """Sonarr-specific error codes."""
 
     FETCH_FAILED = "SONARR_FETCH_FAILED"
@@ -24,9 +25,10 @@ class SonarrErrorCode(str, Enum):
     INTERNAL_ERROR = f"SONARR_{ErrorCode.INTERNAL_ERROR}"
     TIMEOUT_ERROR = f"SONARR_{ErrorCode.TIMEOUT_ERROR}"
     RATE_LIMIT_ERROR = f"SONARR_{ErrorCode.RATE_LIMIT_ERROR}"
+    CONFIG_ERROR = f"SONARR_{ErrorCode.CONFIG_ERROR}"
 
 
-class RadarrErrorCode(str, Enum):
+class RadarrErrorCode(StrEnum):
     """Radarr-specific error codes."""
 
     FETCH_FAILED = "RADARR_FETCH_FAILED"
@@ -40,7 +42,7 @@ class RadarrErrorCode(str, Enum):
     RATE_LIMIT_ERROR = f"SONARR_{ErrorCode.RATE_LIMIT_ERROR}"
 
 
-class JellyfinErrorCode(str, Enum):
+class JellyfinErrorCode(StrEnum):
     """Jellyfin-specific error codes."""
 
     FETCH_FAILED = "JELLYFIN_FETCH_FAILED"

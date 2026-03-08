@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
@@ -11,7 +11,7 @@ from app.schemas.error_codes import JellyfinErrorCode
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
+async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client, mock_env_vars):
     """Пагинация: 2 страницы → все эпизоды."""
     page1 = {
         "Items": [{"Id": f"e{i}", "Name": f"Episode {i}"} for i in range(1, 101)],
@@ -34,10 +34,7 @@ async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
     client_instance.get.side_effect = [resp1, resp2]
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "token"),
-    ):
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),):
         result = await fetch_jellyfin_episodes_for_user_all("user123")
 
     assert len(result) == 150
@@ -47,7 +44,7 @@ async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
+async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client, mock_env_vars):
     data = {
         "Items": [{"Id": "e1", "Name": "Pilot"}],
         "TotalRecordCount": 1,
@@ -61,10 +58,7 @@ async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
     client_instance.get.return_value = resp
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "token"),
-    ):
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),):
         result = await fetch_jellyfin_episodes_for_user_all("user123")
 
     assert result == [{"Id": "e1", "Name": "Pilot"}]
@@ -72,10 +66,9 @@ async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_no_api_key():
+async def test_fetch_jellyfin_episodes_no_api_key(mock_env_vars):
     with (
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", None),
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
+        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY=None),
         pytest.raises(JellyfinClientError) as exc,
     ):
         await fetch_jellyfin_episodes_for_user_all("user123")
@@ -84,10 +77,9 @@ async def test_fetch_jellyfin_episodes_no_api_key():
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_no_url():
+async def test_fetch_jellyfin_episodes_no_url(mock_env_vars):
     with (
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "token"),
-        patch("app.client.jellyfin_client.JELLYFIN_URL", None),
+        mock_env_vars(JELLYFIN_URL=None, JELLYFIN_API_KEY="abc123"),
         pytest.raises(JellyfinClientError) as exc,
     ):
         await fetch_jellyfin_episodes_for_user_all("user123")
@@ -95,42 +87,48 @@ async def test_fetch_jellyfin_episodes_no_url():
     assert exc.value.code == JellyfinErrorCode.INTERNAL_ERROR
 
 
+@pytest.mark.parametrize(
+    "error_type,status_code,error_message,expected_code",
+    [
+        ("network", None, "Timeout", JellyfinErrorCode.NETWORK_ERROR),
+        ("http", 403, "Forbidden", JellyfinErrorCode.FETCH_FAILED),
+        ("http", 500, "Internal Server Error", JellyfinErrorCode.FETCH_FAILED),
+    ],
+    ids=["network_error", "http_403", "http_500"],
+)
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_network_error(mock_httpx_client):
+async def test_fetch_jellyfin_episodes_errors(
+    mock_httpx_client,
+    mock_env_vars,
+    error_type: str,
+    status_code: int | None,
+    error_message: str,
+    expected_code: JellyfinErrorCode,
+):
+    """Тесты для различных типов ошибок при fetch_jellyfin_episodes_for_user_all."""
     client_instance = AsyncMock()
-    client_instance.get.side_effect = httpx.RequestError("Timeout")
+
+    if error_type == "network":
+        client_instance.get.side_effect = httpx.RequestError(error_message)
+    else:
+        resp = Mock()
+        resp.status_code = status_code
+        resp.text = error_message
+        resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            str(status_code),
+            request=Mock(),
+            response=resp,
+        )
+        client_instance.get.return_value = resp
+
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
     with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "token"),
+        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),
         pytest.raises(JellyfinClientError) as exc,
     ):
         await fetch_jellyfin_episodes_for_user_all("user123")
 
-    assert exc.value.code == JellyfinErrorCode.NETWORK_ERROR
-
-
-@pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_http_error(mock_httpx_client):
-    resp = Mock()
-    resp.text = "Forbidden"
-    resp.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "403",
-        request=Mock(),
-        response=resp,
-    )
-
-    client_instance = AsyncMock()
-    client_instance.get.return_value = resp
-    mock_httpx_client.return_value.__aenter__.return_value = client_instance
-
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "token"),
-        pytest.raises(JellyfinClientError) as exc,
-    ):
-        await fetch_jellyfin_episodes_for_user_all("user123")
-
-    assert exc.value.code == JellyfinErrorCode.FETCH_FAILED
-    assert "Forbidden" in exc.value.message
+    assert exc.value.code == expected_code
+    if error_type == "http":
+        assert error_message in exc.value.message

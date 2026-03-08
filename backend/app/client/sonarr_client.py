@@ -1,15 +1,24 @@
+"""Sonarr API client (refactored)."""
+
 import os
-from typing import Any, cast
+from typing import Any
 
 import httpx
 
 from app.client.endpoints import SONARR_SERIES
+from app.client.pagination import fetch_paginated_simple
 from app.config import logger
 from app.exceptions.client_errors import ClientError
 from app.schemas.error_codes import SonarrErrorCode
+from app.utils.config_validator import validate_config
 
-SONARR_URL = os.getenv("SONARR_URL")
-SONARR_API_KEY = os.getenv("SONARR_API_KEY")
+
+def _get_sonarr_url() -> str | None:
+    return os.getenv("SONARR_URL")
+
+
+def _get_sonarr_api_key() -> str | None:
+    return os.getenv("SONARR_API_KEY")
 
 
 class SonarrClientError(ClientError):
@@ -21,104 +30,87 @@ class SonarrClientError(ClientError):
         super().__init__(code=code, message=message)
 
 
+def _get_headers() -> dict[str, str]:
+    api_key = _get_sonarr_api_key()
+    assert api_key is not None
+    return {"X-Api-Key": api_key}
+
+
+async def _handle_sonarr_error(error: Exception) -> None:
+    """Handle Sonarr API errors uniformly."""
+    if isinstance(error, httpx.RequestError):
+        logger.error("Network error while requesting Sonarr API: %s", error)
+        raise SonarrClientError(
+            code=SonarrErrorCode.NETWORK_ERROR,
+            message="Failed to connect to Sonarr",
+        ) from error
+
+    elif isinstance(error, httpx.HTTPStatusError):
+        logger.error(
+            "Sonarr API returned status %s for URL %s",
+            error.response.status_code,
+            error.request.url,
+        )
+        raise SonarrClientError(
+            code=SonarrErrorCode.FETCH_FAILED,
+            message=f"Sonarr API error: {error.response.text}",
+        ) from error
+
+    else:
+        logger.error("Unexpected error while fetching from Sonarr: %s", error)
+        raise SonarrClientError(
+            code=SonarrErrorCode.INTERNAL_ERROR,
+            message="Unexpected error occurred while fetching from Sonarr",
+        ) from error
+
+
+@validate_config(
+    "SONARR_URL",
+    "SONARR_API_KEY",
+    error_class=SonarrClientError,
+    error_code=SonarrErrorCode.INTERNAL_ERROR,
+)
 async def fetch_sonarr_series() -> list[dict[str, Any]]:
-    """Fetches the list of series from the Sonarr API."""
-    if SONARR_API_KEY is None:
-        logger.error("SONARR_API_KEY is not set")
-        raise SonarrClientError(
-            code=SonarrErrorCode.INTERNAL_ERROR,
-            message="Sonarr API key is not configured",
-        )
-
-    if SONARR_URL is None:
-        logger.error("SONARR_URL is not set")
-        raise SonarrClientError(
-            code=SonarrErrorCode.INTERNAL_ERROR,
-            message="Sonarr URL is not configured",
-        )
+    """Fetch the list of series from the Sonarr API."""
+    url = _get_sonarr_url()
+    assert url is not None
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(
-                f"{SONARR_URL}{SONARR_SERIES}",
-                headers={"X-Api-Key": SONARR_API_KEY},
+            series = await fetch_paginated_simple(
+                client=client,
+                url=f"{url}{SONARR_SERIES}",
+                headers=_get_headers(),
                 timeout=30.0,
+                service_name="Sonarr Series",
             )
-
-            response.raise_for_status()
-            series = response.json()
-            logger.info("Fetched %d series from Sonarr", len(series))
-            return cast(list[dict[str, Any]], series)
-
-        except httpx.RequestError as e:
-            logger.error("Network error while requesting Sonarr API: %s", e)
-            raise SonarrClientError(
-                code=SonarrErrorCode.NETWORK_ERROR,
-                message="Failed to connect to Sonarr",
-            ) from e
-
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                "Sonarr API returned an unsuccessful status code %s for URL %s",
-                e.response.status_code,
-                e.request.url,
-            )
-            raise SonarrClientError(
-                code=SonarrErrorCode.FETCH_FAILED,
-                message=f"Sonarr API error: {e.response.text}",
-            ) from e
-
+            return series
         except Exception as e:
-            logger.error("Unexpected error while fetching series from Sonarr: %s", e)
-            raise SonarrClientError(
-                code=SonarrErrorCode.INTERNAL_ERROR,
-                message="Unexpected error occurred while fetching series",
-            ) from e
+            await _handle_sonarr_error(e)
+            raise
 
 
+@validate_config(
+    "SONARR_URL",
+    "SONARR_API_KEY",
+    error_class=SonarrClientError,
+    error_code=SonarrErrorCode.INTERNAL_ERROR,
+)
 async def fetch_sonarr_episodes(series_id: int) -> list[dict[str, Any]]:
-    """Fetches all episodes for a given series from Sonarr API."""
-    if SONARR_API_KEY is None:
-        logger.error("SONARR_API_KEY is not set")
-        raise SonarrClientError(
-            code=SonarrErrorCode.INTERNAL_ERROR,
-            message="Sonarr API key is not configured",
-        )
-
-    if SONARR_URL is None:
-        logger.error("SONARR_URL is not set")
-        raise SonarrClientError(
-            code=SonarrErrorCode.INTERNAL_ERROR,
-            message="Sonarr URL is not configured",
-        )
+    """Fetch all episodes for a given series from Sonarr API."""
+    url = _get_sonarr_url()
 
     async with httpx.AsyncClient() as client:
         try:
-            url = f"{SONARR_URL}/api/v3/episode?seriesId={series_id}"
-            response = await client.get(url, headers={"X-Api-Key": SONARR_API_KEY}, timeout=30.0)
-            response.raise_for_status()
-            episodes = response.json()
-            logger.info("Fetched %d episodes for series %d", len(episodes), series_id)
-            return cast(list[dict[str, Any]], episodes)
-        except httpx.RequestError as e:
-            logger.error("Network error while requesting Sonarr episodes API: %s", e)
-            raise SonarrClientError(
-                code=SonarrErrorCode.NETWORK_ERROR,
-                message="Failed to connect to Sonarr",
-            ) from e
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                "Sonarr episodes API returned an unsuccessful status code %s for URL %s",
-                e.response.status_code,
-                e.request.url,
+            url = f"{url}/api/v3/episode?seriesId={series_id}"
+            episodes = await fetch_paginated_simple(
+                client=client,
+                url=url,
+                headers=_get_headers(),
+                timeout=30.0,
+                service_name=f"Sonarr Episodes (series_id={series_id})",
             )
-            raise SonarrClientError(
-                code=SonarrErrorCode.FETCH_FAILED,
-                message=f"Sonarr API error: {e.response.text}",
-            ) from e
+            return episodes
         except Exception as e:
-            logger.error("Unexpected error while fetching episodes from Sonarr: %s", e)
-            raise SonarrClientError(
-                code=SonarrErrorCode.INTERNAL_ERROR,
-                message="Unexpected error occurred while fetching episodes",
-            ) from e
+            await _handle_sonarr_error(e)
+            raise

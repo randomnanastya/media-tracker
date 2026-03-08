@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
@@ -8,7 +8,7 @@ from app.schemas.error_codes import JellyfinErrorCode
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_users_success(mock_httpx_client):
+async def test_fetch_jellyfin_users_success(mock_httpx_client, mock_env_vars):
     """Успешное получение пользователей."""
     mock_response = Mock()
     mock_response.status_code = 200
@@ -21,10 +21,7 @@ async def test_fetch_jellyfin_users_success(mock_httpx_client):
     mock_client_instance.get.return_value = mock_response
     mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
 
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
-    ):
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),):
         result = await fetch_jellyfin_users()
 
         assert len(result) == 2
@@ -33,12 +30,9 @@ async def test_fetch_jellyfin_users_success(mock_httpx_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_users_no_api_key():
+async def test_fetch_jellyfin_users_no_api_key(mock_env_vars):
     """Нет JELLYFIN_API_KEY → INTERNAL_ERROR."""
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", None),
-    ):
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY=None),):
         with pytest.raises(JellyfinClientError) as exc_info:
             await fetch_jellyfin_users()
 
@@ -47,12 +41,9 @@ async def test_fetch_jellyfin_users_no_api_key():
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_users_no_url():
+async def test_fetch_jellyfin_users_no_url(mock_env_vars):
     """Нет JELLYFIN_URL → INTERNAL_ERROR."""
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", None),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
-    ):
+    with (mock_env_vars(JELLYFIN_URL=None, JELLYFIN_API_KEY="abc123"),):
         with pytest.raises(JellyfinClientError) as exc_info:
             await fetch_jellyfin_users()
 
@@ -60,44 +51,44 @@ async def test_fetch_jellyfin_users_no_url():
         assert "URL is not configured" in exc_info.value.message
 
 
+@pytest.mark.parametrize(
+    "error_type,status_code,error_message,expected_code",
+    [
+        ("network", None, "Connection failed", JellyfinErrorCode.NETWORK_ERROR),
+        ("http", 401, "Unauthorized", JellyfinErrorCode.FETCH_FAILED),
+        ("http", 403, "Forbidden", JellyfinErrorCode.FETCH_FAILED),
+    ],
+    ids=["network_error", "http_401", "http_403"],
+)
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_users_network_error(mock_httpx_client):
-    """httpx.RequestError → NETWORK_ERROR."""
+async def test_fetch_jellyfin_users_errors(
+    mock_httpx_client,
+    mock_env_vars,
+    error_type: str,
+    status_code: int | None,
+    error_message: str,
+    expected_code: JellyfinErrorCode,
+):
+    """Тесты для различных типов ошибок при fetch_jellyfin_users."""
     mock_client_instance = AsyncMock()
-    mock_client_instance.get.side_effect = httpx.RequestError("Connection failed")
+
+    if error_type == "network":
+        mock_client_instance.get.side_effect = httpx.RequestError(error_message)
+    else:
+        mock_response = Mock()
+        mock_response.status_code = status_code
+        mock_response.text = error_message
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            message=str(status_code), request=Mock(), response=mock_response
+        )
+        mock_client_instance.get.return_value = mock_response
+
     mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
 
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
-    ):
+    with mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"):
         with pytest.raises(JellyfinClientError) as exc_info:
             await fetch_jellyfin_users()
 
-        assert exc_info.value.code == JellyfinErrorCode.NETWORK_ERROR
-        assert "Failed to connect" in exc_info.value.message
-
-
-@pytest.mark.asyncio
-async def test_fetch_jellyfin_users_http_error(mock_httpx_client):
-    """HTTP 401 → FETCH_FAILED."""
-    mock_response = Mock()
-    mock_response.status_code = 401
-    mock_response.text = "Unauthorized"
-    mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-        message="401", request=Mock(), response=mock_response
-    )
-
-    mock_client_instance = AsyncMock()
-    mock_client_instance.get.return_value = mock_response
-    mock_httpx_client.return_value.__aenter__.return_value = mock_client_instance
-
-    with (
-        patch("app.client.jellyfin_client.JELLYFIN_URL", "http://jf.local"),
-        patch("app.client.jellyfin_client.JELLYFIN_API_KEY", "abc123"),
-    ):
-        with pytest.raises(JellyfinClientError) as exc_info:
-            await fetch_jellyfin_users()
-
-        assert exc_info.value.code == JellyfinErrorCode.FETCH_FAILED
-        assert "Unauthorized" in exc_info.value.message
+        assert exc_info.value.code == expected_code
+        if error_type == "http":
+            assert error_message in exc_info.value.message

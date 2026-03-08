@@ -58,14 +58,14 @@ async def jellyfin_import_users_job() -> None:
 @log_job_execution
 async def jellyfin_import_movies_job() -> None:
     async with AsyncSessionLocal() as session:
-        logger.debug("Processing Jellyfin Users data...")
+        logger.debug("Processing Jellyfin movies data...")
         await import_jellyfin_movies(session)
 
 
 @log_job_execution
 async def jellyfin_import_series_job() -> None:
     async with AsyncSessionLocal() as session:
-        logger.debug("Processing Jellyfin Users data...")
+        logger.debug("Processing Jellyfin series data...")
         await import_jellyfin_series(session)
 
 
