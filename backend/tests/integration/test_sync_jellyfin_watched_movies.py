@@ -251,12 +251,12 @@ async def test_find_movie_by_different_ids(session_no_expire, monkeypatch):
 
     async def mock_fetch_jellyfin(jellyfin_user_id):
         return [
-            {
-                "Id": "jellyfin_70",
-                "Name": "Movie by Jellyfin ID",
-                "ProviderIds": {},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-            }
+            JellyfinMovieDictFactory(
+                Id="jellyfin_70",
+                Name="Movie by Jellyfin ID",
+                ProviderIds={},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+            )
         ]
 
     monkeypatch.setattr(
@@ -274,12 +274,12 @@ async def test_find_movie_by_different_ids(session_no_expire, monkeypatch):
 
     async def mock_fetch_tmdb(jellyfin_user_id):
         return [
-            {
-                "Id": "unknown_jellyfin",
-                "Name": "Movie by TMDB ID",
-                "ProviderIds": {"Tmdb": "tmdb_700"},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-            }
+            JellyfinMovieDictFactory(
+                Id="unknown_jellyfin",
+                Name="Movie by TMDB ID",
+                ProviderIds={"Tmdb": "tmdb_700"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -309,12 +309,12 @@ async def test_error_handling(session_no_expire, monkeypatch):
 
         if jellyfin_user_id == "jf_8":
             return [
-                {
-                    "Id": "80",
-                    "Name": "Good Movie",
-                    "ProviderIds": {"Tmdb": "800"},
-                    "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-                }
+                JellyfinMovieDictFactory(
+                    Id="80",
+                    Name="Good Movie",
+                    ProviderIds={"Tmdb": "800"},
+                    UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+                ),
             ]
         else:
             raise Exception("Jellyfin API error")

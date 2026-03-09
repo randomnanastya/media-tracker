@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from app.models import WatchHistory
 from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
+from tests.factories import JellyfinSeriesDictFactory
 from tests.integration.conftest import create_episode, create_season, create_series, create_user
 
 
@@ -32,16 +33,16 @@ async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": "episode_1",
-                "Name": "Test Episode",
-                "SeriesId": "series_1",
-                "SeasonId": "season_1",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_100"},
-            }
+            JellyfinSeriesDictFactory(
+                Id="episode_1",
+                Name="Test Episode",
+                SeriesId="series_1",
+                SeasonId="season_1",
+                IndexNumber=1,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_100"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -110,19 +111,18 @@ async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypa
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": "episode_2",
-                "Name": "Episode to Update",
-                "SeriesId": "series_2",
-                "SeasonId": "season_2",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {
+            JellyfinSeriesDictFactory(
+                Id="episode_2",
+                Name="Episode to Update",
+                SeriesId="series_2",
+                SeasonId="season_2",
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_200"},
+                UserData={
                     "Played": True,
                     "LastPlayedDate": "2024-01-15T20:00:00Z",  # Новая дата просмотра
                 },
-                "ProviderIds": {"Tmdb": "tmdb_200"},
-            }
+            ),
         ]
 
     monkeypatch.setattr(
@@ -183,16 +183,15 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": "episode_3",
-                "Name": "Episode to Unwatch",
-                "SeriesId": "series_3",
-                "SeasonId": "season_3",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": False},
-                "ProviderIds": {"Tmdb": "tmdb_300"},
-            }
+            JellyfinSeriesDictFactory(
+                Id="episode_3",
+                Name="Episode to Unwatch",
+                SeriesId="series_3",
+                SeasonId="season_3",
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_300"},
+                UserData={"Played": False},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -249,36 +248,35 @@ async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": "episode_4",
-                "Name": "Episode 1",
-                "SeriesId": "series_4",
-                "SeasonId": "season_4",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_400"},
-            },
-            {
-                "Id": "episode_5",
-                "Name": "Episode 2",
-                "SeriesId": "series_4",
-                "SeasonId": "season_4",
-                "IndexNumber": 2,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": False},
-                "ProviderIds": {"Tmdb": "tmdb_400"},
-            },
-            {
-                "Id": "episode_6",
-                "Name": "Episode 3",
-                "SeriesId": "series_4",
-                "SeasonId": "season_4",
-                "IndexNumber": 3,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_400"},
-            },
+            JellyfinSeriesDictFactory(
+                Id="episode_4",
+                Name="Episode 1",
+                SeriesId="series_4",
+                SeasonId="season_4",
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_400"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+            ),
+            JellyfinSeriesDictFactory(
+                Id="episode_5",
+                Name="Episode 2",
+                SeriesId="series_4",
+                SeasonId="season_4",
+                IndexNumber=2,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_400"},
+                UserData={"Played": False},
+            ),
+            JellyfinSeriesDictFactory(
+                Id="episode_6",
+                Name="Episode 3",
+                SeriesId="series_4",
+                SeasonId="season_4",
+                IndexNumber=3,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_400"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -342,16 +340,16 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
         call_count += 1
 
         return [
-            {
-                "Id": "episode_7",
-                "Name": "Shared Episode",
-                "SeriesId": "series_5",
-                "SeasonId": "season_5",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_500"},
-            }
+            JellyfinSeriesDictFactory(
+                Id="episode_7",
+                Name="Shared Episode",
+                SeriesId="series_5",
+                SeasonId="series_5",
+                IndexNumber=1,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_500"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -410,26 +408,26 @@ async def test_skip_episode_not_found_in_database(session_no_expire, monkeypatch
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": "episode_8",
-                "Name": "Missing Episode",
-                "SeriesId": "series_6",
-                "SeasonId": "season_6",
-                "IndexNumber": 2,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_600"},
-            },
-            {
-                "Id": "episode_other",
-                "Name": "Existing Episode",
-                "SeriesId": "series_6",
-                "SeasonId": "season_6",
-                "IndexNumber": 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_600"},
-            },
+            JellyfinSeriesDictFactory(
+                Id="episode_8",
+                Name="Missing Episode",
+                SeriesId="series_6",
+                SeasonId="series_6",
+                IndexNumber=2,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_600"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+            ),
+            JellyfinSeriesDictFactory(
+                Id="episode_other",
+                Name="Existing Episode",
+                SeriesId="series_6",
+                SeasonId="series_6",
+                IndexNumber=1,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_600"},
+                UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+            ),
         ]
 
     monkeypatch.setattr(
@@ -489,16 +487,16 @@ async def test_error_handling_during_sync(session_no_expire, monkeypatch):
 
         if jellyfin_user_id == "jf_9":
             return [
-                {
-                    "Id": "episode_9",
-                    "Name": "Test Episode",
-                    "SeriesId": "series_7",
-                    "SeasonId": "season_7",
-                    "IndexNumber": 1,
-                    "ParentIndexNumber": 1,
-                    "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-                    "ProviderIds": {"Tmdb": "tmdb_700"},
-                }
+                JellyfinSeriesDictFactory(
+                    Id="episode_9",
+                    Name="Test Episode",
+                    SeriesId="series_7",
+                    SeasonId="series_7",
+                    IndexNumber=1,
+                    ParentIndexNumber=1,
+                    ProviderIds={"Tmdb": "tmdb_700"},
+                    UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+                ),
             ]
         else:  # jf_10 - вызывает ошибку
             raise Exception("Jellyfin API error")
@@ -556,17 +554,17 @@ async def test_bulk_insert_of_watched_episodes(session_no_expire, monkeypatch):
 
     async def mock_fetch(jellyfin_user_id):
         return [
-            {
-                "Id": f"episode_{i + 10}",
-                "Name": f"Episode {i + 1}",
-                "SeriesId": "series_8",
-                "SeasonId": "season_8",
-                "IndexNumber": i + 1,
-                "ParentIndexNumber": 1,
-                "UserData": {"Played": True, "LastPlayedDate": f"2024-01-{i + 1:02d}T12:00:00Z"},
-                "ProviderIds": {"Tmdb": "tmdb_800"},
-            }
-            for i in range(10)
+            JellyfinSeriesDictFactory(
+                Id=f"episode_{j + 10}",
+                Name=f"Episode {j + 1}",
+                SeriesId="series_8",
+                SeasonId="series_8",
+                IndexNumber=j + 1,
+                ParentIndexNumber=1,
+                ProviderIds={"Tmdb": "tmdb_800"},
+                UserData={"Played": True, "LastPlayedDate": f"2024-01-{j + 1:02d}T12:00:00Z"},
+            )
+            for j in range(10)
         ]
 
     monkeypatch.setattr(

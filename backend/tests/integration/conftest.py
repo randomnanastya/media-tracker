@@ -4,7 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.database import get_session
 from app.main import app
-from app.models import Base, Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
+from app.models import Base, MediaType
+from tests.factories import (
+    EpisodeFactory,
+    MediaFactory,
+    MovieFactory,
+    SeasonFactory,
+    SeriesFactory,
+    UserFactory,
+    WatchHistoryFactory,
+)
 
 TEST_DATABASE_URL = "postgresql+asyncpg://test:test@localhost:5432/test"
 
@@ -54,7 +63,7 @@ async def client_with_db(session_for_test):
 # Хелпер-функции для создания тестовых данных
 async def create_user(session, username="user", jellyfin_user_id=None):
     """Создает тестового пользователя."""
-    user = User(username=username, jellyfin_user_id=jellyfin_user_id)
+    user = UserFactory.build(username=username, jellyfin_user_id=jellyfin_user_id)
     session.add(user)
     await session.flush()
     return user
@@ -62,16 +71,13 @@ async def create_user(session, username="user", jellyfin_user_id=None):
 
 async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Movie"):
     """Создает тестовый фильм."""
-    media = Media(media_type=MediaType.MOVIE, title=title)
+    media = MediaFactory(media_type=MediaType.MOVIE, title=title)
     session.add(media)
     await session.flush()
-
-    movie = Movie(
-        id=media.id,
-        jellyfin_id=jellyfin_id,
-        tmdb_id=tmdb_id,
-        imdb_id=imdb_id,
+    movie = MovieFactory.build(
+        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id
     )
+
     session.add(movie)
     media.movie = movie
     await session.flush()
@@ -80,7 +86,7 @@ async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, ti
 
 async def create_watch_history(session, user_id, media_id, is_watched=True, watched_at=None):
     """Создает запись истории просмотров."""
-    wh = WatchHistory(
+    wh = WatchHistoryFactory.build(
         user_id=user_id,
         media_id=media_id,
         episode_id=None,
@@ -94,16 +100,11 @@ async def create_watch_history(session, user_id, media_id, is_watched=True, watc
 
 async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Series"):
     """Создает тестовый сериал."""
-    media = Media(media_type=MediaType.SERIES, title=title)
+    media = MediaFactory(meia_type=MediaType.SERIES, title=title)
     session.add(media)
     await session.flush()
 
-    series = Series(
-        id=media.id,
-        jellyfin_id=jellyfin_id,
-        tmdb_id=tmdb_id,
-        imdb_id=imdb_id,
-    )
+    series = SeriesFactory(id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id)
     session.add(series)
     media.series = series
     await session.flush()
@@ -112,11 +113,8 @@ async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, t
 
 async def create_season(session, series_id=None, number=0, jellyfin_id=None, release_date=None):
     """Создает тестовый сезон."""
-    season = Season(
-        series_id=series_id,
-        jellyfin_id=jellyfin_id,
-        number=number,
-        release_date=release_date,
+    season = SeasonFactory(
+        series_id=series_id, jellyfin_id=jellyfin_id, number=number, release_date=release_date
     )
     session.add(season)
     await session.flush()
@@ -125,11 +123,8 @@ async def create_season(session, series_id=None, number=0, jellyfin_id=None, rel
 
 async def create_episode(session, season_id=None, number=0, jellyfin_id=None, title="Test episode"):
     """Создает тестовый эпизод."""
-    season = Episode(
-        season_id=season_id,
-        jellyfin_id=jellyfin_id,
-        number=number,
-        title=title,
+    season = EpisodeFactory(
+        season_id=season_id, jellyfin_id=jellyfin_id, number=number, title=title
     )
     session.add(season)
     await session.flush()
