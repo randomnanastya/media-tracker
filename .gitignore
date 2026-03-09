@@ -51,7 +51,5 @@ docker-compose.yaml
 
 # AI
 CLAUDE.md
-REFACTORING.md
-PHASE1_COMPLETE.md
 .claude
 .tasks
