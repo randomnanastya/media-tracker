@@ -5,10 +5,10 @@ from sqlalchemy import delete, select
 
 from app.models import WatchHistory
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
+from tests.factories import JellyfinMovieDictFactory
 from tests.integration.conftest import create_movie, create_user
 
 
-@pytest.mark.asyncio
 async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
     """
     Тест добавления просмотренного фильма.
@@ -18,15 +18,17 @@ async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
     _ = await create_user(session_no_expire, username="alice", jellyfin_user_id="jf_1")
     movie = await create_movie(session_no_expire, jellyfin_id="10", tmdb_id="100", imdb_id="tt100")
 
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            id=10,
+            Name="Test Movie",
+            ProviderIds={"Tmdb": "100", "Imdb": "tt100"},
+            UserData={"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
+        )
+    ]
+
     async def mock_fetch(jellyfin_user_id):
-        return [
-            {
-                "Id": "10",
-                "Name": "Test Movie",
-                "ProviderIds": {"Tmdb": "100", "Imdb": "tt100"},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T12:00:00Z"},
-            }
-        ]
+        return mock_movies
 
     monkeypatch.setattr(
         "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
@@ -51,7 +53,6 @@ async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
     assert result.total_movies_processed == 1
 
 
-@pytest.mark.asyncio
 async def test_sync_with_mixed_watched_status(session_no_expire, monkeypatch):
     """
     Тест обработки смешанного статуса просмотра.
@@ -66,27 +67,29 @@ async def test_sync_with_mixed_watched_status(session_no_expire, monkeypatch):
 
     await session_no_expire.commit()
 
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            Id="mixed_0",
+            Name="Watched Movie",
+            ProviderIds={"Tmdb": "1000"},
+            UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+        ),
+        JellyfinMovieDictFactory(
+            Id="mixed_1",
+            Name="Unwatched Movie",
+            ProviderIds={"Tmdb": "1001"},
+            UserData={"Played": False},
+        ),
+        JellyfinMovieDictFactory(
+            Id="mixed_2",
+            Name="Another Watched",
+            ProviderIds={"Tmdb": "1002"},
+            UserData={"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
+        ),
+    ]
+
     async def mock_fetch(jellyfin_user_id):
-        return [
-            {
-                "Id": "mixed_0",
-                "Name": "Watched Movie",
-                "ProviderIds": {"Tmdb": "1000"},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-            },
-            {
-                "Id": "mixed_1",
-                "Name": "Unwatched Movie",
-                "ProviderIds": {"Tmdb": "1001"},
-                "UserData": {"Played": False},
-            },
-            {
-                "Id": "mixed_2",
-                "Name": "Another Watched",
-                "ProviderIds": {"Tmdb": "1002"},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
-            },
-        ]
+        return mock_movies
 
     monkeypatch.setattr(
         "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
@@ -108,7 +111,6 @@ async def test_sync_with_mixed_watched_status(session_no_expire, monkeypatch):
     assert result.total_movies_processed == 3
 
 
-@pytest.mark.asyncio
 async def test_sync_updates_existing_watched_movie(session_no_expire, monkeypatch):
     """Тест обновления уже существующей записи истории просмотров"""
     user = await create_user(session_no_expire, username="charlie", jellyfin_user_id="jf_3")
@@ -123,15 +125,17 @@ async def test_sync_updates_existing_watched_movie(session_no_expire, monkeypatc
     session_no_expire.add(old_watch)
     await session_no_expire.commit()
 
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            Id=30,
+            Name="Updated Movie",
+            ProviderIds={"Tmdb": "300"},
+            UserData={"Played": True, "LastPlayedDate": "2024-01-15T20:00:00Z"},
+        )
+    ]
+
     async def mock_fetch(jellyfin_user_id):
-        return [
-            {
-                "Id": "30",
-                "Name": "Updated Movie",
-                "ProviderIds": {"Tmdb": "300"},
-                "UserData": {"Played": True, "LastPlayedDate": "2024-01-15T20:00:00Z"},
-            }
-        ]
+        return mock_movies
 
     monkeypatch.setattr(
         "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
@@ -149,7 +153,6 @@ async def test_sync_updates_existing_watched_movie(session_no_expire, monkeypatc
     assert result.watched_added == 0
 
 
-@pytest.mark.asyncio
 async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
     """Тест отметки фильма как непросмотренного"""
     user = await create_user(session_no_expire, username="david", jellyfin_user_id="jf_4")
@@ -164,15 +167,14 @@ async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
     session_no_expire.add(old_watch)
     await session_no_expire.commit()
 
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            Id="40", Name="Unwatched Movie", ProviderIds={"Tmdb": "400"}, UserData={"Played": False}
+        )
+    ]
+
     async def mock_fetch(jellyfin_user_id):
-        return [
-            {
-                "Id": "40",
-                "Name": "Unwatched Movie",
-                "ProviderIds": {"Tmdb": "400"},
-                "UserData": {"Played": False},
-            }
-        ]
+        return mock_movies
 
     monkeypatch.setattr(
         "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
@@ -189,7 +191,6 @@ async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
     assert result.unwatched_marked == 1
 
 
-@pytest.mark.asyncio
 async def test_sync_multiple_users(session_no_expire, monkeypatch):
     """Тест синхронизации для нескольких пользователей"""
     _ = await create_user(session_no_expire, username="user1", jellyfin_user_id="jf_5")
@@ -206,21 +207,21 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
 
         if jellyfin_user_id == "jf_5":
             return [
-                {
-                    "Id": "50",
-                    "Name": "Movie 1",
-                    "ProviderIds": {"Tmdb": "500"},
-                    "UserData": {"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
-                }
+                JellyfinMovieDictFactory(
+                    Id="50",
+                    Name="Movie 1",
+                    ProviderIds={"Tmdb": "500"},
+                    UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
+                )
             ]
         else:
             return [
-                {
-                    "Id": "60",
-                    "Name": "Movie 2",
-                    "ProviderIds": {"Tmdb": "600"},
-                    "UserData": {"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
-                }
+                JellyfinMovieDictFactory(
+                    Id="60",
+                    Name="Movie 2",
+                    ProviderIds={"Tmdb": "600"},
+                    UserData={"Played": True, "LastPlayedDate": "2024-01-02T11:00:00Z"},
+                )
             ]
 
     monkeypatch.setattr(
@@ -239,7 +240,7 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
     assert result.watched_added == 2
 
 
-@pytest.mark.asyncio
+# TODO остановилась тут
 async def test_find_movie_by_different_ids(session_no_expire, monkeypatch):
     """Тест поиска фильма по Jellyfin ID, TMDB ID и IMDb ID"""
     _ = await create_user(session_no_expire, username="multi_id", jellyfin_user_id="jf_7")

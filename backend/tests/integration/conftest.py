@@ -41,51 +41,9 @@ async def session_no_expire(engine_for_test):
 
 
 @pytest.fixture
-async def session_isolated(engine_for_test):
-    """
-    Изолированная сессия для сложных тестов.
-    Отключает autoflush и autocommit для полного контроля.
-    """
-    async with AsyncSession(
-        engine_for_test,
-        expire_on_commit=False,  # Объекты не истекают после коммита
-        autoflush=False,  # Отключаем автоматический flush
-        autocommit=False,  # Полный контроль над транзакциями
-    ) as session:
-        yield session
-
-
-@pytest.fixture
-async def session_with_autoflush(engine_for_test):
-    """
-    Сессия с включенным autoflush для простых тестов.
-    """
-    async with AsyncSession(
-        engine_for_test,
-        expire_on_commit=False,
-        autoflush=True,  # Включен autoflush
-        autocommit=False,
-    ) as session:
-        yield session
-
-
-@pytest.fixture
 async def client_with_db(session_for_test):
     async def override_get_session():
         yield session_for_test
-
-    app.dependency_overrides[get_session] = override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-async def client_with_no_expire_session(session_no_expire):
-    """Клиент с сессией, где объекты не истекают после коммита."""
-
-    async def override_get_session():
-        yield session_no_expire
 
     app.dependency_overrides[get_session] = override_get_session
     async with AsyncClient(app=app, base_url="http://test") as client:
@@ -166,7 +124,7 @@ async def create_season(session, series_id=None, number=0, jellyfin_id=None, rel
 
 
 async def create_episode(session, season_id=None, number=0, jellyfin_id=None, title="Test episode"):
-    """Создает тестовый сезон."""
+    """Создает тестовый эпизод."""
     season = Episode(
         season_id=season_id,
         jellyfin_id=jellyfin_id,

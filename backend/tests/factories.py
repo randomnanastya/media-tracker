@@ -328,6 +328,7 @@ class JellyfinMovieDictFactory(factory.DictFactory):
 
     class Params:
         no_date = factory.Trait(PremiereDate=None)
+        no_id = factory.Trait(Id=None)
         no_providers = factory.Trait(ProviderIds={})
         only_tmdb = factory.Trait(
             ProviderIds=LazyFunction(lambda: {"Tmdb": str(fake.random_int(10000, 99999))})

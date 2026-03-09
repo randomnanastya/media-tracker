@@ -8,7 +8,6 @@ from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watc
 from tests.integration.conftest import create_episode, create_season, create_series, create_user
 
 
-@pytest.mark.asyncio
 async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
     """
     Тест добавления просмотренной серии.
@@ -77,7 +76,6 @@ async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
     assert result.total_episodes_processed == 1
 
 
-@pytest.mark.asyncio
 async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypatch):
     """
     Тест обновления уже существующей записи просмотра эпизода.
@@ -151,7 +149,6 @@ async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypa
     assert result.watched_added == 0
 
 
-@pytest.mark.asyncio
 async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
     """
     Тест отметки эпизода как непросмотренного.
@@ -223,7 +220,6 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
     assert result.watched_updated == 0
 
 
-@pytest.mark.asyncio
 async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):
     """
     Тест синхронизации нескольких эпизодов для одного пользователя.
@@ -316,7 +312,6 @@ async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):
     assert result.total_episodes_processed == 3
 
 
-@pytest.mark.asyncio
 async def test_sync_multiple_users(session_no_expire, monkeypatch):
     """
     Тест синхронизации эпизодов для нескольких пользователей.
@@ -389,7 +384,6 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
     assert result.total_episodes_processed == 2
 
 
-@pytest.mark.asyncio
 async def test_skip_episode_not_found_in_database(session_no_expire, monkeypatch):
     """
     Тест пропуска эпизода, который не найден в базе данных.
