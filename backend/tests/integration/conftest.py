@@ -100,7 +100,7 @@ async def create_watch_history(session, user_id, media_id, is_watched=True, watc
 
 async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Series"):
     """Создает тестовый сериал."""
-    media = MediaFactory(meia_type=MediaType.SERIES, title=title)
+    media = MediaFactory(media_type=MediaType.SERIES, title=title)
     session.add(media)
     await session.flush()
 
