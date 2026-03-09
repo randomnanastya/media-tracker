@@ -1,52 +1,55 @@
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Episode, Media, MediaType, Season, Series
+from tests.factories import JellyfinEpisodeDictFactory, JellyfinSeriesDictFactory
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_series_creates_new_series_with_episodes(
     client_with_db,
     session_for_test,
     monkeypatch,
 ):
-    jellyfin_series = [
-        {
-            "Id": "jf-series-1",
-            "Name": "Test Series",
-            "PremiereDate": "2020-01-01T00:00:00Z",
-            "ProductionYear": 2020,
-            "Status": "Continuing",
-            "ProviderIds": {
+    jellyfin_series: list[dict] = [  # type: ignore[list-item]
+        JellyfinSeriesDictFactory(
+            Id="jf-series-1",
+            Name="Test Series",
+            Status="Continuing",
+            ProviderIds={
                 "Tmdb": "100",
                 "Tvdb": "200",
                 "Imdb": "tt0000100",
             },
-        }
+            ProductionYear=2020,
+            PremiereDate="2020-01-01T00:00:00Z",
+        )
     ]
 
-    jellyfin_episodes = [
-        {
-            "Id": "ep-1",
-            "SeasonId": "season-1",
-            "ParentIndexNumber": 1,
-            "IndexNumber": 1,
-            "Name": "Pilot",
-            "PremiereDate": "2020-01-01T00:00:00Z",
-        },
-        {
-            "Id": "ep-2",
-            "SeasonId": "season-1",
-            "ParentIndexNumber": 1,
-            "IndexNumber": 2,
-            "Name": "Episode 2",
-            "PremiereDate": "2020-01-08T00:00:00Z",
-        },
-    ]
+    # jellyfin_episodes = [
+    #     {
+    #         "Id": "ep-1",
+    #         "SeasonId": "season-1",
+    #         "ParentIndexNumber": 1,
+    #         "IndexNumber": 1,
+    #         "Name": "Pilot",
+    #         "PremiereDate": "2020-01-01T00:00:00Z",
+    #     },
+    #     {
+    #         "Id": "ep-2",
+    #         "SeasonId": "season-1",
+    #         "ParentIndexNumber": 1,
+    #         "IndexNumber": 2,
+    #         "Name": "Episode 2",
+    #         "PremiereDate": "2020-01-08T00:00:00Z",
+    #     },
+    # ]
 
+    jellyfin_episodes: list[dict] = [  # type: ignore[list-item]
+        JellyfinEpisodeDictFactory(SeasonId=jellyfin_series[0].get("Id")),
+        JellyfinEpisodeDictFactory(SeasonId=jellyfin_series[0].get("Id")),
+    ]
     monkeypatch.setattr(
         "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
         AsyncMock(return_value=jellyfin_series),
@@ -86,7 +89,6 @@ async def test_import_jellyfin_series_creates_new_series_with_episodes(
     assert len(episodes) == 2
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_series_updates_existing_by_tmdb(
     client_with_db,
     session_for_test,
@@ -106,16 +108,25 @@ async def test_import_jellyfin_series_updates_existing_by_tmdb(
     session_for_test.add(series)
     await session_for_test.commit()
 
-    jellyfin_series = [
-        {
-            "Id": "jf-series-1",
-            "Name": "New Title",
-            "ProductionYear": 2021,
-            "Status": "Ended",
-            "ProviderIds": {"Tmdb": "100"},
-        }
-    ]
+    # jellyfin_series = [
+    #     {
+    #         "Id": "jf-series-1",
+    #         "Name": "New Title",
+    #         "ProductionYear": 2021,
+    #         "Status": "Ended",
+    #         "ProviderIds": {"Tmdb": "100"},
+    #     }
+    # ]
 
+    jellyfin_series: list[dict] = [  # type: ignore[list-item]
+        JellyfinSeriesDictFactory(
+            Id="jf-series-1",
+            Name="New Title",
+            ProductionYear=2021,
+            Status="Ended",
+            ProviderIds={"Tmdb": "100"},
+        )
+    ]
     monkeypatch.setattr(
         "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
         AsyncMock(return_value=jellyfin_series),
@@ -139,7 +150,6 @@ async def test_import_jellyfin_series_updates_existing_by_tmdb(
     assert updated.year == 2021
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_series_updates_existing_episode(
     client_with_db,
     session_for_test,
@@ -166,23 +176,19 @@ async def test_import_jellyfin_series_updates_existing_episode(
     session_for_test.add(episode)
     await session_for_test.commit()
 
+    episodes: list[dict] = [  # type: ignore[list-item]
+        JellyfinEpisodeDictFactory(
+            Id="ep-1", SeasonId="season-1", ParentIndexNumber=1, IndexNumber=1, Name="New title"
+        )
+    ]
+
     monkeypatch.setattr(
         "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
         AsyncMock(return_value=[{"Id": "jf-series-1", "Name": "Series"}]),
     )
     monkeypatch.setattr(
         "app.services.import_jellyfin_series_service.fetch_jellyfin_episodes",
-        AsyncMock(
-            return_value=[
-                {
-                    "Id": "ep-1",
-                    "SeasonId": "season-1",
-                    "ParentIndexNumber": 1,
-                    "IndexNumber": 1,
-                    "Name": "New title",
-                }
-            ]
-        ),
+        AsyncMock(return_value=episodes),
     )
 
     resp = await client_with_db.post("/api/v1/jellyfin/import/series")

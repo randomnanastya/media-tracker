@@ -1,30 +1,22 @@
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Media, MediaType, Movie
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
+from tests.factories import JellyfinMovieDictFactory
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_movies_new_movie(
     client_with_db,
     session_for_test,
     monkeypatch,
 ):
-    mock_movies = [
-        {
-            "Id": "jf-123",
-            "Name": "Jellyfin Movie",
-            "PremiereDate": "2022-05-01T00:00:00Z",
-            "CommunityRating": 7.171,
-            "ProviderIds": {
-                "Tmdb": "111",
-                "Imdb": "tt1111111",
-            },
-        }
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            Id="jf-123", Name="Jellyfin Movie", ProviderIds={"Tmdb": "111", "Imdb": "tt1111111"}
+        )
     ]
 
     mock_fetch = AsyncMock(return_value=mock_movies)
@@ -50,7 +42,7 @@ async def test_import_jellyfin_movies_new_movie(
     assert media.release_date is not None
 
     movie_result = await session_for_test.execute(
-        select(Movie).where(Movie.jellyfin_id == "jf-123")
+        select(Movie).where(Movie.jellyfin_id == mock_movies[0].get("Id"))
     )
     act_movie = movie_result.scalar_one()
 
@@ -60,7 +52,6 @@ async def test_import_jellyfin_movies_new_movie(
     assert act_movie.jellyfin_id == mock_movies[0].get("Id")
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_movies_updates_existing_movie_by_tmdb(
     client_with_db,
     session_for_test,
@@ -84,16 +75,10 @@ async def test_import_jellyfin_movies_updates_existing_movie_by_tmdb(
     session_for_test.add(movie)
     await session_for_test.commit()
 
-    mock_movies = [
-        {
-            "Id": "jf-222",
-            "Name": "Existing Movie",
-            "PremiereDate": "2015-03-21T00:00:00Z",
-            "ProviderIds": {
-                "Tmdb": "222",
-                "Imdb": "tt2222222",
-            },
-        }
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(
+            Id="jf-222", Name="Existing Movie", ProviderIds={"Tmdb": "222", "Imdb": "tt2222222"}
+        )
     ]
 
     mock_fetch = AsyncMock(return_value=mock_movies)
@@ -109,7 +94,7 @@ async def test_import_jellyfin_movies_updates_existing_movie_by_tmdb(
         imported_count=0,
         updated_count=1,
     )
-    assert act_resp, exp_resp
+    assert act_resp.json() == exp_resp.model_dump(mode="json", exclude_none=True)
 
     # still only one movie
     movies_result = await session_for_test.execute(select(Movie).options(selectinload(Movie.media)))
@@ -125,19 +110,13 @@ async def test_import_jellyfin_movies_updates_existing_movie_by_tmdb(
     assert updated_movie.media.release_date is not None
 
 
-@pytest.mark.asyncio
 async def test_import_jellyfin_movies_skip_movie_without_ids(
     client_with_db,
     session_for_test,
     monkeypatch,
 ):
-    mock_movies = [
-        {
-            "Id": None,
-            "Name": "Broken Movie",
-            "PremiereDate": None,
-            "ProviderIds": {},
-        }
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        JellyfinMovieDictFactory(no_providers=True, no_id=True)
     ]
 
     mock_fetch = AsyncMock(return_value=mock_movies)

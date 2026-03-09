@@ -4,7 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.database import get_session
 from app.main import app
-from app.models import Base, Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
+from app.models import Base, MediaType
+from tests.factories import (
+    EpisodeFactory,
+    MediaFactory,
+    MovieFactory,
+    SeasonFactory,
+    SeriesFactory,
+    UserFactory,
+    WatchHistoryFactory,
+)
 
 TEST_DATABASE_URL = "postgresql+asyncpg://test:test@localhost:5432/test"
 
@@ -41,35 +50,6 @@ async def session_no_expire(engine_for_test):
 
 
 @pytest.fixture
-async def session_isolated(engine_for_test):
-    """
-    Изолированная сессия для сложных тестов.
-    Отключает autoflush и autocommit для полного контроля.
-    """
-    async with AsyncSession(
-        engine_for_test,
-        expire_on_commit=False,  # Объекты не истекают после коммита
-        autoflush=False,  # Отключаем автоматический flush
-        autocommit=False,  # Полный контроль над транзакциями
-    ) as session:
-        yield session
-
-
-@pytest.fixture
-async def session_with_autoflush(engine_for_test):
-    """
-    Сессия с включенным autoflush для простых тестов.
-    """
-    async with AsyncSession(
-        engine_for_test,
-        expire_on_commit=False,
-        autoflush=True,  # Включен autoflush
-        autocommit=False,
-    ) as session:
-        yield session
-
-
-@pytest.fixture
 async def client_with_db(session_for_test):
     async def override_get_session():
         yield session_for_test
@@ -80,23 +60,10 @@ async def client_with_db(session_for_test):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-async def client_with_no_expire_session(session_no_expire):
-    """Клиент с сессией, где объекты не истекают после коммита."""
-
-    async def override_get_session():
-        yield session_no_expire
-
-    app.dependency_overrides[get_session] = override_get_session
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client
-    app.dependency_overrides.clear()
-
-
 # Хелпер-функции для создания тестовых данных
 async def create_user(session, username="user", jellyfin_user_id=None):
     """Создает тестового пользователя."""
-    user = User(username=username, jellyfin_user_id=jellyfin_user_id)
+    user = UserFactory.build(username=username, jellyfin_user_id=jellyfin_user_id)
     session.add(user)
     await session.flush()
     return user
@@ -104,16 +71,13 @@ async def create_user(session, username="user", jellyfin_user_id=None):
 
 async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Movie"):
     """Создает тестовый фильм."""
-    media = Media(media_type=MediaType.MOVIE, title=title)
+    media = MediaFactory(media_type=MediaType.MOVIE, title=title)
     session.add(media)
     await session.flush()
-
-    movie = Movie(
-        id=media.id,
-        jellyfin_id=jellyfin_id,
-        tmdb_id=tmdb_id,
-        imdb_id=imdb_id,
+    movie = MovieFactory.build(
+        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id
     )
+
     session.add(movie)
     media.movie = movie
     await session.flush()
@@ -122,7 +86,7 @@ async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, ti
 
 async def create_watch_history(session, user_id, media_id, is_watched=True, watched_at=None):
     """Создает запись истории просмотров."""
-    wh = WatchHistory(
+    wh = WatchHistoryFactory.build(
         user_id=user_id,
         media_id=media_id,
         episode_id=None,
@@ -136,16 +100,11 @@ async def create_watch_history(session, user_id, media_id, is_watched=True, watc
 
 async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Series"):
     """Создает тестовый сериал."""
-    media = Media(media_type=MediaType.SERIES, title=title)
+    media = MediaFactory(media_type=MediaType.SERIES, title=title)
     session.add(media)
     await session.flush()
 
-    series = Series(
-        id=media.id,
-        jellyfin_id=jellyfin_id,
-        tmdb_id=tmdb_id,
-        imdb_id=imdb_id,
-    )
+    series = SeriesFactory(id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id)
     session.add(series)
     media.series = series
     await session.flush()
@@ -154,11 +113,8 @@ async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, t
 
 async def create_season(session, series_id=None, number=0, jellyfin_id=None, release_date=None):
     """Создает тестовый сезон."""
-    season = Season(
-        series_id=series_id,
-        jellyfin_id=jellyfin_id,
-        number=number,
-        release_date=release_date,
+    season = SeasonFactory(
+        series_id=series_id, jellyfin_id=jellyfin_id, number=number, release_date=release_date
     )
     session.add(season)
     await session.flush()
@@ -166,12 +122,9 @@ async def create_season(session, series_id=None, number=0, jellyfin_id=None, rel
 
 
 async def create_episode(session, season_id=None, number=0, jellyfin_id=None, title="Test episode"):
-    """Создает тестовый сезон."""
-    season = Episode(
-        season_id=season_id,
-        jellyfin_id=jellyfin_id,
-        number=number,
-        title=title,
+    """Создает тестовый эпизод."""
+    season = EpisodeFactory(
+        season_id=season_id, jellyfin_id=jellyfin_id, number=number, title=title
     )
     session.add(season)
     await session.flush()

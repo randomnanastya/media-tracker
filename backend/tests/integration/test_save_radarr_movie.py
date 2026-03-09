@@ -1,19 +1,20 @@
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy import select
 
 from app.models import Media, MediaType, Movie
+from tests.factories import RadarrMovieDictFactory
 from tests.utils.db_asserts import assert_model_matches
 
 
-@pytest.mark.asyncio
 async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, monkeypatch):
     client = client_with_db
 
     # Mock the fetch_radarr_movies function
-    mock_movies = [
-        {"id": 123, "title": "Test Movie", "inCinemas": "2023-01-01T00:00:00Z", "year": 2010}
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(
+            id=123, title="Test Movie", inCinemas="2023-01-01T00:00:00Z", year=2010
+        )
     ]
     mock_fetch = AsyncMock(return_value=mock_movies)
     monkeypatch.setattr("app.services.radarr_service.fetch_radarr_movies", mock_fetch)
@@ -50,7 +51,6 @@ async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, 
     )
 
 
-@pytest.mark.asyncio
 async def test_import_radarr_movies_existing_movie(client_with_db, session_for_test, monkeypatch):
     # First, insert an existing movie manually
     existing_media = Media(media_type=MediaType.MOVIE, title="Existing Movie", release_date=None)
@@ -62,7 +62,9 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     await session_for_test.commit()  # Commit this setup data (will be rolled back after test)
 
     # Mock the fetch_radarr_movies to return the existing movie
-    mock_movies = [{"id": 456, "title": "Existing Movie", "inCinemas": None}]
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(id=456, title="Existing Movie", inCinemas=None, no_external_ids=True)
+    ]
     mock_fetch = AsyncMock(return_value=mock_movies)
     monkeypatch.setattr("app.services.radarr_service.fetch_radarr_movies", mock_fetch)
 
@@ -80,10 +82,11 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     assert len(movie_count.scalars().all()) == 1  # Only the existing one
 
 
-@pytest.mark.asyncio
 async def test_import_radarr_movies_invalid_data(client_with_db, session_for_test, monkeypatch):
     # Mock the fetch_radarr_movies to return invalid movie (no id)
-    mock_movies = [{"title": "Invalid Movie"}]  # No 'id'
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(title="Invalid Movie", missing_id=True, no_external_ids=True)
+    ]
     mock_fetch = AsyncMock(return_value=mock_movies)
     monkeypatch.setattr("app.services.radarr_service.fetch_radarr_movies", mock_fetch)
 

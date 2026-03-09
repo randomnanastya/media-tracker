@@ -1,56 +1,53 @@
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Episode, Media, MediaType, Season, Series
+from tests.factories import SeriesDictFactory, SonarrEpisodeDictFactory
 
 
-@pytest.mark.asyncio
 async def test_import_sonarr_series_creates_new_series_with_episodes(
     client_with_db,
     session_for_test,
     monkeypatch,
 ):
-    sonarr_series = [
-        {
-            "id": 1,
-            "title": "Test Series",
-            "tvdbId": 100,
-            "imdbId": "tt0000100",
-            "tmdbId": 200,
-            "year": 2021,
-            "status": "continuing",
-            "genres": ["Drama"],
-            "ratings": {"value": 8.5, "votes": 100},
-            "images": [{"coverType": "poster", "remoteUrl": "http://poster.jpg"}],
-            "seasons": [{"seasonNumber": 1}],
-        }
+    sonarr_series: list[dict] = [  # type: ignore[list-item]
+        SeriesDictFactory(
+            id=1,
+            title="Test Series",
+            tvdbId=100,
+            tmdbId=200,
+            imdbId="tt0000100",
+            year=2021,
+            status="continuing",
+            genres=["Drama"],
+            ratings={"value": 8.5, "votes": 100},
+            images=[{"coverType": "poster", "remoteUrl": "http://poster.jpg"}],
+            seasons=[{"seasonNumber": 1}],
+        )
     ]
 
-    sonarr_episodes = [
-        {
-            "id": 10,
-            "seasonNumber": 1,
-            "episodeNumber": 1,
-            "title": "Pilot",
-            "airDateUtc": "2021-01-01T00:00:00Z",
-            "overview": "Episode 1",
-        },
-        {
-            "id": 11,
-            "seasonNumber": 1,
-            "episodeNumber": 2,
-            "title": "Episode 2",
-            "airDateUtc": "2021-01-08T00:00:00Z",
-            "overview": "Episode 2",
-        },
+    sonarr_episodes: list[dict] = [  # type: ignore[list-item]
+        SonarrEpisodeDictFactory(
+            id=10,
+            seasonNumber=1,
+            episodeNumber=1,
+            title="Pilot",
+            airDateUtc="2021-01-01T00:00:00Z",
+            overview="Episode 1",
+        ),
+        SonarrEpisodeDictFactory(
+            id=11,
+            seasonNumber=1,
+            episodeNumber=3,
+            title="Episode 2",
+            airDateUtc="2021-01-08T00:00:00Z",
+            overview="Episode 2",
+        ),
     ]
-
     monkeypatch.setattr(
-        "app.services.sonarr_service.fetch_sonarr_series",
-        AsyncMock(return_value=sonarr_series),
+        "app.services.sonarr_service.fetch_sonarr_series", AsyncMock(return_value=sonarr_series)
     )
     monkeypatch.setattr(
         "app.services.sonarr_service.fetch_sonarr_episodes",
@@ -87,7 +84,6 @@ async def test_import_sonarr_series_creates_new_series_with_episodes(
     assert len(episodes) == 2
 
 
-@pytest.mark.asyncio
 async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
     client_with_db,
     session_for_test,
@@ -101,13 +97,8 @@ async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
     session_for_test.add(series)
     await session_for_test.commit()
 
-    sonarr_series = [
-        {
-            "id": 1,
-            "title": "New Title",
-            "status": "continuing",
-            "seasons": [],
-        }
+    sonarr_series: list[dict] = [  # type: ignore[list-item]
+        SeriesDictFactory(id=1, title="New Title", status="continuing", seasons=[])
     ]
 
     monkeypatch.setattr(
@@ -130,7 +121,6 @@ async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
     assert updated.status == "continuing"
 
 
-@pytest.mark.asyncio
 async def test_import_sonarr_series_updates_by_external_ids(
     client_with_db,
     session_for_test,
@@ -144,13 +134,8 @@ async def test_import_sonarr_series_updates_by_external_ids(
     session_for_test.add(series)
     await session_for_test.commit()
 
-    sonarr_series = [
-        {
-            "id": 2,
-            "title": "Existing Updated",
-            "tvdbId": 100,
-            "seasons": [],
-        }
+    sonarr_series: list[dict] = [  # type: ignore[list-item]
+        SeriesDictFactory(id=2, title="Existing Updated", tvdbId=100, seasons=[])
     ]
 
     monkeypatch.setattr(
@@ -173,7 +158,6 @@ async def test_import_sonarr_series_updates_by_external_ids(
     assert updated.media.title == "Existing Updated"
 
 
-@pytest.mark.asyncio
 async def test_import_sonarr_series_updates_existing_episode(
     client_with_db,
     session_for_test,
@@ -200,30 +184,20 @@ async def test_import_sonarr_series_updates_existing_episode(
     session_for_test.add(episode)
     await session_for_test.commit()
 
+    resp_series: list[dict] = [  # type: ignore[list-item]
+        SeriesDictFactory(id=1, title="Series", seasons=[{"seasonNumber": 1}]),
+    ]
     monkeypatch.setattr(
         "app.services.sonarr_service.fetch_sonarr_series",
-        AsyncMock(
-            return_value=[
-                {
-                    "id": 1,
-                    "title": "Series",
-                    "seasons": [{"seasonNumber": 1}],
-                }
-            ]
-        ),
+        AsyncMock(return_value=resp_series),
     )
+
+    resp_episodes: list[dict] = [  # type: ignore[list-item]
+        SonarrEpisodeDictFactory(id=10, seasonNumber=1, episodeNumber=1, title="New title")
+    ]
     monkeypatch.setattr(
         "app.services.sonarr_service.fetch_sonarr_episodes",
-        AsyncMock(
-            return_value=[
-                {
-                    "id": 10,
-                    "seasonNumber": 1,
-                    "episodeNumber": 1,
-                    "title": "New title",
-                }
-            ]
-        ),
+        AsyncMock(return_value=resp_episodes),
     )
 
     resp = await client_with_db.post("/api/v1/sonarr/import")
