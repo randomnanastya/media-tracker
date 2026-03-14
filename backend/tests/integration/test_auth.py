@@ -148,3 +148,45 @@ async def test_change_password(authenticated_client, monkeypatch):
 async def test_existing_endpoints_require_auth(client_with_real_auth):
     response = await client_with_real_auth.post("/api/v1/radarr/import")
     assert response.status_code == 403
+
+
+async def test_invalid_jwt_token_rejected(client_with_real_auth, monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", "test-integration-secret-32chars!!")
+
+    response = await client_with_real_auth.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": "Bearer invalid.token.here"},
+    )
+    assert response.status_code == 401
+
+
+async def test_missing_auth_header_rejected(client_with_real_auth):
+    response = await client_with_real_auth.get("/api/v1/auth/me")
+    assert response.status_code == 403
+
+
+async def test_update_profile(authenticated_client, monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", "test-integration-secret-32chars!!")
+    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+
+    response = await authenticated_client.put(
+        "/api/v1/auth/me",
+        json={"username": "updated_admin", "email": "new@test.com"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["username"] == "updated_admin"
+    assert data["email"] == "new@test.com"
+
+
+async def test_get_recovery_code_integration(authenticated_client, monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", "test-integration-secret-32chars!!")
+    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+
+    response = await authenticated_client.get("/api/v1/auth/recovery-code")
+    assert response.status_code == 200
+    data = response.json()
+    assert "recovery_code" in data
+    parts = data["recovery_code"].split("-")
+    assert len(parts) == 4
+    assert all(len(p) == 5 for p in parts)

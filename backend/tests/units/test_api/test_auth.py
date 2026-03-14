@@ -168,3 +168,77 @@ async def test_get_recovery_code(async_client: AsyncClient) -> None:
         response = await async_client.get("/api/v1/auth/recovery-code")
     assert response.status_code == 200
     assert response.json()["recovery_code"] == "AAAAA-BBBBB-CCCCC-DDDDD"
+
+
+# === POST /reset-password ===
+
+
+@pytest.mark.asyncio
+async def test_reset_password_success(async_client: AsyncClient) -> None:
+    user = AppUserFactory.build()
+    with patch(
+        "app.api.auth.auth_service.reset_password_with_code", new_callable=AsyncMock
+    ) as mock_fn:
+        mock_fn.return_value = (user, "NEW-CODE-XXXX-YYYY")
+        response = await async_client.post(
+            "/api/v1/auth/reset-password",
+            json={"recovery_code": "AAAAA-BBBBB-CCCCC-DDDDD", "new_password": "newpass123"},
+        )
+    assert response.status_code == 200
+    data = response.json()
+    assert "new_recovery_code" in data
+    assert "message" in data
+    assert data["new_recovery_code"] == "NEW-CODE-XXXX-YYYY"
+
+
+@pytest.mark.asyncio
+async def test_reset_password_invalid_code(async_client: AsyncClient) -> None:
+    with patch(
+        "app.api.auth.auth_service.reset_password_with_code", new_callable=AsyncMock
+    ) as mock_fn:
+        mock_fn.side_effect = HTTPException(400, detail={"code": "INVALID_RECOVERY_CODE"})
+        response = await async_client.post(
+            "/api/v1/auth/reset-password",
+            json={"recovery_code": "WRONG-CODE-XXXX-YYYY", "new_password": "newpass123"},
+        )
+    assert response.status_code == 400
+
+
+# === Валидация ===
+
+
+@pytest.mark.asyncio
+async def test_register_validation_too_short(async_client: AsyncClient) -> None:
+    response = await async_client.post(
+        "/api/v1/auth/register",
+        json={"username": "ab", "password": "pass1234"},
+    )
+    assert response.status_code == 422
+
+
+# === PUT /me конфликт ===
+
+
+@pytest.mark.asyncio
+async def test_update_me_username_taken(async_client: AsyncClient) -> None:
+    with patch("app.api.auth.auth_service.update_user_profile", new_callable=AsyncMock) as mock_fn:
+        mock_fn.side_effect = HTTPException(409, detail={"code": "USERNAME_TAKEN"})
+        response = await async_client.put(
+            "/api/v1/auth/me",
+            json={"username": "taken_name"},
+        )
+    assert response.status_code == 409
+
+
+# === PUT /me/password ошибка ===
+
+
+@pytest.mark.asyncio
+async def test_change_password_wrong_current(async_client: AsyncClient) -> None:
+    with patch("app.api.auth.auth_service.change_password", new_callable=AsyncMock) as mock_fn:
+        mock_fn.side_effect = HTTPException(400, detail={"code": "INVALID_CREDENTIALS"})
+        response = await async_client.put(
+            "/api/v1/auth/me/password",
+            json={"current_password": "wrongpass", "new_password": "newpass123"},
+        )
+    assert response.status_code == 400

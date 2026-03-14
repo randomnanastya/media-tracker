@@ -194,3 +194,125 @@ async def test_change_password_wrong_current(mock_session: AsyncMock) -> None:
         await auth_service.change_password(mock_session, user, "wrongpass", "newpass123")
 
     assert exc_info.value.status_code == 400
+
+
+# === refresh_access_token ===
+
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_success(mock_session: AsyncMock) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    raw = generate_refresh_token()
+    future = datetime.now(UTC) + timedelta(days=30)
+    token = RefreshTokenFactory.build(token_hash=hash_token(raw), revoked=False, expires_at=future)
+
+    lookup_result = Mock()
+    lookup_result.scalar_one_or_none.return_value = token
+    mock_session.execute.return_value = lookup_result
+
+    result = await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    new_access, new_refresh = result
+    assert isinstance(new_access, str)
+    assert isinstance(new_refresh, str)
+    assert token.revoked is True
+
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_revoked(mock_session: AsyncMock) -> None:
+    raw = generate_refresh_token()
+    token = RefreshTokenFactory.build(token_hash=hash_token(raw), revoked=True)
+
+    lookup_result = Mock()
+    lookup_result.scalar_one_or_none.return_value = token
+    mock_session.execute.return_value = lookup_result
+
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+
+    assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_expired(mock_session: AsyncMock) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    raw = generate_refresh_token()
+    past = datetime.now(UTC) - timedelta(days=1)
+    token = RefreshTokenFactory.build(token_hash=hash_token(raw), revoked=False, expires_at=past)
+
+    lookup_result = Mock()
+    lookup_result.scalar_one_or_none.return_value = token
+    mock_session.execute.return_value = lookup_result
+
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+
+    assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_access_token_not_found(mock_session: AsyncMock) -> None:
+    lookup_result = Mock()
+    lookup_result.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = lookup_result
+
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_service.refresh_access_token(
+            mock_session, "nonexistent-token", "test-secret", 15
+        )
+
+    assert exc_info.value.status_code == 401
+
+
+# === update_user_profile ===
+
+
+@pytest.mark.asyncio
+async def test_update_user_profile_success(mock_session: AsyncMock) -> None:
+    user = AppUserFactory.build(username="oldname", email="old@test.com")
+    conflict_result = Mock()
+    conflict_result.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = conflict_result
+
+    returned = await auth_service.update_user_profile(
+        mock_session, user, username="newname", email="new@test.com"
+    )
+
+    assert returned.username == "newname"
+    assert returned.email == "new@test.com"
+    assert returned is user
+
+
+@pytest.mark.asyncio
+async def test_update_user_profile_username_taken(mock_session: AsyncMock) -> None:
+    user = AppUserFactory.build(username="myname")
+    other_user = AppUserFactory.build(username="takenname")
+    conflict_result = Mock()
+    conflict_result.scalar_one_or_none.return_value = other_user
+    mock_session.execute.return_value = conflict_result
+
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_service.update_user_profile(mock_session, user, username="takenname")
+
+    assert exc_info.value.status_code == 409
+
+
+# === regenerate_recovery_code ===
+
+
+@pytest.mark.asyncio
+async def test_regenerate_recovery_code(mock_session: AsyncMock) -> None:
+    user = AppUserFactory.build(recovery_code_hash=None)
+
+    raw_code = await auth_service.regenerate_recovery_code(mock_session, user)
+
+    assert isinstance(raw_code, str)
+    parts = raw_code.split("-")
+    assert len(parts) == 4
+    assert all(len(p) == 5 for p in parts)
+    assert user.recovery_code_hash is not None
+    assert user.recovery_code_hash != raw_code
