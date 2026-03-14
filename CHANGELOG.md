@@ -1,3 +1,10 @@
+## [0.5.2](https://github.com/randomnanastya/media-tracker/compare/v0.5.1...v0.5.2) (2026-03-14)
+
+
+### Bug Fixes
+
+* fix release tag ([#65](https://github.com/randomnanastya/media-tracker/issues/65)) ([1f5ece3](https://github.com/randomnanastya/media-tracker/commit/1f5ece366b3ba522a0916e0e79c89f3d5895a05c))
+
 ## [0.5.1](https://github.com/randomnanastya/media-tracker/compare/v0.5.0...v0.5.1) (2026-03-14)
 
 
