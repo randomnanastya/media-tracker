@@ -8,13 +8,16 @@ import pytest
 from httpx import AsyncClient
 from pytest_factoryboy import register
 
+from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import Movie, Series, User, WatchHistory
+from app.models import AppUser, Movie, Series, User, WatchHistory
 from tests.factories import (
+    AppUserFactory,
     EpisodeFactory,
     MediaFactory,
     MovieFactory,
     RadarrMovieDictFactory,
+    RefreshTokenFactory,
     SeasonFactory,
     SeriesFactory,
     UserFactory,
@@ -57,6 +60,23 @@ register(SeasonFactory)
 register(EpisodeFactory)
 register(UserFactory)
 register(WatchHistoryFactory)
+register(AppUserFactory)
+register(RefreshTokenFactory)
+
+
+@pytest.fixture
+def mock_current_user() -> AppUser:
+    return AppUserFactory.build(id=1, username="testadmin", is_active=True)
+
+
+@pytest.fixture(autouse=True)
+def override_auth_dependency(mock_current_user: AppUser) -> Generator[None, None, None]:
+    async def override() -> AppUser:
+        return mock_current_user
+
+    app.dependency_overrides[get_current_user] = override
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 
 # --- Моки базы данных и зависимостей ---

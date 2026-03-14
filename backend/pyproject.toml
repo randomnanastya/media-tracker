@@ -20,6 +20,10 @@ apscheduler = "^3.10"
 asyncpg = "^0.29.0"
 typing-extensions = "^4.8.0"
 alembic = "^1.16.5"
+PyJWT = "^2.9"
+bcrypt = "^4.0"
+email-validator = "^2.0"
+python-multipart = ">=0.0.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest-check = "^2.5.4"

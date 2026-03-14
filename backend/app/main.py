@@ -1,12 +1,14 @@
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
-from app.api import jellyfin, radarr, sonarr
+from app.api import auth, jellyfin, radarr, sonarr
 from app.config import logger
+from app.dependencies.auth import get_current_user
 from app.exceptions.handlers import register_exception_handlers
 from app.services.jobs import (
     jellyfin_import_movies_job,
@@ -25,6 +27,11 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Startup/shutdown lifecycle with APScheduler."""
     try:
+        app_env = os.getenv("APP_ENV", "development")
+        jwt_secret = os.getenv("JWT_SECRET", "")
+        if app_env == "production" and not jwt_secret:
+            raise RuntimeError("JWT_SECRET is required in production")
+
         jobs = [
             ("Jellyfin Users", "1:00"),
             ("Radarr", "1:10"),
@@ -104,9 +111,10 @@ def create_app() -> FastAPI:
     )
 
     # Include routers
-    app.include_router(radarr.router)
-    app.include_router(sonarr.router)
-    app.include_router(jellyfin.router)
+    app.include_router(auth.router)
+    app.include_router(radarr.router, dependencies=[Depends(get_current_user)])
+    app.include_router(sonarr.router, dependencies=[Depends(get_current_user)])
+    app.include_router(jellyfin.router, dependencies=[Depends(get_current_user)])
 
     # Register exception handlers
     register_exception_handlers(app)
