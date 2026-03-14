@@ -1,11 +1,18 @@
+import os
+from collections.abc import AsyncGenerator
+from unittest.mock import patch
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.database import get_session
+from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import Base, MediaType
+from app.models import AppUser, Base, MediaType
+from app.utils.security import hash_password
 from tests.factories import (
+    AppUserFactory,
     EpisodeFactory,
     MediaFactory,
     MovieFactory,
@@ -54,9 +61,54 @@ async def client_with_db(session_for_test):
     async def override_get_session():
         yield session_for_test
 
+    async def override_auth():
+        return AppUserFactory.build(id=1, username="test_admin", is_active=True)
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_auth
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
+    app.dependency_overrides.clear()
+
+
+async def create_app_user(
+    session: AsyncSession,
+    username: str = "admin",
+    password: str = "testpassword123",
+) -> tuple[AppUser, str]:
+    user = AppUserFactory.build(
+        username=username,
+        hashed_password=hash_password(password),
+        is_active=True,
+    )
+    session.add(user)
+    await session.flush()
+    return user, password
+
+
+@pytest.fixture
+async def authenticated_client(
+    session_for_test: AsyncSession, engine_for_test: object
+) -> AsyncGenerator[AsyncClient, None]:
+    user, password = await create_app_user(session_for_test)
+    username = user.username  # capture before commit
+    await session_for_test.commit()
+
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        yield session_for_test
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    with patch.dict(os.environ, {"JWT_SECRET": "test-integration-secret-32chars!!"}):
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            login_resp = await client.post(
+                "/api/v1/auth/login",
+                json={"username": username, "password": password},
+            )
+            token = login_resp.json()["access_token"]
+            client.headers["Authorization"] = f"Bearer {token}"
+            yield client
+
     app.dependency_overrides.clear()
 
 

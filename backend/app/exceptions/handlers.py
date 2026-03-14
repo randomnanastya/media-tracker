@@ -301,6 +301,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             ).model_dump(exclude_none=True),
         )
 
+    @app.exception_handler(StarletteHTTPException)
+    async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> Response:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
     @app.exception_handler(SonarrServiceError)
     async def handle_service_error(request: Request, exc: SonarrServiceError) -> Response:
         logger.error(

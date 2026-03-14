@@ -6,7 +6,18 @@ import factory
 from factory import LazyAttribute, LazyFunction, Sequence, SubFactory
 from faker import Faker
 
-from app.models import Episode, Media, MediaType, Movie, Season, Series, User, WatchHistory
+from app.models import (
+    AppUser,
+    Episode,
+    Media,
+    MediaType,
+    Movie,
+    RefreshToken,
+    Season,
+    Series,
+    User,
+    WatchHistory,
+)
 
 fake = Faker()
 
@@ -402,3 +413,36 @@ class JellyfinUserDictFactory(factory.DictFactory):
 
     class Params:
         no_password = factory.Trait(HasPassword=False, HasConfiguredPassword=False)
+
+
+class AppUserFactory(factory.Factory):
+    class Meta:
+        model = AppUser
+
+    id = Sequence(lambda n: n + 1)
+    username = Sequence(lambda n: f"appuser_{n}")
+    email = LazyFunction(lambda: fake.email())
+    hashed_password = LazyFunction(lambda: fake.sha256())
+    recovery_code_hash = None
+    is_active = True
+    created_at = LazyFunction(lambda: datetime(2024, 1, 1, tzinfo=UTC))
+    last_login_at = None
+
+    class Params:
+        inactive = factory.Trait(is_active=False)
+
+
+class RefreshTokenFactory(factory.Factory):
+    class Meta:
+        model = RefreshToken
+
+    id = Sequence(lambda n: n + 1)
+    user_id = 1
+    token_hash = LazyFunction(lambda: fake.sha256())
+    expires_at = LazyFunction(lambda: datetime(2099, 1, 1, tzinfo=UTC))
+    created_at = LazyFunction(lambda: datetime(2024, 1, 1, tzinfo=UTC))
+    revoked = False
+
+    class Params:
+        revoked_token = factory.Trait(revoked=True)
+        expired = factory.Trait(expires_at=LazyFunction(lambda: datetime(2020, 1, 1, tzinfo=UTC)))
