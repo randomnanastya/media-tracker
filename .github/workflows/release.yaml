@@ -182,6 +182,8 @@ jobs:
           fetch-depth: 0
       - name: Fetch tags
         run: git fetch --tags
+      - name: Pull latest changes (including semantic-release tag)
+        run: git pull origin main
       - name: Set image name
         id: image_name
         run: echo "IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
