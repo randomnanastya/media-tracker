@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/randomnanastya/media-tracker/compare/v0.4.1...v0.5.0) (2026-03-14)
+
+
+### Features
+
+* added auth for api ([f6584bb](https://github.com/randomnanastya/media-tracker/commit/f6584bb0eb272bf20fa1fea3b1e3acb2cd646ec3))
+
 ## [0.4.1](https://github.com/randomnanastya/media-tracker/compare/v0.4.0...v0.4.1) (2026-03-08)
 
 
