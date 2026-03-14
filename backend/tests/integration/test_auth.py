@@ -1,9 +1,9 @@
-async def test_full_register_and_login_flow(client_with_db, session_for_test, monkeypatch):
+async def test_full_register_and_login_flow(client_with_real_auth, session_for_test, monkeypatch):
     monkeypatch.setenv("JWT_SECRET", "test-integration-secret-32chars!!")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
     monkeypatch.setenv("REFRESH_TOKEN_EXPIRE_DAYS", "30")
 
-    reg_resp = await client_with_db.post(
+    reg_resp = await client_with_real_auth.post(
         "/api/v1/auth/register",
         json={"username": "admin", "password": "testpass123"},
     )
@@ -11,14 +11,14 @@ async def test_full_register_and_login_flow(client_with_db, session_for_test, mo
     recovery_code = reg_resp.json()["recovery_code"]
     assert "-" in recovery_code
 
-    login_resp = await client_with_db.post(
+    login_resp = await client_with_real_auth.post(
         "/api/v1/auth/login",
         json={"username": "admin", "password": "testpass123"},
     )
     assert login_resp.status_code == 200
     token = login_resp.json()["access_token"]
 
-    me_resp = await client_with_db.get(
+    me_resp = await client_with_real_auth.get(
         "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -145,6 +145,6 @@ async def test_change_password(authenticated_client, monkeypatch):
     assert login_new.status_code == 200
 
 
-async def test_existing_endpoints_require_auth(client_with_db):
-    response = await client_with_db.post("/api/v1/radarr/import")
+async def test_existing_endpoints_require_auth(client_with_real_auth):
+    response = await client_with_real_auth.post("/api/v1/radarr/import")
     assert response.status_code == 403

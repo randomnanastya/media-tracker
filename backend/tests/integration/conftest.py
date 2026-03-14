@@ -71,6 +71,19 @@ async def client_with_db(session_for_test):
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+async def client_with_real_auth(session_for_test):
+    """Client with real auth (get_current_user not overridden)."""
+
+    async def override_get_session():
+        yield session_for_test
+
+    app.dependency_overrides[get_session] = override_get_session
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
 async def create_app_user(
     session: AsyncSession,
     username: str = "admin",
