@@ -15,7 +15,7 @@ optional_security_scheme = HTTPBearer(auto_error=False)
 def _decode_token(token: str) -> dict[str, object]:
     secret = get_jwt_secret()
     try:
-        return decode_access_token(token, secret)  # type: ignore[return-value]
+        return decode_access_token(token, secret)
     except jwt.ExpiredSignatureError as err:
         raise HTTPException(status_code=401, detail={"code": AuthErrorCode.TOKEN_EXPIRED}) from err
     except jwt.InvalidTokenError as err:
