@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mt-black: #000000;
+  --color-mt-gray: #504d4a;
+  --color-mt-light: #FCF4E8;
+  --color-mt-accent: #ffb826;
+  --color-mt-brown: #96551d;
+
+  --color-mt-card-bg: rgba(0, 0, 0, 0.45);
+  --color-mt-card-border: rgba(201, 194, 185, 0.15);
+  --color-mt-input-bg: rgba(255, 255, 255, 0.08);
+  --color-mt-input-border: rgba(201, 194, 185, 0.25);
+}
