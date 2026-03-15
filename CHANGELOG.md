@@ -1,3 +1,10 @@
+## [0.5.3](https://github.com/randomnanastya/media-tracker/compare/v0.5.2...v0.5.3) (2026-03-15)
+
+
+### Bug Fixes
+
+* fix auth token to cookie ([#67](https://github.com/randomnanastya/media-tracker/issues/67)) ([8f692b8](https://github.com/randomnanastya/media-tracker/commit/8f692b856cf5453369ab0748c3d70a236f03e405))
+
 ## [0.5.2](https://github.com/randomnanastya/media-tracker/compare/v0.5.1...v0.5.2) (2026-03-14)
 
 
