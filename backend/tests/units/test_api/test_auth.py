@@ -77,11 +77,11 @@ async def test_login_success(async_client: AsyncClient) -> None:
                     json={"username": "user", "password": "pass"},
                 )
     assert response.status_code == 200
-    data = response.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
-    assert data["token_type"] == "bearer"
-    assert "expires_in" in data
+    assert response.json() == {"message": "ok"}
+    cookies = response.headers.get_list("set-cookie")
+    assert any("access_token" in c for c in cookies)
+    assert any("refresh_token" in c for c in cookies)
+    assert any("HttpOnly" in c for c in cookies)
 
 
 @pytest.mark.asyncio
@@ -101,16 +101,26 @@ async def test_refresh_success(async_client: AsyncClient) -> None:
         mock_fn.return_value = ("new-access", "new-refresh")
         with patch.dict(
             "os.environ",
-            {"JWT_SECRET": "secret", "ACCESS_TOKEN_EXPIRE_MINUTES": "15"},
+            {
+                "JWT_SECRET": "secret",
+                "ACCESS_TOKEN_EXPIRE_MINUTES": "15",
+                "REFRESH_TOKEN_EXPIRE_DAYS": "30",
+            },
         ):
             response = await async_client.post(
                 "/api/v1/auth/refresh",
-                json={"refresh_token": "old-refresh-token"},
+                cookies={"refresh_token": "old-refresh-token"},
             )
     assert response.status_code == 200
-    data = response.json()
-    assert data["access_token"] == "new-access"
-    assert data["refresh_token"] == "new-refresh"
+    assert response.json() == {"message": "ok"}
+    cookies = response.headers.get_list("set-cookie")
+    assert any("access_token" in c for c in cookies)
+
+
+@pytest.mark.asyncio
+async def test_refresh_missing_cookie(async_client: AsyncClient) -> None:
+    response = await async_client.post("/api/v1/auth/refresh")
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -119,10 +129,11 @@ async def test_logout_success(async_client: AsyncClient) -> None:
         mock_fn.return_value = None
         response = await async_client.post(
             "/api/v1/auth/logout",
-            json={"refresh_token": "some-token"},
+            cookies={"refresh_token": "some-token"},
         )
     assert response.status_code == 200
     assert response.json() == {"message": "ok"}
+    mock_fn.assert_called_once()
 
 
 @pytest.mark.asyncio

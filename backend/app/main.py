@@ -5,6 +5,7 @@ from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, jellyfin, radarr, sonarr
 from app.config import logger
@@ -101,6 +102,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
         logger.exception("Failed to stop scheduler cleanly: %s", e)
 
 
+def _get_cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
@@ -108,6 +114,14 @@ def create_app() -> FastAPI:
         description="Collects and stores stats from Sonarr, Radarr, and Jellyfin",
         version="0.1.0",
         lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_get_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # Include routers
