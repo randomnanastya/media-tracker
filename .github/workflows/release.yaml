@@ -176,6 +176,17 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            suffix: ""
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+            suffix: "-frontend"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -186,7 +197,7 @@ jobs:
         run: git pull origin main
       - name: Set image name
         id: image_name
-        run: echo "IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+        run: echo "IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}${{ matrix.suffix }}" >> $GITHUB_OUTPUT
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
@@ -203,8 +214,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: |
             ${{ steps.image_name.outputs.IMAGE }}:${{ steps.get_version.outputs.VERSION }}
