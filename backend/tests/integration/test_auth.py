@@ -143,7 +143,7 @@ async def test_change_password(authenticated_client, monkeypatch):
 
 async def test_existing_endpoints_require_auth(client_with_real_auth):
     response = await client_with_real_auth.post("/api/v1/radarr/import")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 async def test_invalid_jwt_token_rejected(client_with_real_auth, monkeypatch):
@@ -158,7 +158,7 @@ async def test_invalid_jwt_token_rejected(client_with_real_auth, monkeypatch):
 
 async def test_missing_auth_header_rejected(client_with_real_auth):
     response = await client_with_real_auth.get("/api/v1/auth/me")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 async def test_update_profile(authenticated_client, monkeypatch):
