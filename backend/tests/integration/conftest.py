@@ -118,7 +118,7 @@ async def authenticated_client(
                 "/api/v1/auth/login",
                 json={"username": username, "password": password},
             )
-            token = login_resp.json()["access_token"]
+            token = login_resp.cookies.get("access_token")
             client.headers["Authorization"] = f"Bearer {token}"
             yield client
 

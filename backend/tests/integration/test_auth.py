@@ -16,12 +16,8 @@ async def test_full_register_and_login_flow(client_with_real_auth, session_for_t
         json={"username": "admin", "password": "testpass123"},
     )
     assert login_resp.status_code == 200
-    token = login_resp.json()["access_token"]
 
-    me_resp = await client_with_real_auth.get(
-        "/api/v1/auth/me",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    me_resp = await client_with_real_auth.get("/api/v1/auth/me")
     assert me_resp.status_code == 200
     assert me_resp.json()["username"] == "admin"
 
@@ -55,19 +51,19 @@ async def test_refresh_token_rotation(client_with_db, session_for_test, monkeypa
         "/api/v1/auth/login",
         json={"username": "admin", "password": "testpass123"},
     )
-    old_refresh = login_resp.json()["refresh_token"]
+    old_refresh = login_resp.cookies.get("refresh_token")
 
     refresh_resp = await client_with_db.post(
         "/api/v1/auth/refresh",
-        json={"refresh_token": old_refresh},
+        cookies={"refresh_token": old_refresh},
     )
     assert refresh_resp.status_code == 200
-    new_refresh = refresh_resp.json()["refresh_token"]
+    new_refresh = refresh_resp.cookies.get("refresh_token")
     assert new_refresh != old_refresh
 
     old_refresh_resp = await client_with_db.post(
         "/api/v1/auth/refresh",
-        json={"refresh_token": old_refresh},
+        cookies={"refresh_token": old_refresh},
     )
     assert old_refresh_resp.status_code == 401
 
@@ -81,17 +77,17 @@ async def test_logout_invalidates_token(authenticated_client, session_for_test, 
         "/api/v1/auth/login",
         json={"username": "admin", "password": "testpassword123"},
     )
-    refresh_token = login_resp.json()["refresh_token"]
+    refresh_token = login_resp.cookies.get("refresh_token")
 
     logout_resp = await authenticated_client.post(
         "/api/v1/auth/logout",
-        json={"refresh_token": refresh_token},
+        cookies={"refresh_token": refresh_token},
     )
     assert logout_resp.status_code == 200
 
     refresh_resp = await authenticated_client.post(
         "/api/v1/auth/refresh",
-        json={"refresh_token": refresh_token},
+        cookies={"refresh_token": refresh_token},
     )
     assert refresh_resp.status_code == 401
 

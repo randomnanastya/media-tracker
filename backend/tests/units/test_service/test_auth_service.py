@@ -211,7 +211,7 @@ async def test_refresh_access_token_success(mock_session: AsyncMock) -> None:
     lookup_result.scalar_one_or_none.return_value = token
     mock_session.execute.return_value = lookup_result
 
-    result = await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+    result = await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15, 30)
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -231,7 +231,7 @@ async def test_refresh_access_token_revoked(mock_session: AsyncMock) -> None:
     mock_session.execute.return_value = lookup_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15, 30)
 
     assert exc_info.value.status_code == 401
 
@@ -249,7 +249,7 @@ async def test_refresh_access_token_expired(mock_session: AsyncMock) -> None:
     mock_session.execute.return_value = lookup_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15)
+        await auth_service.refresh_access_token(mock_session, raw, "test-secret", 15, 30)
 
     assert exc_info.value.status_code == 401
 
@@ -262,7 +262,7 @@ async def test_refresh_access_token_not_found(mock_session: AsyncMock) -> None:
 
     with pytest.raises(HTTPException) as exc_info:
         await auth_service.refresh_access_token(
-            mock_session, "nonexistent-token", "test-secret", 15
+            mock_session, "nonexistent-token", "test-secret", 15, 30
         )
 
     assert exc_info.value.status_code == 401
