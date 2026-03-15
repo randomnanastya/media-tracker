@@ -99,6 +99,7 @@ async def refresh_access_token(
     refresh_token_raw: str,
     secret: str,
     expires_minutes: int,
+    refresh_expires_days: int,
 ) -> tuple[str, str]:
     result = await session.execute(
         select(RefreshToken).where(RefreshToken.token_hash == hash_token(refresh_token_raw))
@@ -115,7 +116,9 @@ async def refresh_access_token(
     token.revoked = True
 
     new_access_token = create_access_token(token.user_id, secret, expires_minutes)
-    new_refresh_token = await create_refresh_token(session, token.user_id, expires_days=30)
+    new_refresh_token = await create_refresh_token(
+        session, token.user_id, expires_days=refresh_expires_days
+    )
 
     return new_access_token, new_refresh_token
 
@@ -147,7 +150,7 @@ async def reset_password_with_code(
 
     matched_user.hashed_password = hash_password(new_password)
     new_code = generate_recovery_code()
-    matched_user.recovery_code_hash = hash_password(new_code)
+    matched_user.recovery_code_hash = hash_token(new_code)
 
     return matched_user, new_code
 

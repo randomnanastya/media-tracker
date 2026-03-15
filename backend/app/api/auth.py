@@ -1,27 +1,27 @@
 import os
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.dependencies.auth import get_current_user
 from app.models import AppUser
 from app.schemas.auth import (
+    AuthMessageResponse,
     AuthStatusResponse,
     ChangePasswordRequest,
     LoginRequest,
-    LogoutRequest,
     RecoveryCodeResponse,
-    RefreshRequest,
     RegisterRequest,
     RegisterResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
-    TokenResponse,
     UpdateUserRequest,
     UserResponse,
 )
+from app.schemas.error_codes import AuthErrorCode
 from app.services import auth_service
+from app.utils.cookies import clear_auth_cookies, set_access_token_cookie, set_refresh_token_cookie
 from app.utils.security import create_access_token, get_jwt_secret
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
@@ -48,44 +48,42 @@ async def register(
     return response
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=AuthMessageResponse)
 async def login(
     body: LoginRequest,
+    response: Response,
     session: AsyncSession = Depends(get_session),
-) -> TokenResponse:
+) -> AuthMessageResponse:
     expires_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     expires_days = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
-
     user = await auth_service.authenticate_user(session, body.username, body.password)
     secret = get_jwt_secret()
     access_token = create_access_token(user.id, secret, expires_minutes)
     refresh_token = await auth_service.create_refresh_token(session, user.id, expires_days)
     await session.commit()
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=expires_minutes * 60,
-    )
+    set_access_token_cookie(response, access_token, expires_minutes * 60)
+    set_refresh_token_cookie(response, refresh_token, expires_days * 86400)
+    return AuthMessageResponse()
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh", response_model=AuthMessageResponse)
 async def refresh(
-    body: RefreshRequest,
+    response: Response,
     session: AsyncSession = Depends(get_session),
-) -> TokenResponse:
+    refresh_token: str | None = Cookie(default=None),
+) -> AuthMessageResponse:
+    if refresh_token is None:
+        raise HTTPException(status_code=401, detail={"code": AuthErrorCode.TOKEN_INVALID})
     secret = get_jwt_secret()
     expires_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
-
-    access_token, refresh_token = await auth_service.refresh_access_token(
-        session, body.refresh_token, secret, expires_minutes
+    expires_days = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
+    new_access, new_refresh = await auth_service.refresh_access_token(
+        session, refresh_token, secret, expires_minutes, expires_days
     )
     await session.commit()
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        expires_in=expires_minutes * 60,
-    )
+    set_access_token_cookie(response, new_access, expires_minutes * 60)
+    set_refresh_token_cookie(response, new_refresh, expires_days * 86400)
+    return AuthMessageResponse()
 
 
 @router.post("/reset-password", response_model=ResetPasswordResponse)
@@ -100,15 +98,18 @@ async def reset_password(
     return ResetPasswordResponse(message="Password reset successful", new_recovery_code=new_code)
 
 
-@router.post("/logout", response_model=dict[str, str])
+@router.post("/logout", response_model=AuthMessageResponse)
 async def logout(
-    body: LogoutRequest,
+    response: Response,
     session: AsyncSession = Depends(get_session),
     current_user: AppUser = Depends(get_current_user),
-) -> dict[str, str]:
-    await auth_service.revoke_refresh_token(session, body.refresh_token)
+    refresh_token: str | None = Cookie(default=None),
+) -> AuthMessageResponse:
+    if refresh_token is not None:
+        await auth_service.revoke_refresh_token(session, refresh_token)
     await session.commit()
-    return {"message": "ok"}
+    clear_auth_cookies(response)
+    return AuthMessageResponse()
 
 
 @router.get("/me", response_model=UserResponse)
@@ -144,17 +145,17 @@ async def update_me(
     return response
 
 
-@router.put("/me/password", response_model=dict[str, str])
+@router.put("/me/password", response_model=AuthMessageResponse)
 async def change_password(
     body: ChangePasswordRequest,
     session: AsyncSession = Depends(get_session),
     current_user: AppUser = Depends(get_current_user),
-) -> dict[str, str]:
+) -> AuthMessageResponse:
     await auth_service.change_password(
         session, current_user, body.current_password, body.new_password
     )
     await session.commit()
-    return {"message": "ok"}
+    return AuthMessageResponse()
 
 
 @router.get("/recovery-code", response_model=RecoveryCodeResponse)
