@@ -5,10 +5,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yaml'
   pull_request:
     branches:
       - main
-      - 'MTB-*'
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yaml'
 
 jobs:
   yaml-lint:
