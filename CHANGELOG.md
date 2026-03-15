@@ -1,3 +1,16 @@
+# [0.6.0](https://github.com/randomnanastya/media-tracker/compare/v0.5.3...v0.6.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* fix linter ([5f46f84](https://github.com/randomnanastya/media-tracker/commit/5f46f84f101efd7be585c500e570aaa9da112c1c))
+
+
+### Features
+
+* front auth ([6f609f4](https://github.com/randomnanastya/media-tracker/commit/6f609f4a04e35f0e648d0f3b532908e3a34217e5))
+* front auth [#69](https://github.com/randomnanastya/media-tracker/issues/69) ([30d5e45](https://github.com/randomnanastya/media-tracker/commit/30d5e45fc4d0a896e18d239f3ced677d68f4414c))
+
 ## [0.5.3](https://github.com/randomnanastya/media-tracker/compare/v0.5.2...v0.5.3) (2026-03-15)
 
 
