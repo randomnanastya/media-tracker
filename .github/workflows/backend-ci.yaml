@@ -15,6 +15,9 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-ci.yaml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   yaml-lint:
     runs-on: ubuntu-latest
