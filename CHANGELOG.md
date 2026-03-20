@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/randomnanastya/media-tracker/compare/v0.6.0...v0.7.0) (2026-03-20)
+
+
+### Features
+
+* added changed pwd in setting page ([#72](https://github.com/randomnanastya/media-tracker/issues/72)) ([ef37a2d](https://github.com/randomnanastya/media-tracker/commit/ef37a2d39b120a2fe141ec0ceffde140307c2275))
+
 # [0.6.0](https://github.com/randomnanastya/media-tracker/compare/v0.5.3...v0.6.0) (2026-03-15)
 
 
