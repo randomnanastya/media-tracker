@@ -1,6 +1,7 @@
 import { apiClient } from "./client";
 import type {
   AuthStatusResponse,
+  ChangePasswordRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -31,4 +32,7 @@ export const authApi = {
 
   logout: () =>
     apiClient.post("api/v1/auth/logout").json<{ message: string }>(),
+
+  changePassword: (data: ChangePasswordRequest) =>
+    apiClient.put("api/v1/auth/me/password", { json: data }).json<{ message: string }>(),
 };

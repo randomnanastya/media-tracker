@@ -57,7 +57,7 @@ export function ForgotPasswordForm({ onSuccess }: ForgotPasswordFormProps) {
         error={errors.new_password?.message}
       />
       {errors.root && (
-        <p className="text-red-400 text-sm mt-1">{errors.root.message}</p>
+        <p role="alert" className="text-red-400 text-sm mt-1">{errors.root.message}</p>
       )}
       <SubmitButton label="Reset password" isLoading={mutation.isPending} />
     </form>
