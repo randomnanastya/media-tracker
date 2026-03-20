@@ -46,3 +46,8 @@ export interface UserResponse {
   created_at: string;
   last_login_at: string | null;
 }
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}

@@ -9,6 +9,7 @@ interface PasswordFieldProps {
   placeholder?: string;
   error?: string;
   registration: UseFormRegisterReturn;
+  variant?: "dark" | "light";
 }
 
 export function PasswordField({
@@ -16,12 +17,19 @@ export function PasswordField({
   placeholder,
   error,
   registration,
+  variant = "dark",
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
+  const isDark = variant === "dark";
+  const labelClass = isDark ? "text-mt-light" : "text-[#2a2520]";
+  const inputClass = isDark
+    ? "w-full bg-mt-input-bg border border-mt-input-border rounded-lg pl-10 pr-10 py-2.5 text-mt-light placeholder-mt-light/60 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none"
+    : "w-full bg-white/80 border border-[#c9b89a] rounded-lg pl-10 pr-10 py-2.5 text-[#2a2520] placeholder-[#2a2520]/50 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none";
+
   return (
     <div className="mb-4">
-      <label htmlFor={registration.name} className="text-mt-light text-sm mb-1 block">
+      <label htmlFor={registration.name} className={`${labelClass} text-sm mb-1 block`}>
         {label}
       </label>
       <div className="relative">
@@ -37,7 +45,7 @@ export function PasswordField({
           placeholder={placeholder}
           aria-invalid={!!error}
           aria-describedby={error ? `${registration.name}-error` : undefined}
-          className="w-full bg-mt-input-bg border border-mt-input-border rounded-lg pl-10 pr-10 py-2.5 text-mt-light placeholder-mt-light/60 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none"
+          className={inputClass}
         />
         <button
           type="button"
