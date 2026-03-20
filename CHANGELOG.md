@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/randomnanastya/media-tracker/compare/v0.7.0...v0.7.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* workflow yaml for release ([#73](https://github.com/randomnanastya/media-tracker/issues/73)) ([1ceb07e](https://github.com/randomnanastya/media-tracker/commit/1ceb07e4459ec8af2394f8d7d7c22994421aa98a))
+
 # [0.7.0](https://github.com/randomnanastya/media-tracker/compare/v0.6.0...v0.7.0) (2026-03-20)
 
 
