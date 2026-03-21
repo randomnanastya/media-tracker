@@ -320,11 +320,60 @@ async def test_test_service_missing_url_returns_422(async_client):
 
 
 @pytest.mark.asyncio
-async def test_test_service_missing_api_key_returns_422(async_client):
-    """Missing api_key field in test request → 422."""
+async def test_test_service_no_api_key_no_db_config_returns_not_configured(
+    async_client, mock_session
+):
+    """POST without api_key when no config in DB → success=False, 'not configured' message."""
+    with patch(
+        "app.api.settings.config_repo.get_config_by_service",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        response = await async_client.post(
+            "/api/v1/settings/services/radarr/test",
+            json={"url": "http://radarr:7878"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    assert "not configured" in data["message"].lower()
+
+
+@pytest.mark.asyncio
+async def test_test_service_no_api_key_uses_db_token(async_client, mock_session):
+    """POST without api_key fetches token from DB and passes it to test_service_connection."""
+    db_config = _make_config(ServiceType.RADARR, "http://radarr:7878", "encrypted-token")
+
+    with (
+        patch(
+            "app.api.settings.config_repo.get_config_by_service",
+            new_callable=AsyncMock,
+            return_value=db_config,
+        ),
+        patch("app.api.settings.decrypt_api_key", return_value="db-token"),
+        patch(
+            "app.api.settings.test_service_connection",
+            new_callable=AsyncMock,
+            return_value=(True, "ok"),
+        ) as mock_test,
+    ):
+        response = await async_client.post(
+            "/api/v1/settings/services/radarr/test",
+            json={"url": "http://radarr:7878"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    mock_test.assert_awaited_once_with(ServiceType.RADARR, "http://radarr:7878", "db-token")
+
+
+@pytest.mark.asyncio
+async def test_test_service_empty_api_key_returns_422(async_client):
+    """Empty string api_key violates min_length=1 → 422."""
     response = await async_client.post(
         "/api/v1/settings/services/radarr/test",
-        json={"url": "http://radarr:7878"},
+        json={"url": "http://radarr:7878", "api_key": ""},
     )
     assert response.status_code == 422
 

@@ -20,7 +20,7 @@ class ServiceTestRequest(BaseModel):
     """Request body for testing a connection before saving."""
 
     url: str = Field(min_length=1, max_length=500)
-    api_key: str = Field(min_length=1, max_length=500)
+    api_key: str | None = Field(default=None, min_length=1, max_length=500)
 
 
 class ServiceConfigResponse(BaseModel):

@@ -106,7 +106,19 @@ async def delete_service(
 async def test_service(
     service: ServiceType,
     body: ServiceTestRequest,
+    session: AsyncSession = Depends(get_session),
 ) -> ServiceTestResponse:
     """Test connection using provided url + api_key (before saving)."""
-    success, message = await test_service_connection(service, body.url, body.api_key)
+    api_key = body.api_key
+    if api_key is None:
+        existing = await config_repo.get_config_by_service(session, service)
+        if existing is None:
+            return ServiceTestResponse(
+                service_type=service,
+                success=False,
+                message="Service not configured. Enter URL and API Token.",
+            )
+        api_key = decrypt_api_key(existing.encrypted_api_key)
+
+    success, message = await test_service_connection(service, body.url, api_key)
     return ServiceTestResponse(service_type=service, success=success, message=message)
