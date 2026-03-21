@@ -1,3 +1,22 @@
+# [0.8.0](https://github.com/randomnanastya/media-tracker/compare/v0.7.1...v0.8.0) (2026-03-21)
+
+
+### Bug Fixes
+
+* bag model encryptor and env vars ([5d1d544](https://github.com/randomnanastya/media-tracker/commit/5d1d54442b493c0acb7e7b241d4c4e40e0a23518))
+* bag with err prefix and log f string ([3f88721](https://github.com/randomnanastya/media-tracker/commit/3f887211eaf5e4ddc0920186e6882f3c032054fa))
+* correct merge commit message format ([278391f](https://github.com/randomnanastya/media-tracker/commit/278391fb434e34cc4d11b08177551e5b6ad12c98))
+* integration tests after changed code ([288a719](https://github.com/randomnanastya/media-tracker/commit/288a719f1776e5c90dec83e32fa45ae5a4f3478e))
+* linter mypy ([7a21ed2](https://github.com/randomnanastya/media-tracker/commit/7a21ed2744ae8b33ffaf440369e924b67f74285d))
+
+
+### Features
+
+* added services ([f8e7d4d](https://github.com/randomnanastya/media-tracker/commit/f8e7d4d5e4745521b7bb4e6adb1d3aa5d69c8f5b))
+* changed client for values into db ([9a3f18b](https://github.com/randomnanastya/media-tracker/commit/9a3f18b6b723de8ada757784372f92ce2df0f94a))
+* changed client for values into db ([134e217](https://github.com/randomnanastya/media-tracker/commit/134e217d395ab0a902b9f7875052b8c430a2ac85))
+* models and encrypt for settings external services ([ff10f16](https://github.com/randomnanastya/media-tracker/commit/ff10f16a61dbd9f06f8b33b1e2b432fd6b63b9c2))
+
 ## [0.7.1](https://github.com/randomnanastya/media-tracker/compare/v0.7.0...v0.7.1) (2026-03-20)
 
 
