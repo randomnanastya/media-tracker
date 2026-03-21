@@ -4,8 +4,9 @@ from sqlalchemy.orm import selectinload
 
 from app.client.jellyfin_client import fetch_jellyfin_episodes_for_user_all
 from app.config import logger
-from app.models import Episode, Season, User, WatchHistory
+from app.models import Episode, Season, ServiceType, User, WatchHistory
 from app.schemas.jellyfin import JellyfinWatchedSeriesResponse
+from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
 
 
@@ -13,6 +14,12 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
     """
     Sync watched episodes from Jellyfin for all users.
     """
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.info("Jellyfin is not configured, skipping watched series sync")
+        return JellyfinWatchedSeriesResponse()
+    url, api_key = config
+
     # 1. Get all users with jellyfin_user_id
     users_result = await session.execute(select(User).where(User.jellyfin_user_id.isnot(None)))
     users = users_result.scalars().all()
@@ -34,7 +41,9 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
 
         try:
             # 2. Get all episodes by user from Jellyfin (with pagination into func)
-            episodes_data = await fetch_jellyfin_episodes_for_user_all(user.jellyfin_user_id)
+            episodes_data = await fetch_jellyfin_episodes_for_user_all(
+                url, api_key, user.jellyfin_user_id
+            )
 
             if not episodes_data:
                 logger.info(f"No episodes found for user {user.username}")
