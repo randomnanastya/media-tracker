@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/randomnanastya/media-tracker/compare/v0.9.0...v0.10.0) (2026-03-21)
+
+
+### Features
+
+* test api external services if existing token ([#81](https://github.com/randomnanastya/media-tracker/issues/81)) ([b0d754b](https://github.com/randomnanastya/media-tracker/commit/b0d754b0bbf4cb986f683af27931f7f9987a5e91))
+
 # [0.9.0](https://github.com/randomnanastya/media-tracker/compare/v0.8.1...v0.9.0) (2026-03-21)
 
 
