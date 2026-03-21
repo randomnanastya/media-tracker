@@ -350,6 +350,61 @@ async def test_test_service_success_integration(client_with_db, monkeypatch):
     assert response.json()["success"] is True
 
 
+async def test_test_service_no_api_key_uses_db_config(
+    client_with_db, session_for_test, monkeypatch
+):
+    """POST /test without api_key uses the stored token from DB → success=True."""
+    monkeypatch.setenv("ENCRYPTION_KEY", _FERNET_KEY)
+
+    import app.utils.encryption as enc_module
+
+    monkeypatch.setattr(enc_module, "_fernet", None)
+
+    stored_key = "stored-api-key-9876"
+    await _create_config(session_for_test, ServiceType.RADARR, url=_TEST_URL, api_key=stored_key)
+
+    with patch(
+        "app.services.service_test.httpx.AsyncClient",
+    ) as mock_client_cls:
+        mock_response = AsyncMock()
+        mock_response.raise_for_status = AsyncMock()
+
+        mock_http = AsyncMock()
+        mock_http.get = AsyncMock(return_value=mock_response)
+        mock_http.__aenter__ = AsyncMock(return_value=mock_http)
+        mock_http.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_http
+
+        response = await client_with_db.post(
+            "/api/v1/settings/services/radarr/test",
+            json={"url": _TEST_URL},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["service_type"] == "radarr"
+
+
+async def test_test_service_no_api_key_not_configured_returns_false(client_with_db, monkeypatch):
+    """POST /test without api_key when no config in DB → success=False, 'not configured'."""
+    monkeypatch.setenv("ENCRYPTION_KEY", _FERNET_KEY)
+
+    import app.utils.encryption as enc_module
+
+    monkeypatch.setattr(enc_module, "_fernet", None)
+
+    response = await client_with_db.post(
+        "/api/v1/settings/services/sonarr/test",
+        json={"url": "http://sonarr:8989"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    assert "not configured" in data["message"].lower()
+
+
 async def test_test_service_connection_refused_integration(client_with_db, monkeypatch):
     """POST /test when httpx raises RequestError → success=False."""
     import httpx
