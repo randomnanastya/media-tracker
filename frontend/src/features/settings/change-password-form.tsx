@@ -39,7 +39,6 @@ export function ChangePasswordForm() {
         void confirm_new_password;
         mutation.mutate(payload);
       })}
-      className="max-w-sm"
     >
       <PasswordField
         label="Current Password"
@@ -47,6 +46,7 @@ export function ChangePasswordForm() {
         registration={register("current_password")}
         error={errors.current_password?.message}
         variant="light"
+        layout="inline"
       />
       <PasswordField
         label="New Password"
@@ -54,6 +54,7 @@ export function ChangePasswordForm() {
         registration={register("new_password")}
         error={errors.new_password?.message}
         variant="light"
+        layout="inline"
       />
       <PasswordField
         label="Confirm New Password"
@@ -61,18 +62,24 @@ export function ChangePasswordForm() {
         registration={register("confirm_new_password")}
         error={errors.confirm_new_password?.message}
         variant="light"
+        layout="inline"
       />
-      {errors.root && (
-        <p role="alert" className="text-red-400 text-sm mt-1">
-          {errors.root.message}
-        </p>
-      )}
-      {successMessage && (
-        <p role="status" className="text-green-400 text-sm mt-1">
-          {successMessage}
-        </p>
-      )}
-      <SubmitButton label="Save Password" isLoading={mutation.isPending} />
+      <div className="flex flex-col md:flex-row md:items-start gap-1 md:gap-4">
+        <div className="hidden md:block md:w-44 md:flex-shrink-0" aria-hidden="true" />
+        <div className="flex-1 min-w-0">
+          {errors.root && (
+            <p role="alert" className="text-red-400 text-sm mb-1">
+              {errors.root.message}
+            </p>
+          )}
+          {successMessage && (
+            <p role="status" className="text-green-400 text-sm mb-1">
+              {successMessage}
+            </p>
+          )}
+          <SubmitButton label="Save Password" isLoading={mutation.isPending} />
+        </div>
+      </div>
     </form>
   );
 }
