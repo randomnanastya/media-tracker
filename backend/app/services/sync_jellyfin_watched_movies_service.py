@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies_for_user_all
 from app.config import logger
-from app.models import Movie, User, WatchHistory
+from app.models import Movie, ServiceType, User, WatchHistory
 from app.schemas.jellyfin import JellyfinWatchedMoviesResponse
+from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
 
 
@@ -12,6 +13,18 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
     """
     Sync watched movies from Jellyfin for all users.
     """
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.info("Jellyfin is not configured, skipping sync")
+        return JellyfinWatchedMoviesResponse(
+            total_users=0,
+            total_movies_processed=0,
+            watched_added=0,
+            watched_updated=0,
+            unwatched_marked=0,
+        )
+    url, api_key = config
+
     # 1. Get all users with jellyfin_user_id
     users_result = await session.execute(select(User).where(User.jellyfin_user_id.isnot(None)))
     users = users_result.scalars().all()
@@ -22,20 +35,22 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
     watched_updated = 0
     unwatched_marked = 0
 
-    logger.info(f"Starting watched movies sync for {total_users} users")
+    logger.info("Starting watched movies sync for %s users", total_users)
 
     for user in users:
         user_added = user_updated = user_unwatched = 0
         if not user.jellyfin_user_id:
             continue
 
-        logger.info(f"Processing movies for user {user.username}")
+        logger.info("Processing movies for user %s", user.username)
         try:
             # 2. Get all movies by user from Jellyfin (with pagination into func)
-            movies_data = await fetch_jellyfin_movies_for_user_all(user.jellyfin_user_id)
+            movies_data = await fetch_jellyfin_movies_for_user_all(
+                url, api_key, user.jellyfin_user_id
+            )
 
             if not movies_data:
-                logger.info(f"No movies found for user {user.username}")
+                logger.info("No movies found for user %s", user.username)
                 continue
 
             # 3. Create data for fast finding
@@ -120,7 +135,9 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
 
                 if not movie:
                     logger.debug(
-                        f"Movie not found in database: {movie_data.get('Name')} (Jellyfin ID: {jellyfin_id})"
+                        "Movie not found in database: %s (Jellyfin ID: %s)",
+                        movie_data.get("Name"),
+                        jellyfin_id,
                     )
                     continue
 
@@ -136,7 +153,7 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                 if played and last_played_date_str:
                     last_played_date = parse_datetime(last_played_date_str)
                     if not last_played_date:
-                        logger.debug(f"Could not parse date for: {movie_data.get('Name')}")
+                        logger.debug("Could not parse date for: %s", movie_data.get("Name"))
                         continue
 
                     if existing_watch:
@@ -149,7 +166,7 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                             existing_watch.watched_at = last_played_date
                             watched_updated += 1
                             user_updated += 1
-                            logger.debug(f"Updated: {movie.id}")
+                            logger.debug("Updated: %s", movie.id)
                     else:
                         # creating new
                         watch_history = WatchHistory(
@@ -162,28 +179,29 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                         session.add(watch_history)
                         watched_added += 1
                         user_added += 1
-                        logger.debug(f"Added: {movie.id}")
+                        logger.debug("Added: %s", movie.id)
 
                 # Situation 2: movie watched false
                 elif existing_watch and existing_watch.is_watched:
                     existing_watch.is_watched = False
                     unwatched_marked += 1
                     user_unwatched += 1
-                    logger.debug(f"Marked unwatched: {movie.id}")
+                    logger.debug("Marked unwatched: %s", movie.id)
 
             # 5. Save changes
             await session.commit()
             logger.info(
-                f"User {user.username}: "
-                f"movies={len(movies_data)}, "
-                f"added={user_added}, "
-                f"updated={user_updated}, "
-                f"unwatched={user_unwatched}"
+                "User %s: movies=%d, added=%d, updated=%d, unwatched=%d",
+                user.username,
+                len(movies_data),
+                user_added,
+                user_updated,
+                user_unwatched,
             )
 
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error for user {user.username}: {e}")
+            logger.error("Error for user %s: %s", user.username, e)
             continue
 
     logger.info(

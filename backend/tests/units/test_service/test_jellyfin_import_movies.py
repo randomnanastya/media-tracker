@@ -21,6 +21,11 @@ async def test_import_jellyfin_movies_creates_new_movies(mock_session):
 
     with (
         patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -63,6 +68,11 @@ async def test_import_jellyfin_movie_updates_existing_by_jellyfin_id(
 
     with (
         patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -103,6 +113,11 @@ async def test_import_jellyfin_movie_updates_by_external_ids(mock_session):
 
     with (
         patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -133,6 +148,11 @@ async def test_import_jellyfin_movie_without_any_ids_skipped(mock_session):
 
     with (
         patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -153,6 +173,11 @@ async def test_import_jellyfin_movies_flush_failure_rollbacks(mock_session):
     movie_data = JellyfinMovieDictFactory.build(Id="jf1", Name="Movie", ProviderIds={"Tmdb": "1"})
 
     with (
+        patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
         patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,
@@ -186,6 +211,11 @@ async def test_import_jellyfin_movies_commit_failure(mock_session):
     movie_data = JellyfinMovieDictFactory.build(Id="jf1", Name="Movie", ProviderIds={"Tmdb": "1"})
 
     with (
+        patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
         patch(
             "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
             new_callable=AsyncMock,

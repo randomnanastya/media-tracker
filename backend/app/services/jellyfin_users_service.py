@@ -3,13 +3,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_users
 from app.config import logger
-from app.models import User
+from app.models import ServiceType, User
 from app.schemas.jellyfin import JellyfinUsersResponse
+from app.services.service_config_repository import get_decrypted_config
 
 
 async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
     """Imports users from Jellyfin into the database with logging."""
-    users = await fetch_jellyfin_users()
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.info("Jellyfin is not configured, skipping import")
+        return JellyfinUsersResponse(status="skipped", imported_count=0, updated_count=0)
+    url, api_key = config
+    users = await fetch_jellyfin_users(url, api_key)
     imported = 0
     updated = 0
 
@@ -62,7 +68,7 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
                     )
 
         await session.commit()
-        logger.info(f"Imported {imported}, updated {updated} users from Jellyfin")
+        logger.info("Imported %s, updated %s users from Jellyfin", imported, updated)
         return JellyfinUsersResponse(
             status="success", imported_count=imported, updated_count=updated
         )

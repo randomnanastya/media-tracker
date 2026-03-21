@@ -20,9 +20,14 @@ async def test_sync_jellyfin_watch_movies_success(
         unwatched_marked=3,
     )
 
-    with patch(
-        "app.api.jellyfin.sync_jellyfin_watched_movies", new_callable=AsyncMock
-    ) as mock_sync:
+    with (
+        patch("app.api.jellyfin.sync_jellyfin_watched_movies", new_callable=AsyncMock) as mock_sync,
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+    ):
         mock_sync.return_value = mock_response
 
         response = await async_client.post("/api/v1/jellyfin/movies/watched")
@@ -44,9 +49,14 @@ async def test_watched_movies_empty_result(async_client, override_session_depend
         unwatched_marked=0,
     )
 
-    with patch(
-        "app.api.jellyfin.sync_jellyfin_watched_movies", new_callable=AsyncMock
-    ) as mock_sync:
+    with (
+        patch("app.api.jellyfin.sync_jellyfin_watched_movies", new_callable=AsyncMock) as mock_sync,
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+    ):
         mock_sync.return_value = mock_response
 
         # Act
@@ -66,7 +76,14 @@ async def test_watched_movies_service_error_sync(
 ):
     """Тест обработки ошибки в сервисном слое (синхронная версия)."""
     # Arrange
-    with patch("app.api.jellyfin.sync_jellyfin_watched_movies") as mock_sync:
+    with (
+        patch("app.api.jellyfin.sync_jellyfin_watched_movies") as mock_sync,
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+    ):
         mock_sync.side_effect = Exception("Database connection failed")
 
         # Act
@@ -91,10 +108,17 @@ async def test_watched_movies_service_error_async(
 ):
     """Тест обработки ошибки в сервисном слое"""
     # Arrange
-    with patch(
-        "app.api.jellyfin.sync_jellyfin_watched_movies",
-        new_callable=AsyncMock,
-    ) as mock_sync:
+    with (
+        patch(
+            "app.api.jellyfin.sync_jellyfin_watched_movies",
+            new_callable=AsyncMock,
+        ) as mock_sync,
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+    ):
         mock_sync.side_effect = Exception("Database connection failed")
 
         # Act

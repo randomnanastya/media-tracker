@@ -1,10 +1,19 @@
 from unittest.mock import AsyncMock
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Episode, Media, MediaType, Season, Series
 from tests.factories import SeriesDictFactory, SonarrEpisodeDictFactory
+
+
+@pytest.fixture(autouse=True)
+def mock_sonarr_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.sonarr_service.get_decrypted_config",
+        AsyncMock(return_value=("http://sonarr:8989", "test-api-key")),
+    )
 
 
 async def test_import_sonarr_series_creates_new_series_with_episodes(

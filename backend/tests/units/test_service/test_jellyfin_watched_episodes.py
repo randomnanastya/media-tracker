@@ -17,10 +17,17 @@ async def test_sync_watched_episodes_no_episodes(mock_session, user):
 
     mock_session.execute = AsyncMock(return_value=users_result)
 
-    with patch(
-        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = []
 
         result = await sync_jellyfin_watched_series(mock_session)
@@ -67,6 +74,11 @@ async def test_sync_watched_episodes_add_new(mock_session, user, episode, season
     )
 
     with (
+        patch(
+            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
         patch(
             "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
             new_callable=AsyncMock,
@@ -124,6 +136,11 @@ async def test_sync_watched_episodes_update_existing(
 
     with (
         patch(
+            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -177,10 +194,17 @@ async def test_sync_watched_episodes_mark_unwatched(
         ]
     )
 
-    with patch(
-        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = [episode_data]
 
         result = await sync_jellyfin_watched_series(mock_session)

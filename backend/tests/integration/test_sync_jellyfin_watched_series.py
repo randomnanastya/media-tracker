@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import select
@@ -7,6 +8,14 @@ from app.models import WatchHistory
 from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
 from tests.factories import JellyfinSeriesDictFactory
 from tests.integration.conftest import create_episode, create_season, create_series, create_user
+
+
+@pytest.fixture(autouse=True)
+def mock_jellyfin_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
+        AsyncMock(return_value=("http://jellyfin:8096", "test-api-key")),
+    )
 
 
 async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
@@ -31,7 +40,7 @@ async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
         jellyfin_id="episode_1",
     )
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id="episode_1",
@@ -109,7 +118,7 @@ async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypa
     session_no_expire.add(old_watch)
     await session_no_expire.commit()
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id="episode_2",
@@ -181,7 +190,7 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
     session_no_expire.add(old_watch)
     await session_no_expire.commit()
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id="episode_3",
@@ -246,7 +255,7 @@ async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):
 
     await session_no_expire.commit()
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id="episode_4",
@@ -335,7 +344,7 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
 
     call_count = 0
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         nonlocal call_count
         call_count += 1
 
@@ -406,7 +415,7 @@ async def test_skip_episode_not_found_in_database(session_no_expire, monkeypatch
 
     await session_no_expire.commit()
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id="episode_8",
@@ -481,7 +490,7 @@ async def test_error_handling_during_sync(session_no_expire, monkeypatch):
 
     call_count = 0
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         nonlocal call_count
         call_count += 1
 
@@ -552,7 +561,7 @@ async def test_bulk_insert_of_watched_episodes(session_no_expire, monkeypatch):
 
     await session_no_expire.commit()
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinSeriesDictFactory(
                 Id=f"episode_{j + 10}",

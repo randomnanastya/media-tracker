@@ -15,9 +15,16 @@ from app.services.jellyfin_users_service import import_jellyfin_users
 async def test_import_jellyfin_users_success(
     async_client: AsyncClient, mock_session, mock_db_result
 ):
-    with patch(
-        "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = [
             {"Id": "1", "Name": "Alice"},
             {"Id": "2", "Name": "Bob"},
@@ -45,6 +52,11 @@ async def test_import_jellyfin_users_client_error(async_client: AsyncClient, moc
     with (
         patch.object(import_jellyfin_users, "__defaults__", (mock_session,)),
         patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
         ) as mock_fetch,
     ):
@@ -70,6 +82,11 @@ async def test_import_jellyfin_users_db_error(
     """SQLAlchemyError → 500 + JELLYFIN_DATABASE_ERROR"""
     with (
         patch.object(import_jellyfin_users, "__defaults__", (mock_session,)),
+        patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
         patch(
             "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
         ) as mock_fetch,

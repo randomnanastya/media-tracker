@@ -11,13 +11,14 @@ from app.client.jellyfin_client import (
     fetch_jellyfin_episodes,
     fetch_jellyfin_series,
 )
-from app.models import Episode, Season, Series
+from app.models import Episode, Season, Series, ServiceType
 from app.schemas.jellyfin import JellyfinImportSeriesResponse
 from app.services.series_utils import (
     create_new_series,
     find_series_by_external_ids,
     update_existing_series,
 )
+from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime_utils import parse_iso_datetime
 
 logger = logging.getLogger(__name__)
@@ -36,9 +37,11 @@ async def _process_seasons_and_episodes(
     session: AsyncSession,
     series: Series,
     jellyfin_series_id: str,
+    jellyfin_url: str,
+    jellyfin_api_key: str,
 ) -> tuple[int, int]:
     """Process seasons and episodes from Jellyfin episodes."""
-    episodes_raw = await fetch_jellyfin_episodes(jellyfin_series_id)
+    episodes_raw = await fetch_jellyfin_episodes(jellyfin_url, jellyfin_api_key, jellyfin_series_id)
     if not episodes_raw:
         return 0, 0
 
@@ -146,7 +149,17 @@ async def _process_seasons_and_episodes(
 async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesResponse:
     """Import series from Jellyfin: add missing data, link by jellyfin_id."""
     logger.info("Starting Jellyfin series import...")
-    jellyfin_series = await fetch_jellyfin_series()
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.warning("Jellyfin config not found in DB, skipping series import")
+        return JellyfinImportSeriesResponse(
+            new_series=0,
+            updated_series=0,
+            new_episodes=0,
+            updated_episodes=0,
+        )
+    url, api_key = config
+    jellyfin_series = await fetch_jellyfin_series(url, api_key)
 
     total_new_series = total_updated_series = 0
     total_new_episodes = total_updated_episodes = 0
@@ -196,7 +209,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
                     total_updated_series += 1
 
                 new_eps, upd_eps = await _process_seasons_and_episodes(
-                    session, existing_series, jellyfin_id
+                    session, existing_series, jellyfin_id, url, api_key
                 )
                 total_new_episodes += new_eps
                 total_updated_episodes += upd_eps
@@ -227,7 +240,9 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             )
             total_new_series += 1
 
-            new_eps, upd_eps = await _process_seasons_and_episodes(session, new_series, jellyfin_id)
+            new_eps, upd_eps = await _process_seasons_and_episodes(
+                session, new_series, jellyfin_id, url, api_key
+            )
             total_new_episodes += new_eps
             total_updated_episodes += upd_eps
 

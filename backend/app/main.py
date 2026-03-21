@@ -7,7 +7,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, jellyfin, radarr, sonarr
+from app.api import auth, jellyfin, radarr, settings, sonarr
 from app.config import logger
 from app.dependencies.auth import get_current_user
 from app.exceptions.handlers import register_exception_handlers
@@ -129,6 +129,7 @@ def create_app() -> FastAPI:
     app.include_router(radarr.router, dependencies=[Depends(get_current_user)])
     app.include_router(sonarr.router, dependencies=[Depends(get_current_user)])
     app.include_router(jellyfin.router, dependencies=[Depends(get_current_user)])
+    app.include_router(settings.router, dependencies=[Depends(get_current_user)])
 
     # Register exception handlers
     register_exception_handlers(app)

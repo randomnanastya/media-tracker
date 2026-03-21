@@ -1,10 +1,19 @@
 from unittest.mock import AsyncMock
 
+import pytest
 from sqlalchemy import select
 
 from app.models import Media, MediaType, Movie
 from tests.factories import RadarrMovieDictFactory
 from tests.utils.db_asserts import assert_model_matches
+
+
+@pytest.fixture(autouse=True)
+def mock_radarr_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.radarr_service.get_decrypted_config",
+        AsyncMock(return_value=("http://radarr:7878", "test-api-key")),
+    )
 
 
 async def test_import_radarr_movies_new_movie(client_with_db, session_for_test, monkeypatch):
