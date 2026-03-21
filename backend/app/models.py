@@ -15,6 +15,12 @@ class MediaType(enum.Enum):
     SERIES = "series"
 
 
+class ServiceType(enum.Enum):
+    RADARR = "radarr"
+    SONARR = "sonarr"
+    JELLYFIN = "jellyfin"
+
+
 class Media(Base):
     __tablename__ = "media"
 
@@ -170,3 +176,23 @@ class RefreshToken(Base):
     revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     user: Mapped["AppUser"] = relationship("AppUser", back_populates="refresh_tokens")
+
+
+class ServiceConfig(Base):
+    __tablename__ = "service_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    service_type: Mapped[ServiceType] = mapped_column(
+        Enum(ServiceType), nullable=False, unique=True
+    )
+    url: Mapped[str] = mapped_column(String(500), nullable=False)
+    encrypted_api_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
