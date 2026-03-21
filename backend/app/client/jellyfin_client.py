@@ -1,6 +1,5 @@
 """Jellyfin API client (refactored)."""
 
-import os
 from typing import Any
 
 import httpx
@@ -10,15 +9,6 @@ from app.client.pagination import fetch_paginated, fetch_paginated_simple
 from app.config import logger
 from app.exceptions.client_errors import ClientError
 from app.schemas.error_codes import JellyfinErrorCode
-from app.utils.config_validator import validate_config
-
-
-def _get_jellyfin_url() -> str | None:
-    return os.getenv("JELLYFIN_URL")
-
-
-def _get_jellyfin_api_key() -> str | None:
-    return os.getenv("JELLYFIN_API_KEY")
 
 
 class JellyfinClientError(ClientError):
@@ -28,13 +18,6 @@ class JellyfinClientError(ClientError):
         self.code = code
         self.message = message
         super().__init__(code, message)
-
-
-def _get_headers() -> dict[str, str]:
-    """Get Jellyfin request headers."""
-    api_key = _get_jellyfin_api_key()
-    assert api_key is not None
-    return {"X-Emby-Token": api_key}
 
 
 async def _handle_jellyfin_error(error: Exception) -> None:
@@ -65,23 +48,16 @@ async def _handle_jellyfin_error(error: Exception) -> None:
         ) from error
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_users() -> list[dict[str, Any]]:
+async def fetch_jellyfin_users(url: str, api_key: str) -> list[dict[str, Any]]:
     """Fetch all users from Jellyfin."""
-    url = _get_jellyfin_url()
-    assert url is not None
+    headers = {"X-Emby-Token": api_key}
 
     async with httpx.AsyncClient() as client:
         try:
             users = await fetch_paginated_simple(
                 client=client,
                 url=f"{url}{JELLYFIN_USERS}",
-                headers=_get_headers(),
+                headers=headers,
                 service_name="Jellyfin Users",
             )
             return users
@@ -90,19 +66,9 @@ async def fetch_jellyfin_users() -> list[dict[str, Any]]:
             raise  # Never reached, but makes mypy happy
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
+async def fetch_jellyfin_movies(url: str, api_key: str) -> list[dict[str, Any]]:
     """Fetch ALL movies from Jellyfin with pagination."""
-    url = _get_jellyfin_url()
-    api_key = _get_jellyfin_api_key()
-    assert url is not None
-    assert api_key is not None
-
+    headers = {"X-Emby-Token": api_key}
     base_url = f"{url}/Items/?api_key={api_key}"
 
     async with httpx.AsyncClient() as client:
@@ -110,7 +76,7 @@ async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "IncludeItemTypes": "Movie",
                     "Recursive": "true",
@@ -127,19 +93,9 @@ async def fetch_jellyfin_movies() -> list[dict[str, Any]]:
             raise
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_series() -> list[dict[str, Any]]:
+async def fetch_jellyfin_series(url: str, api_key: str) -> list[dict[str, Any]]:
     """Fetch ALL series from Jellyfin with pagination."""
-    url = _get_jellyfin_url()
-    api_key = _get_jellyfin_api_key()
-    assert api_key is not None
-    assert url is not None
-
+    headers = {"X-Emby-Token": api_key}
     base_url = f"{url}/Items/?api_key={api_key}"
 
     async with httpx.AsyncClient() as client:
@@ -147,7 +103,7 @@ async def fetch_jellyfin_series() -> list[dict[str, Any]]:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "IncludeItemTypes": "Series",
                     "Recursive": "true",
@@ -164,25 +120,19 @@ async def fetch_jellyfin_series() -> list[dict[str, Any]]:
             raise
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_seasons(series_id: str) -> list[dict[str, Any]]:
+async def fetch_jellyfin_seasons(
+    url: str, api_key: str, series_jellyfin_id: str
+) -> list[dict[str, Any]]:
     """Fetch ALL seasons by series from Jellyfin."""
-    url = _get_jellyfin_url()
-    assert url is not None
-
-    base_url = f"{url}/Shows/{series_id}/Seasons"
+    headers = {"X-Emby-Token": api_key}
+    base_url = f"{url}/Shows/{series_jellyfin_id}/Seasons"
 
     async with httpx.AsyncClient() as client:
         try:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "ImageTypeLimit": "0",
                 },
@@ -196,25 +146,19 @@ async def fetch_jellyfin_seasons(series_id: str) -> list[dict[str, Any]]:
             raise
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_episodes(series_id: str) -> list[dict[str, Any]]:
+async def fetch_jellyfin_episodes(
+    url: str, api_key: str, series_jellyfin_id: str
+) -> list[dict[str, Any]]:
     """Fetch ALL episodes by series from Jellyfin."""
-    url = _get_jellyfin_url()
-    assert url is not None
-
-    base_url = f"{url}/Shows/{series_id}/Episodes"
+    headers = {"X-Emby-Token": api_key}
+    base_url = f"{url}/Shows/{series_jellyfin_id}/Episodes"
 
     async with httpx.AsyncClient() as client:
         try:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "ImageTypeLimit": "0",
                 },
@@ -228,25 +172,19 @@ async def fetch_jellyfin_episodes(series_id: str) -> list[dict[str, Any]]:
             raise
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
+async def fetch_jellyfin_movies_for_user_all(
+    url: str, api_key: str, user_jellyfin_id: str
+) -> list[dict[str, Any]]:
     """Fetch ALL movies for a user from Jellyfin (both watched and unwatched)."""
-    url = _get_jellyfin_url()
-    assert url is not None
-
-    base_url = f"{url}/Users/{jellyfin_user_id}/Items"
+    headers = {"X-Emby-Token": api_key}
+    base_url = f"{url}/Users/{user_jellyfin_id}/Items"
 
     async with httpx.AsyncClient() as client:
         try:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "IncludeItemTypes": "Movie",
                     "Recursive": "true",
@@ -255,7 +193,7 @@ async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict
                 },
                 limit=100,
                 timeout=60.0,
-                service_name=f"Jellyfin Movies for User {jellyfin_user_id}",
+                service_name=f"Jellyfin Movies for User {user_jellyfin_id}",
             )
             return items
         except Exception as e:
@@ -263,25 +201,19 @@ async def fetch_jellyfin_movies_for_user_all(jellyfin_user_id: str) -> list[dict
             raise
 
 
-@validate_config(
-    "JELLYFIN_URL",
-    "JELLYFIN_API_KEY",
-    error_class=JellyfinClientError,
-    error_code=JellyfinErrorCode.INTERNAL_ERROR,
-)
-async def fetch_jellyfin_episodes_for_user_all(jellyfin_user_id: str) -> list[dict[str, Any]]:
+async def fetch_jellyfin_episodes_for_user_all(
+    url: str, api_key: str, user_jellyfin_id: str
+) -> list[dict[str, Any]]:
     """Fetch ALL episodes for a user from Jellyfin (both watched and unwatched)."""
-    url = _get_jellyfin_url()
-    assert url is not None
-
-    base_url = f"{url}/Users/{jellyfin_user_id}/Items"
+    headers = {"X-Emby-Token": api_key}
+    base_url = f"{url}/Users/{user_jellyfin_id}/Items"
 
     async with httpx.AsyncClient() as client:
         try:
             items = await fetch_paginated(
                 client=client,
                 url=base_url,
-                headers=_get_headers(),
+                headers=headers,
                 params={
                     "IncludeItemTypes": "Episode",
                     "Recursive": "true",
@@ -290,7 +222,7 @@ async def fetch_jellyfin_episodes_for_user_all(jellyfin_user_id: str) -> list[di
                 },
                 limit=100,
                 timeout=60.0,
-                service_name=f"Jellyfin Episodes for User {jellyfin_user_id}",
+                service_name=f"Jellyfin Episodes for User {user_jellyfin_id}",
             )
             return items
         except Exception as e:

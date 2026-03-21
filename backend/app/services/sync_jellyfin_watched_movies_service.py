@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies_for_user_all
 from app.config import logger
-from app.models import Movie, User, WatchHistory
+from app.models import Movie, ServiceType, User, WatchHistory
 from app.schemas.jellyfin import JellyfinWatchedMoviesResponse
+from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
 
 
@@ -12,6 +13,18 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
     """
     Sync watched movies from Jellyfin for all users.
     """
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.info("Jellyfin is not configured, skipping sync")
+        return JellyfinWatchedMoviesResponse(
+            total_users=0,
+            total_movies_processed=0,
+            watched_added=0,
+            watched_updated=0,
+            unwatched_marked=0,
+        )
+    url, api_key = config
+
     # 1. Get all users with jellyfin_user_id
     users_result = await session.execute(select(User).where(User.jellyfin_user_id.isnot(None)))
     users = users_result.scalars().all()
@@ -32,7 +45,9 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
         logger.info(f"Processing movies for user {user.username}")
         try:
             # 2. Get all movies by user from Jellyfin (with pagination into func)
-            movies_data = await fetch_jellyfin_movies_for_user_all(user.jellyfin_user_id)
+            movies_data = await fetch_jellyfin_movies_for_user_all(
+                url, api_key, user.jellyfin_user_id
+            )
 
             if not movies_data:
                 logger.info(f"No movies found for user {user.username}")

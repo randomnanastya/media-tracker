@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies
 from app.config import logger
+from app.models import ServiceType
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from app.services.movie_utils import (
     create_new_movie,
@@ -10,11 +11,17 @@ from app.services.movie_utils import (
     parse_release_date,
     update_existing_movie,
 )
+from app.services.service_config_repository import get_decrypted_config
 
 
 async def import_jellyfin_movies(session: AsyncSession) -> JellyfinImportMoviesResponse:
     """Import movies from Jellyfin into the database."""
-    movies = await fetch_jellyfin_movies()
+    config = await get_decrypted_config(session, ServiceType.JELLYFIN)
+    if config is None:
+        logger.info("Jellyfin is not configured, skipping import")
+        return JellyfinImportMoviesResponse(imported_count=0, updated_count=0)
+    url, api_key = config
+    movies = await fetch_jellyfin_movies(url, api_key)
     imported = 0
     updated = 0
 
