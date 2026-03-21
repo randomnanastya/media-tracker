@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/randomnanastya/media-tracker/compare/v0.8.0...v0.8.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* fix commit name before merge ([#77](https://github.com/randomnanastya/media-tracker/issues/77)) ([cd9a08d](https://github.com/randomnanastya/media-tracker/commit/cd9a08df5c10c1c54cc2cc74f6b91670b5ff1512))
+
 # [0.8.0](https://github.com/randomnanastya/media-tracker/compare/v0.7.1...v0.8.0) (2026-03-21)
 
 
