@@ -1,3 +1,10 @@
+# [0.9.0](https://github.com/randomnanastya/media-tracker/compare/v0.8.1...v0.9.0) (2026-03-21)
+
+
+### Features
+
+* front create forms for external services settings ([#80](https://github.com/randomnanastya/media-tracker/issues/80)) ([dc34115](https://github.com/randomnanastya/media-tracker/commit/dc34115ee685e3c6069df66b35ee37643d247b4b))
+
 ## [0.8.1](https://github.com/randomnanastya/media-tracker/compare/v0.8.0...v0.8.1) (2026-03-21)
 
 
