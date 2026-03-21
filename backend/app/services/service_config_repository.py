@@ -64,4 +64,4 @@ async def delete_config(session: AsyncSession, service_type: ServiceType) -> boo
         delete(ServiceConfig).where(ServiceConfig.service_type == service_type)
     )
     await session.flush()
-    return bool(result.rowcount > 0)
+    return bool(result.rowcount > 0)  # type: ignore[attr-defined]
