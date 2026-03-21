@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import padlockIcon from "../assets/icons/padlock.png";
-import eyeIcon from "../assets/icons/eye.png";
-import eyeClosedIcon from "../assets/icons/eye-closed.png";
+import eyeIcon from "../assets/icons/eye.svg";
+import eyeClosedIcon from "../assets/icons/eye-slash.svg";
 
 interface PasswordFieldProps {
   label: string;
@@ -10,6 +10,7 @@ interface PasswordFieldProps {
   error?: string;
   registration: UseFormRegisterReturn;
   variant?: "dark" | "light";
+  layout?: "stacked" | "inline";
 }
 
 export function PasswordField({
@@ -18,6 +19,7 @@ export function PasswordField({
   error,
   registration,
   variant = "dark",
+  layout = "stacked",
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -27,11 +29,8 @@ export function PasswordField({
     ? "w-full bg-mt-input-bg border border-mt-input-border rounded-lg pl-10 pr-10 py-2.5 text-mt-light placeholder-mt-light/60 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none"
     : "w-full bg-white/80 border border-[#c9b89a] rounded-lg pl-10 pr-10 py-2.5 text-[#2a2520] placeholder-[#2a2520]/50 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none";
 
-  return (
-    <div className="mb-4">
-      <label htmlFor={registration.name} className={`${labelClass} text-sm mb-1 block`}>
-        {label}
-      </label>
+  const inputBlock = (
+    <>
       <div className="relative">
         <img
           src={padlockIcon}
@@ -66,6 +65,29 @@ export function PasswordField({
           {error}
         </p>
       )}
+    </>
+  );
+
+  if (layout === "inline") {
+    return (
+      <div className="mb-4 flex flex-col md:flex-row md:items-start gap-1 md:gap-4">
+        <label
+          htmlFor={registration.name}
+          className={`${labelClass} text-sm md:w-44 md:flex-shrink-0 md:pt-2.5`}
+        >
+          {label}
+        </label>
+        <div className="flex-1 min-w-0">{inputBlock}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4">
+      <label htmlFor={registration.name} className={`${labelClass} text-sm mb-1 block`}>
+        {label}
+      </label>
+      {inputBlock}
     </div>
   );
 }
