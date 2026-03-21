@@ -36,7 +36,7 @@ def _make_session(scalars_result=None, scalar_one_or_none=None, rowcount=0):
 
 
 def _make_config(service_type: ServiceType, url: str, encrypted_key: str) -> ServiceConfig:
-    cfg = ServiceConfig.__new__(ServiceConfig)
+    cfg = MagicMock(spec=ServiceConfig)
     cfg.id = 1
     cfg.service_type = service_type
     cfg.url = url

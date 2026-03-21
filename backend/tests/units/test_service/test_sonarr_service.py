@@ -21,6 +21,11 @@ async def test_import_sonarr_series_creates_entities(
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -149,6 +154,11 @@ async def test_import_sonarr_series_real_data(mock_session):
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -236,7 +246,12 @@ async def test_import_sonarr_series_prioritizes_sonarr_id_and_preserves_imdb_tvd
     mock_fetch_sonarr_episodes.return_value = []
 
     # Act
-    result = await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        result = await import_sonarr_series(mock_session)
 
     # Assert
     assert result.updated_series == 1
@@ -294,7 +309,12 @@ async def test_import_sonarr_series_finds_by_tvdb_id_when_no_sonarr_id(
     mock_fetch_sonarr_episodes.return_value = []
 
     # Act
-    result = await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        result = await import_sonarr_series(mock_session)
 
     # Assert
     assert result.updated_series == 1
@@ -351,7 +371,12 @@ async def test_import_sonarr_series_creates_seasons_from_seasons_array(
     mock_fetch_sonarr_episodes.return_value = []
 
     # Act
-    result = await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        result = await import_sonarr_series(mock_session)
 
     # Assert
     assert result.new_series == 1
@@ -415,7 +440,12 @@ async def test_import_sonarr_series_creates_seasons_from_seasons_array_existing_
     mock_fetch_sonarr_episodes.return_value = []
 
     # Act
-    result = await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        result = await import_sonarr_series(mock_session)
 
     # Assert
     assert result.updated_series == 1
@@ -495,7 +525,12 @@ async def test_import_sonarr_series_sets_season_release_date_from_first_episode(
     mock_fetch_sonarr_episodes.return_value = episodes
 
     # Act
-    await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        await import_sonarr_series(mock_session)
 
     # Assert
     assert mock_session.flush.called
@@ -618,7 +653,12 @@ async def test_import_sonarr_series_no_changes_when_all_match(
     mock_fetch_sonarr_episodes.return_value = []
 
     # Act
-    result = await import_sonarr_series(mock_session)
+    with patch(
+        "app.services.sonarr_service.get_decrypted_config",
+        new_callable=AsyncMock,
+        return_value=("http://sonarr:8989", "test-api-key"),
+    ):
+        result = await import_sonarr_series(mock_session)
 
     # Assert
     assert result.updated_series == 0
@@ -630,9 +670,16 @@ async def test_import_sonarr_series_no_changes_when_all_match(
 @pytest.mark.asyncio
 async def test_import_sonarr_series_failure_connection_timeout(mock_session):
     """Test service raises ClientError on connection timeout."""
-    with patch(
-        "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
-    ) as mock_fetch_series:
+    with (
+        patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
+            "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
+        ) as mock_fetch_series,
+    ):
         mock_fetch_series.side_effect = ClientError(
             code=SonarrErrorCode.NETWORK_ERROR, message="Failed to connect to Sonarr"
         )
@@ -702,6 +749,11 @@ async def test_import_sonarr_series_skips_invalid(
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -736,6 +788,11 @@ async def test_import_sonarr_series_invalid_date(
     mock_session, sonarr_series_invalid_data, sonarr_episodes_basic, mock_exists_false
 ):
     with (
+        patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
@@ -786,6 +843,11 @@ async def test_import_sonarr_series_no_identifiers_skipped(mock_session, sonarr_
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -825,6 +887,11 @@ async def test_import_sonarr_series_invalid_episode_date(
     series_data["seasons"] = [{"seasonNumber": 1}]
 
     with (
+        patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,

@@ -11,6 +11,11 @@ async def test_import_radarr_movies_creates_both_entities(mock_session, radarr_m
     # Arrange
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -66,6 +71,11 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_tmdb(mock_sessio
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -108,6 +118,11 @@ async def test_import_radarr_movie_without_radarr_id_updates_by_imdb(mock_sessio
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -148,6 +163,11 @@ async def test_import_radarr_movie_with_radarr_id_updates_existing_by_tmdb(mock_
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -182,6 +202,11 @@ async def test_import_radarr_movie_without_ids_skips_creation(mock_session):
     from tests.factories import RadarrMovieDictFactory
 
     with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
@@ -231,6 +256,11 @@ async def test_import_radarr_movie_without_radarr_id_already_complete_skips_upda
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -270,6 +300,11 @@ async def test_import_radarr_movies_skips_existing_movies(mock_session):
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -306,6 +341,11 @@ async def test_import_radarr_movies_handles_partial_insert_failure(mock_session)
     ]
 
     with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
@@ -350,6 +390,11 @@ async def test_import_radarr_movies_handles_commit_failure(mock_session):
 
     with (
         patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,
         patch(
@@ -382,6 +427,11 @@ async def test_import_radarr_movies_skips_movies_without_id(
     """Test service skips movies without Radarr ID or with invalid data."""
     # Arrange
     with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
         patch(
             "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
         ) as mock_fetch,

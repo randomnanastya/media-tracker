@@ -1,10 +1,19 @@
 from unittest.mock import AsyncMock
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Episode, Media, MediaType, Season, Series
 from tests.factories import JellyfinEpisodeDictFactory, JellyfinSeriesDictFactory
+
+
+@pytest.fixture(autouse=True)
+def mock_jellyfin_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.import_jellyfin_series_service.get_decrypted_config",
+        AsyncMock(return_value=("http://jellyfin:8096", "test-api-key")),
+    )
 
 
 async def test_import_jellyfin_series_creates_new_series_with_episodes(

@@ -1,6 +1,6 @@
 """Unit tests for /api/v1/settings/services endpoints (no real DB)."""
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -12,7 +12,7 @@ from app.models import ServiceConfig, ServiceType
 
 
 def _make_config(service_type: ServiceType, url: str, encrypted_key: str) -> ServiceConfig:
-    cfg = ServiceConfig.__new__(ServiceConfig)
+    cfg = MagicMock(spec=ServiceConfig)
     cfg.id = 1
     cfg.service_type = service_type
     cfg.url = url

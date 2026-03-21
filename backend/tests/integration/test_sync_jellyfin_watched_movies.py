@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import delete, select
@@ -7,6 +8,14 @@ from app.models import WatchHistory
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
 from tests.factories import JellyfinMovieDictFactory
 from tests.integration.conftest import create_movie, create_user
+
+
+@pytest.fixture(autouse=True)
+def mock_jellyfin_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+        AsyncMock(return_value=("http://jellyfin:8096", "test-api-key")),
+    )
 
 
 async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
@@ -27,7 +36,7 @@ async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
         )
     ]
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return mock_movies
 
     monkeypatch.setattr(
@@ -88,7 +97,7 @@ async def test_sync_with_mixed_watched_status(session_no_expire, monkeypatch):
         ),
     ]
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return mock_movies
 
     monkeypatch.setattr(
@@ -134,7 +143,7 @@ async def test_sync_updates_existing_watched_movie(session_no_expire, monkeypatc
         )
     ]
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return mock_movies
 
     monkeypatch.setattr(
@@ -173,7 +182,7 @@ async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
         )
     ]
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return mock_movies
 
     monkeypatch.setattr(
@@ -201,7 +210,7 @@ async def test_sync_multiple_users(session_no_expire, monkeypatch):
 
     call_count = 0
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         nonlocal call_count
         call_count += 1
 
@@ -249,7 +258,7 @@ async def test_find_movie_by_different_ids(session_no_expire, monkeypatch):
         session_no_expire, jellyfin_id="jellyfin_70", tmdb_id="tmdb_700", imdb_id="tt700700"
     )
 
-    async def mock_fetch_jellyfin(jellyfin_user_id):
+    async def mock_fetch_jellyfin(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinMovieDictFactory(
                 Id="jellyfin_70",
@@ -272,7 +281,7 @@ async def test_find_movie_by_different_ids(session_no_expire, monkeypatch):
     await session_no_expire.execute(delete(WatchHistory))
     await session_no_expire.commit()
 
-    async def mock_fetch_tmdb(jellyfin_user_id):
+    async def mock_fetch_tmdb(url: str, api_key: str, jellyfin_user_id: str):
         return [
             JellyfinMovieDictFactory(
                 Id="unknown_jellyfin",
@@ -303,7 +312,7 @@ async def test_error_handling(session_no_expire, monkeypatch):
 
     call_count = 0
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         nonlocal call_count
         call_count += 1
 
@@ -339,7 +348,7 @@ async def test_no_movies_found(session_no_expire, monkeypatch):
     """Тест случая, когда у пользователя нет фильмов в Jellyfin"""
     _ = await create_user(session_no_expire, username="empty", jellyfin_user_id="jf_10")
 
-    async def mock_fetch(jellyfin_user_id):
+    async def mock_fetch(url: str, api_key: str, jellyfin_user_id: str):
         return []
 
     monkeypatch.setattr(

@@ -17,9 +17,16 @@ async def test_import_radarr_movie_with_empty_title(mock_session):
         RadarrMovieDictFactory.build(empty_title=True, id=1, tmdbId=1001),
     ]
 
-    with patch(
-        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
+            "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = movies_data
 
         mock_session.execute.return_value = Mock(
@@ -40,9 +47,16 @@ async def test_import_radarr_movie_with_very_long_title(mock_session):
         RadarrMovieDictFactory.build(very_long_title=True, id=1, tmdbId=1001),
     ]
 
-    with patch(
-        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
+            "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = movies_data
 
         mock_session.execute.return_value = Mock(
@@ -63,9 +77,16 @@ async def test_import_radarr_movie_with_unicode_and_emoji(mock_session):
         RadarrMovieDictFactory.build(cyrillic=True, id=1, tmdbId=1001),
     ]
 
-    with patch(
-        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
+            "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = movies_data
 
         mock_session.execute.return_value = Mock(
@@ -86,9 +107,16 @@ async def test_import_radarr_movie_with_zero_year(mock_session):
         RadarrMovieDictFactory.build(zero_year=True, id=1, tmdbId=1001),
     ]
 
-    with patch(
-        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
+            "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = movies_data
 
         mock_session.execute.return_value = Mock(
@@ -108,9 +136,16 @@ async def test_import_radarr_movie_with_negative_id(mock_session):
         RadarrMovieDictFactory.build(negative_id=True, tmdbId=1001),
     ]
 
-    with patch(
-        "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.radarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://radarr:7878", "test-api-key"),
+        ),
+        patch(
+            "app.services.radarr_service.fetch_radarr_movies", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = movies_data
 
         mock_session.execute.return_value = Mock(
@@ -131,6 +166,11 @@ async def test_import_sonarr_series_with_empty_title_skipped(mock_session):
     ]
 
     with (
+        patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
@@ -160,6 +200,11 @@ async def test_import_sonarr_series_with_unicode_title(mock_session):
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -187,6 +232,11 @@ async def test_import_sonarr_series_with_very_long_title(mock_session):
     ]
 
     with (
+        patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
         patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
@@ -216,6 +266,11 @@ async def test_import_sonarr_series_with_empty_overview(mock_session):
 
     with (
         patch(
+            "app.services.sonarr_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://sonarr:8989", "test-api-key"),
+        ),
+        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -242,10 +297,17 @@ async def test_jellyfin_movie_with_empty_name(mock_session):
         JellyfinMovieDictFactory.build(empty_name=True),
     ]
 
-    with patch(
-        "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = jellyfin_movies
 
         mock_session.execute.return_value = Mock(
@@ -268,10 +330,17 @@ async def test_jellyfin_movie_with_unicode_name(mock_session):
         ),
     ]
 
-    with patch(
-        "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = jellyfin_movies
 
         mock_session.execute.return_value = Mock(
@@ -294,10 +363,17 @@ async def test_jellyfin_movie_with_very_long_name(mock_session):
         ),
     ]
 
-    with patch(
-        "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.import_jellyfin_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.import_jellyfin_movies_service.fetch_jellyfin_movies",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = jellyfin_movies
 
         mock_session.execute.return_value = Mock(

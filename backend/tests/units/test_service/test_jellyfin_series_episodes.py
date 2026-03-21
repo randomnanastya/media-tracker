@@ -18,6 +18,8 @@ async def test_process_seasons_no_episodes(mock_session, series):
             mock_session,
             series,
             "jf-series",
+            "http://jellyfin:8096",
+            "test-api-key",
         )
 
         assert result == (0, 0)
@@ -62,6 +64,8 @@ async def test_process_seasons_creates_season_and_episodes(mock_session, series,
             mock_session,
             series,
             "jf-series",
+            "http://jellyfin:8096",
+            "test-api-key",
         )
 
         assert new_cnt == 2
@@ -113,6 +117,8 @@ async def test_process_seasons_updates_existing_episode(mock_session, series):
             mock_session,
             series,
             "jf-series",
+            "http://jellyfin:8096",
+            "test-api-key",
         )
 
         assert new_cnt == 0
@@ -144,6 +150,8 @@ async def test_process_seasons_skips_invalid_episode(mock_session, series):
             mock_session,
             series,
             "jf-series",
+            "http://jellyfin:8096",
+            "test-api-key",
         )
 
         assert new_cnt == 0

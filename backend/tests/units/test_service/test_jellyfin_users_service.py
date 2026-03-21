@@ -25,9 +25,16 @@ async def test_import_jellyfin_users_creates_new_users(
     mock_session, jellyfin_users_basic, mock_scalar_result
 ):
     # Mock the fetch_jellyfin_users function
-    with patch(
-        "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = jellyfin_users_basic
 
         # Configure mock_session.execute to return the mock_scalar_result directly
@@ -58,9 +65,16 @@ async def test_import_jellyfin_users_updates_existing_user(mock_session, jellyfi
     mock_session.execute.return_value = mock_result
 
     # Mock the fetch_jellyfin_users function
-    with patch(
-        "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = jellyfin_users_update
 
         result = await import_jellyfin_users(mock_session)
@@ -78,9 +92,16 @@ async def test_import_jellyfin_users_skips_no_id(mock_session):
     """Should skip users without Id"""
     users = [{"Name": "No ID"}]
 
-    with patch(
-        "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.jellyfin_users_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.jellyfin_users_service.fetch_jellyfin_users", new_callable=AsyncMock
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = users
 
         result = await import_jellyfin_users(mock_session)

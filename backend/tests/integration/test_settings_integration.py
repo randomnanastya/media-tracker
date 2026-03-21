@@ -163,7 +163,7 @@ async def test_put_partial_update_url_preserves_key(client_with_db, session_for_
     assert response.status_code == 200
 
     # Refresh
-    await session_for_test.expire(before_cfg)
+    session_for_test.expire(before_cfg)
     result2 = await session_for_test.execute(
         select(ServiceConfig).where(ServiceConfig.service_type == ServiceType.JELLYFIN)
     )

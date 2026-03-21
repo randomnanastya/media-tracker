@@ -86,6 +86,7 @@ async def upsert_service(
 
     config = await config_repo.upsert_config(session, service, url, api_key)
     await session.commit()
+    await session.refresh(config)
     return _to_response(config)
 
 

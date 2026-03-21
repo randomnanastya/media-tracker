@@ -16,10 +16,17 @@ async def test_sync_watched_movies_no_movies(mock_session, user):
 
     mock_session.execute = AsyncMock(return_value=result_mock)
 
-    with patch(
-        "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = []
 
         result = await sync_jellyfin_watched_movies(mock_session)
@@ -77,6 +84,11 @@ async def test_sync_watched_movies_add_new(mock_session, user, movie):
     )
 
     with (
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
         patch(
             "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
             new_callable=AsyncMock,
@@ -144,6 +156,11 @@ async def test_sync_watched_movies_update_existing(mock_session, user, movie, ex
 
     with (
         patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
             "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -209,10 +226,17 @@ async def test_sync_watched_movies_mark_unwatched(mock_session, user, movie, exi
         ]
     )
 
-    with patch(
-        "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
+    with (
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.get_decrypted_config",
+            new_callable=AsyncMock,
+            return_value=("http://jellyfin:8096", "test-api-key"),
+        ),
+        patch(
+            "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
+            new_callable=AsyncMock,
+        ) as mock_fetch,
+    ):
         mock_fetch.return_value = [movie_data]
 
         result = await sync_jellyfin_watched_movies(mock_session)
