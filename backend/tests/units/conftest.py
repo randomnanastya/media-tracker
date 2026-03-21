@@ -137,12 +137,8 @@ def clear_env() -> Generator[None, None, None]:
     """
     # Очищаем только переменные приложения, не трогая системные (PATH, HOME, и т.д.)
     app_env_keys = [
-        "RADARR_URL",
-        "RADARR_API_KEY",
-        "SONARR_URL",
-        "SONARR_API_KEY",
-        "JELLYFIN_URL",
-        "JELLYFIN_API_KEY",
+        "ENCRYPTION_KEY",
+        "JWT_SECRET",
         "POSTGRES_HOST",
         "POSTGRES_PORT",
         "POSTGRES_USER",

@@ -32,7 +32,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("url", sa.String(length=500), nullable=False),
-        sa.Column("encrypted_api_key", sa.String(length=500), nullable=False),
+        sa.Column("encrypted_api_key", sa.String(length=1024), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

@@ -186,7 +186,7 @@ class ServiceConfig(Base):
         Enum(ServiceType), nullable=False, unique=True
     )
     url: Mapped[str] = mapped_column(String(500), nullable=False)
-    encrypted_api_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    encrypted_api_key: Mapped[str] = mapped_column(String(1024), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

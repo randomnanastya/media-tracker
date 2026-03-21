@@ -42,12 +42,12 @@ def _get_fernet() -> Fernet:
 
 def encrypt_api_key(plain_key: str) -> str:
     """Encrypt API key, return base64-encoded ciphertext."""
-    return _get_fernet().encrypt(plain_key.encode()).decode()
+    return str(_get_fernet().encrypt(plain_key.encode()).decode())
 
 
 def decrypt_api_key(encrypted_key: str) -> str:
     """Decrypt API key from base64-encoded ciphertext."""
-    return _get_fernet().decrypt(encrypted_key.encode()).decode()
+    return str(_get_fernet().decrypt(encrypted_key.encode()).decode())
 
 
 def mask_api_key(plain_key: str) -> str:
