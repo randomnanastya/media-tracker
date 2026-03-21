@@ -72,17 +72,10 @@ async def test_watched_series_success(async_client, override_session_dependency,
         unwatched_marked=6,
     )
 
-    with (
-        patch(
-            "app.api.jellyfin.sync_jellyfin_watched_series",
-            new_callable=AsyncMock,
-        ) as mock_sync,
-        patch(
-            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://jellyfin:8096", "test-api-key"),
-        ),
-    ):
+    with patch(
+        "app.api.jellyfin.sync_jellyfin_watched_series",
+        new_callable=AsyncMock,
+    ) as mock_sync:
         mock_sync.return_value = mock_response
 
         # Act
@@ -107,17 +100,10 @@ async def test_watched_series_empty_result(async_client, override_session_depend
         unwatched_marked=0,
     )
 
-    with (
-        patch(
-            "app.api.jellyfin.sync_jellyfin_watched_series",
-            new_callable=AsyncMock,
-        ) as mock_sync,
-        patch(
-            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://jellyfin:8096", "test-api-key"),
-        ),
-    ):
+    with patch(
+        "app.api.jellyfin.sync_jellyfin_watched_series",
+        new_callable=AsyncMock,
+    ) as mock_sync:
         mock_sync.return_value = mock_response
 
         # Act
@@ -135,17 +121,10 @@ async def test_watched_series_service_error_async(
     async_client, override_session_dependency, mock_session
 ):
     """Ошибка в сервисном слое (async)."""
-    with (
-        patch(
-            "app.api.jellyfin.sync_jellyfin_watched_series",
-            new_callable=AsyncMock,
-        ) as mock_sync,
-        patch(
-            "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://jellyfin:8096", "test-api-key"),
-        ),
-    ):
+    with patch(
+        "app.api.jellyfin.sync_jellyfin_watched_series",
+        new_callable=AsyncMock,
+    ) as mock_sync:
         # Arrange
         mock_sync.side_effect = Exception("Database connection failed")
 
@@ -165,17 +144,12 @@ async def test_watched_series_method_not_allowed(
     async_client, override_session_dependency, mock_session
 ):
     """Неподдерживаемый HTTP метод."""
-    with patch(
-        "app.services.sync_jellyfin_watched_series_service.get_decrypted_config",
-        new_callable=AsyncMock,
-        return_value=("http://jellyfin:8096", "test-api-key"),
-    ):
-        # Act
-        act_resp = await async_client.get("/api/v1/jellyfin/series/watched")
+    # Act
+    act_resp = await async_client.get("/api/v1/jellyfin/series/watched")
 
-        # Assert
-        assert act_resp.status_code == 405
-        assert act_resp.json() == {"detail": "Method Not Allowed"}
+    # Assert
+    assert act_resp.status_code == 405
+    assert act_resp.json() == {"detail": "Method Not Allowed"}
 
 
 @pytest.mark.asyncio

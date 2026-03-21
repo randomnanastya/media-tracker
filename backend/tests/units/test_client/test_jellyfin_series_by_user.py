@@ -9,12 +9,9 @@ from app.client.jellyfin_client import (
 )
 from app.schemas.error_codes import JellyfinErrorCode
 
-TEST_URL = "http://jellyfin.test"
-TEST_API_KEY = "test-key"
-
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
+async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client, mock_env_vars):
     """Пагинация: 2 страницы → все эпизоды."""
     page1 = {
         "Items": [{"Id": f"e{i}", "Name": f"Episode {i}"} for i in range(1, 101)],
@@ -37,7 +34,8 @@ async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
     client_instance.get.side_effect = [resp1, resp2]
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
-    result = await fetch_jellyfin_episodes_for_user_all(TEST_URL, TEST_API_KEY, "user123")
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),):
+        result = await fetch_jellyfin_episodes_for_user_all("user123")
 
     assert len(result) == 150
     assert result[0]["Id"] == "e1"
@@ -46,7 +44,7 @@ async def test_fetch_jellyfin_episodes_pagination(mock_httpx_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
+async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client, mock_env_vars):
     data = {
         "Items": [{"Id": "e1", "Name": "Pilot"}],
         "TotalRecordCount": 1,
@@ -60,10 +58,33 @@ async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
     client_instance.get.return_value = resp
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
-    result = await fetch_jellyfin_episodes_for_user_all(TEST_URL, TEST_API_KEY, "user123")
+    with (mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),):
+        result = await fetch_jellyfin_episodes_for_user_all("user123")
 
     assert result == [{"Id": "e1", "Name": "Pilot"}]
     assert client_instance.get.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_fetch_jellyfin_episodes_no_api_key(mock_env_vars):
+    with (
+        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY=None),
+        pytest.raises(JellyfinClientError) as exc,
+    ):
+        await fetch_jellyfin_episodes_for_user_all("user123")
+
+    assert exc.value.code == JellyfinErrorCode.INTERNAL_ERROR
+
+
+@pytest.mark.asyncio
+async def test_fetch_jellyfin_episodes_no_url(mock_env_vars):
+    with (
+        mock_env_vars(JELLYFIN_URL=None, JELLYFIN_API_KEY="abc123"),
+        pytest.raises(JellyfinClientError) as exc,
+    ):
+        await fetch_jellyfin_episodes_for_user_all("user123")
+
+    assert exc.value.code == JellyfinErrorCode.INTERNAL_ERROR
 
 
 @pytest.mark.parametrize(
@@ -78,6 +99,7 @@ async def test_fetch_jellyfin_episodes_single_page(mock_httpx_client):
 @pytest.mark.asyncio
 async def test_fetch_jellyfin_episodes_errors(
     mock_httpx_client,
+    mock_env_vars,
     error_type: str,
     status_code: int | None,
     error_message: str,
@@ -101,8 +123,11 @@ async def test_fetch_jellyfin_episodes_errors(
 
     mock_httpx_client.return_value.__aenter__.return_value = client_instance
 
-    with pytest.raises(JellyfinClientError) as exc:
-        await fetch_jellyfin_episodes_for_user_all(TEST_URL, TEST_API_KEY, "user123")
+    with (
+        mock_env_vars(JELLYFIN_URL="http://jf.local", JELLYFIN_API_KEY="abc123"),
+        pytest.raises(JellyfinClientError) as exc,
+    ):
+        await fetch_jellyfin_episodes_for_user_all("user123")
 
     assert exc.value.code == expected_code
     if error_type == "http":

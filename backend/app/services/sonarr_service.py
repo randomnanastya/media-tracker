@@ -8,14 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
-from app.models import Episode, Season, Series, ServiceType
+from app.models import Episode, Season, Series
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.series_utils import (
     create_new_series,
     find_series_by_external_ids,
     update_existing_series,
 )
-from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime_utils import parse_iso_datetime
 
 logger = logging.getLogger(__name__)
@@ -41,8 +40,6 @@ async def _process_seasons_and_episodes(
     series: Series,
     raw_series_data: dict[str, Any],
     sonarr_id: int | None,
-    sonarr_url: str,
-    sonarr_api_key: str,
 ) -> tuple[int, int]:
     """Process seasons and episodes for a series."""
     if not sonarr_id:
@@ -72,7 +69,7 @@ async def _process_seasons_and_episodes(
             existing_seasons[num] = new_season
 
     # Fetch episodes from Sonarr
-    episodes_raw = await fetch_sonarr_episodes(sonarr_url, sonarr_api_key, sonarr_id)
+    episodes_raw = await fetch_sonarr_episodes(sonarr_id)
 
     # Determine earliest air date per season
     season_first_air: dict[int, str] = {}
@@ -171,19 +168,8 @@ async def _process_seasons_and_episodes(
 
 async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
     """Import series from Sonarr into the database."""
-    config = await get_decrypted_config(session, ServiceType.SONARR)
-    if config is None:
-        logger.info("Sonarr is not configured, skipping import")
-        return SonarrImportResponse(
-            new_series=0,
-            updated_series=0,
-            new_episodes=0,
-            updated_episodes=0,
-        )
-    url, api_key = config
-
     logger.info("Starting Sonarr series import...")
-    sonarr_series = await fetch_sonarr_series(url, api_key)
+    sonarr_series = await fetch_sonarr_series()
 
     total_new_series = total_updated_series = 0
     total_new_episodes = total_updated_episodes = 0
@@ -242,7 +228,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                     total_updated_series += 1
 
                 new_eps, updated_eps = await _process_seasons_and_episodes(
-                    session, existing_series, raw, sonarr_id, url, api_key
+                    session, existing_series, raw, sonarr_id
                 )
                 total_new_episodes += new_eps
                 total_updated_episodes += updated_eps
@@ -281,7 +267,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
             # Process episodes for new series
             new_eps, updated_eps = await _process_seasons_and_episodes(
-                session, new_series, raw, sonarr_id, url, api_key
+                session, new_series, raw, sonarr_id
             )
             total_new_episodes += new_eps
             total_updated_episodes += updated_eps

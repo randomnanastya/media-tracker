@@ -12,11 +12,6 @@ async def test_import_sonarr_success(
     """Test Sonarr import endpoint returns success response."""
     with (
         patch(
-            "app.services.sonarr_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://sonarr:8989", "test-api-key"),
-        ),
-        patch(
             "app.services.sonarr_service.fetch_sonarr_series", new_callable=AsyncMock
         ) as mock_fetch_series,
         patch(
@@ -84,15 +79,10 @@ async def test_import_sonarr_update_existing_series(
 ):
     """Test updating existing series with new data from Sonarr."""
 
-    with patch(
-        "app.services.sonarr_service.get_decrypted_config",
-        new_callable=AsyncMock,
-        return_value=("http://sonarr:8989", "test-api-key"),
-    ):
-        # Create mock existing series with tvdb_id that matches first test series
-        existing_series = MagicMock()
-        existing_series.sonarr_id = None
-        existing_series.tvdb_id = "12345"  # Matches tvdbId of first series
-        existing_series.imdb_id = None
-        existing_series.media.title = "Old Title"
-        existing_series.poster_url = None
+    # Create mock existing series with tvdb_id that matches first test series
+    existing_series = MagicMock()
+    existing_series.sonarr_id = None
+    existing_series.tvdb_id = "12345"  # Matches tvdbId of first series
+    existing_series.imdb_id = None
+    existing_series.media.title = "Old Title"
+    existing_series.poster_url = None

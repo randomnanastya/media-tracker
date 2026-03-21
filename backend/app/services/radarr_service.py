@@ -2,7 +2,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.radarr_client import fetch_radarr_movies
 from app.config import logger
-from app.models import ServiceType
 from app.schemas.radarr import RadarrImportResponse
 from app.services.movie_utils import (
     create_new_movie,
@@ -11,17 +10,11 @@ from app.services.movie_utils import (
     parse_release_date,
     update_existing_movie,
 )
-from app.services.service_config_repository import get_decrypted_config
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
     """Imports movies from Radarr into the database with logging and aware datetime."""
-    config = await get_decrypted_config(session, ServiceType.RADARR)
-    if config is None:
-        logger.info("Radarr is not configured, skipping import")
-        return RadarrImportResponse(imported_count=0, updated_count=0)
-    url, api_key = config
-    movies = await fetch_radarr_movies(url, api_key)
+    movies = await fetch_radarr_movies()
     imported = 0
     updated = 0
 

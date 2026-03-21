@@ -30,11 +30,6 @@ async def test_import_jellyfin_series_creates_new_series(mock_session):
 
     with (
         patch(
-            "app.services.import_jellyfin_series_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://jellyfin:8096", "test-api-key"),
-        ),
-        patch(
             "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
             new_callable=AsyncMock,
         ) as mock_fetch,
@@ -94,11 +89,6 @@ async def test_import_jellyfin_series_updates_existing_by_jellyfin_id(
     ]
 
     with (
-        patch(
-            "app.services.import_jellyfin_series_service.get_decrypted_config",
-            new_callable=AsyncMock,
-            return_value=("http://jellyfin:8096", "test-api-key"),
-        ),
         patch(
             "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
             new_callable=AsyncMock,

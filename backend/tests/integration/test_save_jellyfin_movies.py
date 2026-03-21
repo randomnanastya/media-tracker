@@ -1,20 +1,11 @@
 from unittest.mock import AsyncMock
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Media, MediaType, Movie
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from tests.factories import JellyfinMovieDictFactory
-
-
-@pytest.fixture(autouse=True)
-def mock_jellyfin_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "app.services.import_jellyfin_movies_service.get_decrypted_config",
-        AsyncMock(return_value=("http://jellyfin:8096", "test-api-key")),
-    )
 
 
 async def test_import_jellyfin_movies_new_movie(

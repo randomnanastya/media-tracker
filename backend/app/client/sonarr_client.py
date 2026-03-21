@@ -1,5 +1,6 @@
 """Sonarr API client (refactored)."""
 
+import os
 from typing import Any
 
 import httpx
@@ -9,6 +10,15 @@ from app.client.pagination import fetch_paginated_simple
 from app.config import logger
 from app.exceptions.client_errors import ClientError
 from app.schemas.error_codes import SonarrErrorCode
+from app.utils.config_validator import validate_config
+
+
+def _get_sonarr_url() -> str | None:
+    return os.getenv("SONARR_URL")
+
+
+def _get_sonarr_api_key() -> str | None:
+    return os.getenv("SONARR_API_KEY")
 
 
 class SonarrClientError(ClientError):
@@ -18,6 +28,12 @@ class SonarrClientError(ClientError):
         self.code = code
         self.message = message
         super().__init__(code=code, message=message)
+
+
+def _get_headers() -> dict[str, str]:
+    api_key = _get_sonarr_api_key()
+    assert api_key is not None
+    return {"X-Api-Key": api_key}
 
 
 async def _handle_sonarr_error(error: Exception) -> None:
@@ -48,16 +64,23 @@ async def _handle_sonarr_error(error: Exception) -> None:
         ) from error
 
 
-async def fetch_sonarr_series(url: str, api_key: str) -> list[dict[str, Any]]:
+@validate_config(
+    "SONARR_URL",
+    "SONARR_API_KEY",
+    error_class=SonarrClientError,
+    error_code=SonarrErrorCode.INTERNAL_ERROR,
+)
+async def fetch_sonarr_series() -> list[dict[str, Any]]:
     """Fetch the list of series from the Sonarr API."""
-    headers = {"X-Api-Key": api_key}
+    url = _get_sonarr_url()
+    assert url is not None
 
     async with httpx.AsyncClient() as client:
         try:
             series = await fetch_paginated_simple(
                 client=client,
                 url=f"{url}{SONARR_SERIES}",
-                headers=headers,
+                headers=_get_headers(),
                 timeout=30.0,
                 service_name="Sonarr Series",
             )
@@ -67,17 +90,23 @@ async def fetch_sonarr_series(url: str, api_key: str) -> list[dict[str, Any]]:
             raise
 
 
-async def fetch_sonarr_episodes(url: str, api_key: str, series_id: int) -> list[dict[str, Any]]:
+@validate_config(
+    "SONARR_URL",
+    "SONARR_API_KEY",
+    error_class=SonarrClientError,
+    error_code=SonarrErrorCode.INTERNAL_ERROR,
+)
+async def fetch_sonarr_episodes(series_id: int) -> list[dict[str, Any]]:
     """Fetch all episodes for a given series from Sonarr API."""
-    headers = {"X-Api-Key": api_key}
+    url = _get_sonarr_url()
 
     async with httpx.AsyncClient() as client:
         try:
-            episode_url = f"{url}/api/v3/episode?seriesId={series_id}"
+            url = f"{url}/api/v3/episode?seriesId={series_id}"
             episodes = await fetch_paginated_simple(
                 client=client,
-                url=episode_url,
-                headers=headers,
+                url=url,
+                headers=_get_headers(),
                 timeout=30.0,
                 service_name=f"Sonarr Episodes (series_id={series_id})",
             )
