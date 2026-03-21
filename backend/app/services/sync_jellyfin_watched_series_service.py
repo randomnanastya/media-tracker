@@ -30,14 +30,14 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
     watched_updated = 0
     unwatched_marked = 0
 
-    logger.info(f"Starting watched episodes sync for {total_users} users")
+    logger.info("Starting watched episodes sync for %s users", total_users)
     for user in users:
         user_added = user_updated = user_unwatched = 0
 
         if not user.jellyfin_user_id:
             continue
 
-        logger.info(f"Processing episodes for user {user.username}")
+        logger.info("Processing episodes for user %s", user.username)
 
         try:
             # 2. Get all episodes by user from Jellyfin (with pagination into func)
@@ -46,7 +46,7 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
             )
 
             if not episodes_data:
-                logger.info(f"No episodes found for user {user.username}")
+                logger.info("No episodes found for user %s", user.username)
                 continue
 
             # --- episodes from DB ---
@@ -134,7 +134,7 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
 
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error syncing episodes for user {user.username}: {e}")
+            logger.error("Error syncing episodes for user %s: %s", user.username, e)
             continue
 
     logger.info(

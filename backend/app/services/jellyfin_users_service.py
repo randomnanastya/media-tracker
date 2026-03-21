@@ -68,7 +68,7 @@ async def import_jellyfin_users(session: AsyncSession) -> JellyfinUsersResponse:
                     )
 
         await session.commit()
-        logger.info(f"Imported {imported}, updated {updated} users from Jellyfin")
+        logger.info("Imported %s, updated %s users from Jellyfin", imported, updated)
         return JellyfinUsersResponse(
             status="success", imported_count=imported, updated_count=updated
         )
