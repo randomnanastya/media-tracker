@@ -1,3 +1,11 @@
+# [0.11.0](https://github.com/randomnanastya/media-tracker/compare/v0.10.0...v0.11.0) (2026-03-22)
+
+
+### Features
+
+* set custom schedule ([07f9a3c](https://github.com/randomnanastya/media-tracker/commit/07f9a3cb653adbd3047e85743427f920796faeb5))
+* set custom scheduler ([9a3a66a](https://github.com/randomnanastya/media-tracker/commit/9a3a66a60a1c2f9a4e227f235af82c878b79610d))
+
 # [0.10.0](https://github.com/randomnanastya/media-tracker/compare/v0.9.0...v0.10.0) (2026-03-21)
 
 
