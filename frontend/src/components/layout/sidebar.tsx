@@ -24,8 +24,10 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-56"
       }`}
     >
-      <div className="h-14 flex items-center px-4 overflow-hidden">
-        {!collapsed && (
+      <div className="h-14 flex items-center justify-center px-4 overflow-hidden">
+        {collapsed ? (
+          <span className="text-mt-accent font-bold text-base tracking-tight">MT</span>
+        ) : (
           <span className="text-mt-accent font-semibold text-lg whitespace-nowrap">
             Media Tracker
           </span>
@@ -38,11 +40,13 @@ export function Sidebar() {
             key={to}
             to={to}
             end={to === "/"}
+            title={label}
+            aria-label={label}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive
-                  ? "text-mt-accent"
-                  : "text-mt-light/70 hover:text-mt-light"
+                  ? "text-mt-accent bg-mt-accent/10"
+                  : "text-mt-light/70 hover:text-mt-light hover:bg-white/5"
               }`
             }
           >
