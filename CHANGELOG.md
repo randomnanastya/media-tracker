@@ -1,3 +1,13 @@
+## [1.0.0](https://github.com/randomnanastya/media-tracker/compare/v0.12.0...v1.0.0) (2026-03-22)
+
+### ⚠ BREAKING CHANGES
+
+* completed ui with auth and settings
+
+### Features
+
+* completed ui with auth and settings ([#88](https://github.com/randomnanastya/media-tracker/issues/88)) ([8310a61](https://github.com/randomnanastya/media-tracker/commit/8310a61eb1f0350042a48167d931aa821224e485))
+
 # [0.12.0](https://github.com/randomnanastya/media-tracker/compare/v0.11.0...v0.12.0) (2026-03-22)
 
 
