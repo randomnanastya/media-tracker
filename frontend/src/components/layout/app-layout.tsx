@@ -3,16 +3,16 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 
 interface AppLayoutProps {
-  pageTitle: string;
+  breadcrumb: [string, ...string[]];
   children: ReactNode;
 }
 
-export function AppLayout({ pageTitle, children }: AppLayoutProps) {
+export function AppLayout({ breadcrumb, children }: AppLayoutProps) {
   return (
     <div className="flex h-screen bg-[#F5ECD7]">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
-        <TopBar title={pageTitle} />
+        <TopBar breadcrumb={breadcrumb} />
         <div className="flex-1 overflow-auto">{children}</div>
       </div>
     </div>

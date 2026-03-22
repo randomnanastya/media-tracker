@@ -26,7 +26,7 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <AuthGuard>
-        <AppLayout pageTitle="Dashboard">
+        <AppLayout breadcrumb={["Dashboard"]}>
           <DashboardPage />
         </AppLayout>
       </AuthGuard>
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
     path: "/settings",
     element: (
       <AuthGuard>
-        <AppLayout pageTitle="Settings">
+        <AppLayout breadcrumb={["Settings"]}>
           <SettingsPage />
         </AppLayout>
       </AuthGuard>

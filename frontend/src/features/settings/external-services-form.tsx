@@ -286,7 +286,7 @@ export function ExternalServicesSection() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-xl">
       {data.services.map((config) => (
         <ServiceForm key={config.service_type} config={config} />
       ))}
