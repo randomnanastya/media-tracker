@@ -56,7 +56,7 @@ jobs:
       - name: Check squash commit message
         uses: gsactions/commit-message-checker@v2
         with:
-          pattern: '^(feat|fix|docs|chore|test|style|refactor)(\([a-z0-9-]+\))?: .+$'
+          pattern: '^(feat|fix|docs|chore|test|style|refactor)(\([a-z0-9-]+\))?!?: .+$'
           error: >
             'Squash commit message must follow Conventional Commits format
             (e.g., "feat: add new endpoint" or "fix(api): update logic")'
