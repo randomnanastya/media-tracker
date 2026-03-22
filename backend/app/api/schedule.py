@@ -111,6 +111,7 @@ async def update_schedule(
 
     try:
         await session.commit()
+        await session.refresh(schedule)
     except Exception as err:
         await session.rollback()
         raise HTTPException(status_code=500, detail="Failed to save schedule") from err
