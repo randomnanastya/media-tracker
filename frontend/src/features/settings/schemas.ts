@@ -10,3 +10,15 @@ export const changePasswordSchema = z.object({
 });
 
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+export const syncScheduleSchema = z.discriminatedUnion("preset", [
+  z.object({ preset: z.literal("daily") }),
+  z.object({ preset: z.literal("weekly") }),
+  z.object({ preset: z.literal("monthly") }),
+  z.object({
+    preset: z.literal("custom"),
+    cron_expression: z.string().min(9, "Invalid cron expression").max(100),
+  }),
+]);
+
+export type SyncScheduleFormData = z.infer<typeof syncScheduleSchema>;

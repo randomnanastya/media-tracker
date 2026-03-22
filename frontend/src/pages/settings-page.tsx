@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { ChangePasswordForm } from "../features/settings/change-password-form";
 import { ExternalServicesSection } from "../features/settings/external-services-form";
+import { SyncScheduleSection } from "../features/settings/sync-schedule-section";
 
-type SettingsTab = "account" | "external";
+type SettingsTab = "account" | "external" | "schedule";
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "account", label: "Account Settings" },
   { id: "external", label: "External Services" },
+  { id: "schedule", label: "Sync Schedule" },
 ];
 
 export function SettingsPage() {
@@ -60,6 +62,18 @@ export function SettingsPage() {
           className="focus-visible:outline-none"
         >
           <ExternalServicesSection />
+        </section>
+      )}
+
+      {activeTab === "schedule" && (
+        <section
+          role="tabpanel"
+          id="panel-schedule"
+          aria-labelledby="tab-schedule"
+          tabIndex={0}
+          className="focus-visible:outline-none"
+        >
+          <SyncScheduleSection />
         </section>
       )}
     </div>
