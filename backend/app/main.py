@@ -7,83 +7,54 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, jellyfin, radarr, settings, sonarr
+from app.api import auth, jellyfin, radarr, schedule, settings, sonarr
 from app.config import logger
+from app.database import AsyncSessionLocal
 from app.dependencies.auth import get_current_user
 from app.exceptions.handlers import register_exception_handlers
-from app.services.jobs import (
-    jellyfin_import_movies_job,
-    jellyfin_import_series_job,
-    jellyfin_import_users_job,
-    jellyfin_sync_movie_watch_history_job,
-    jellyfin_sync_series_watch_history_job,
-    radarr_import_job,
-    sonarr_import_job,
-)
-
-scheduler = AsyncIOScheduler()
+from app.models import SyncJobType
+from app.services import schedule_repository as schedule_repo
+from app.services.schedule_constants import DEFAULT_SCHEDULES, JOB_REGISTRY
+from app.utils.cron_utils import parse_cron_to_apscheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     """Startup/shutdown lifecycle with APScheduler."""
+    scheduler = AsyncIOScheduler()
     try:
         app_env = os.getenv("APP_ENV", "development")
         jwt_secret = os.getenv("JWT_SECRET", "")
         if app_env == "production" and not jwt_secret:
             raise RuntimeError("JWT_SECRET is required in production")
 
-        jobs = [
-            ("Jellyfin Users", "1:00"),
-            ("Radarr", "1:10"),
-            ("Jellyfin Movies", "1:20"),
-            ("Jellyfin Sync Watch Movies", "1:30"),
-            ("Sonarr", "1:40"),
-            ("Jellyfin Series", "1:50"),
-            ("Jellyfin Sync Watch Series", "2:00"),
-        ]
+        async with AsyncSessionLocal() as session:
+            db_schedules = await schedule_repo.get_all_schedules(session)
+            for s in db_schedules:
+                if s.is_running:
+                    await schedule_repo.set_running_status(session, s.job_type, False)
+            await session.commit()
 
-        for name, time in jobs:
-            logger.info("📅 Scheduled %s at %s UTC", name, time)
+        if db_schedules:
+            schedules_map = {s.job_type: s.cron_expression for s in db_schedules}
+        else:
+            schedules_map = {job_type: DEFAULT_SCHEDULES[job_type] for job_type in SyncJobType}
 
-        scheduler.add_job(
-            jellyfin_import_users_job,
-            "cron",
-            hour=1,
-            minute=0,
-            id="jellyfin_users_import",
-            misfire_grace_time=300,
-            coalesce=True,
-        )
+        for job_type, (func, _) in JOB_REGISTRY.items():
+            cron_expr = schedules_map.get(job_type, DEFAULT_SCHEDULES[job_type])
+            cron_kwargs = parse_cron_to_apscheduler(cron_expr)
+            scheduler.add_job(
+                func,
+                "cron",
+                id=job_type.value,
+                misfire_grace_time=300,
+                coalesce=True,
+                max_instances=1,
+                **cron_kwargs,
+            )
+            logger.info("Scheduled %s: %s", job_type.value, cron_expr)
 
-        scheduler.add_job(radarr_import_job, "cron", hour=1, minute=10, id="radarr_import")
-
-        scheduler.add_job(
-            jellyfin_import_movies_job, "cron", hour=1, minute=20, id="jellyfin_import_movies"
-        )
-
-        scheduler.add_job(
-            jellyfin_sync_movie_watch_history_job,
-            "cron",
-            hour=1,
-            minute=30,
-            id="jellyfin_movie_watch_history",
-        )
-
-        scheduler.add_job(sonarr_import_job, "cron", hour=1, minute=40, id="sonarr_import")
-
-        scheduler.add_job(
-            jellyfin_import_series_job, "cron", hour=1, minute=50, id="jellyfin_import_series"
-        )
-
-        scheduler.add_job(
-            jellyfin_sync_series_watch_history_job,
-            "cron",
-            hour=2,
-            minute=0,
-            id="jellyfin_series_watch_history",
-        )
-
+        app.state.scheduler = scheduler
         scheduler.start()
         logger.info("✅ Scheduler started with misfire_grace_time=300")
 
@@ -130,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(sonarr.router, dependencies=[Depends(get_current_user)])
     app.include_router(jellyfin.router, dependencies=[Depends(get_current_user)])
     app.include_router(settings.router, dependencies=[Depends(get_current_user)])
+    app.include_router(schedule.router, dependencies=[Depends(get_current_user)])
 
     # Register exception handlers
     register_exception_handlers(app)
