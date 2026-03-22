@@ -20,6 +20,7 @@ from tests.factories import (
     RefreshTokenFactory,
     SeasonFactory,
     SeriesFactory,
+    SyncScheduleFactory,
     UserFactory,
     WatchHistoryFactory,
 )
@@ -62,6 +63,7 @@ register(UserFactory)
 register(WatchHistoryFactory)
 register(AppUserFactory)
 register(RefreshTokenFactory)
+register(SyncScheduleFactory)
 
 
 @pytest.fixture
@@ -105,6 +107,23 @@ def override_session_dependency(mock_session: AsyncMock) -> Generator[None, None
     app.dependency_overrides[get_session] = override_get_session
     yield
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def mock_scheduler() -> MagicMock:
+    mock = MagicMock()
+    mock.get_job.return_value = MagicMock(next_run_time=None)
+    mock.reschedule_job = MagicMock()
+    return mock
+
+
+@pytest.fixture
+def override_scheduler_dependency(mock_scheduler: MagicMock) -> Generator[None, None, None]:
+    from app.dependencies.scheduler import get_scheduler
+
+    app.dependency_overrides[get_scheduler] = lambda: mock_scheduler
+    yield
+    app.dependency_overrides.pop(get_scheduler, None)
 
 
 @pytest.fixture

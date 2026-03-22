@@ -13,8 +13,11 @@ from app.models import (
     MediaType,
     Movie,
     RefreshToken,
+    SchedulePreset,
     Season,
     Series,
+    SyncJobType,
+    SyncSchedule,
     User,
     WatchHistory,
 )
@@ -446,3 +449,22 @@ class RefreshTokenFactory(factory.Factory):
     class Params:
         revoked_token = factory.Trait(revoked=True)
         expired = factory.Trait(expires_at=LazyFunction(lambda: datetime(2020, 1, 1, tzinfo=UTC)))
+
+
+class SyncScheduleFactory(factory.Factory):
+    class Meta:
+        model = SyncSchedule
+
+    id = Sequence(lambda n: n + 1)
+    job_type = factory.Iterator(list(SyncJobType))
+    preset = SchedulePreset.DAILY
+    cron_expression = "10 22 * * *"
+    is_running = False
+    last_run_at = None
+    created_at = LazyFunction(lambda: datetime(2024, 1, 1, tzinfo=UTC))
+    updated_at = LazyFunction(lambda: datetime(2024, 1, 1, tzinfo=UTC))
+
+    class Params:
+        running = factory.Trait(is_running=True)
+        custom = factory.Trait(preset=SchedulePreset.CUSTOM)
+        monthly = factory.Trait(preset=SchedulePreset.MONTHLY, cron_expression="55 8 1 * *")
