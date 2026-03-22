@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/randomnanastya/media-tracker/compare/v0.11.0...v0.12.0) (2026-03-22)
+
+
+### Features
+
+* front cards with schedule settings ([a254c06](https://github.com/randomnanastya/media-tracker/commit/a254c064bcb7ea99d6139f01f70ebc84940ced15))
+
 # [0.11.0](https://github.com/randomnanastya/media-tracker/compare/v0.10.0...v0.11.0) (2026-03-22)
 
 
