@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/randomnanastya/media-tracker/compare/v1.0.0...v1.0.1) (2026-03-29)
+
+### Bug Fixes
+
+* prevent browser autofill on external services settings form ([#92](https://github.com/randomnanastya/media-tracker/issues/92)) ([48427c4](https://github.com/randomnanastya/media-tracker/commit/48427c4bd447463a562006360d24012579e620ce))
+
 ## [1.0.0](https://github.com/randomnanastya/media-tracker/compare/v0.12.0...v1.0.0) (2026-03-22)
 
 ### ⚠ BREAKING CHANGES
