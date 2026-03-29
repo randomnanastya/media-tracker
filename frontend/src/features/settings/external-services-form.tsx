@@ -174,6 +174,7 @@ function ServiceForm({ config }: ServiceFormProps) {
               setErrors((prev) => ({ ...prev, url: undefined }));
             }}
             placeholder={placeholder}
+            autoComplete="off"
             aria-invalid={!!errors.url}
             aria-describedby={errors.url ? `${config.service_type}-url-error` : undefined}
             className="w-full bg-white/80 border border-[#c9b89a] rounded-lg px-3 py-2.5 text-[#2a2520] placeholder-[#2a2520]/50 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none"
@@ -206,6 +207,7 @@ function ServiceForm({ config }: ServiceFormProps) {
               }}
               readOnly={isTokenReadOnly}
               placeholder={isConfigured ? "" : "Enter API token"}
+              autoComplete="new-password"
               aria-invalid={!!errors.apiKey}
               aria-describedby={errors.apiKey ? `${config.service_type}-token-error` : undefined}
               className={`w-full bg-white/80 border border-[#c9b89a] rounded-lg pl-3 pr-10 py-2.5 text-[#2a2520] placeholder-[#2a2520]/50 focus:border-mt-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none${isTokenReadOnly ? " cursor-default select-none" : ""}`}
