@@ -28,9 +28,10 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 
 interface SyncScheduleFormProps {
   schedule: SyncScheduleResponse;
+  hasRunningJobs: boolean;
 }
 
-export function SyncScheduleForm({ schedule }: SyncScheduleFormProps) {
+export function SyncScheduleForm({ schedule, hasRunningJobs }: SyncScheduleFormProps) {
   const [preset, setPreset] = useState<SchedulePreset>(schedule.preset);
   const [cronExpression, setCronExpression] = useState(schedule.cron_expression);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -48,6 +49,27 @@ export function SyncScheduleForm({ schedule }: SyncScheduleFormProps) {
     },
     onError: async (error: unknown) => {
       if (error instanceof HTTPError && error.response.status === 409) {
+        try {
+          const body = await error.response.json<{ detail?: string; message?: string }>();
+          setErrorMessage(body.detail ?? body.message ?? error.message);
+        } catch {
+          setErrorMessage(error.message);
+        }
+      } else if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An error occurred");
+      }
+    },
+  });
+
+  const triggerMutation = useMutation({
+    mutationFn: () => syncScheduleApi.trigger(schedule.job_type),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["sync-schedules"] });
+    },
+    onError: async (error: unknown) => {
+      if (error instanceof HTTPError) {
         try {
           const body = await error.response.json<{ detail?: string; message?: string }>();
           setErrorMessage(body.detail ?? body.message ?? error.message);
@@ -161,6 +183,14 @@ export function SyncScheduleForm({ schedule }: SyncScheduleFormProps) {
           className={`w-48 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none disabled:opacity-50 ${isDirty ? "bg-mt-accent text-mt-black hover:bg-mt-accent/90" : "bg-mt-accent/40 text-mt-black/60"}`}
         >
           {isPending ? "Saving..." : isDirty ? "Save changes" : "Saved"}
+        </button>
+        <button
+          type="button"
+          onClick={() => triggerMutation.mutate()}
+          disabled={!schedule.is_enabled || hasRunningJobs || triggerMutation.isPending}
+          className="w-48 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-mt-accent focus-visible:outline-none disabled:opacity-50 bg-mt-accent/40 text-mt-black/60 hover:bg-mt-accent/60"
+        >
+          {schedule.is_running ? "Running..." : "Run now"}
         </button>
       </div>
     </div>
