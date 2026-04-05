@@ -1,3 +1,16 @@
+## [1.1.0](https://github.com/randomnanastya/media-tracker/compare/v1.0.1...v1.1.0) (2026-04-05)
+
+### Features
+
+* add api trigger sync external services ([38a3fd9](https://github.com/randomnanastya/media-tracker/commit/38a3fd9aa2a4fb0104b06e294282e5e9e950fd7e))
+* added button sync external services ([b55590b](https://github.com/randomnanastya/media-tracker/commit/b55590b8fe7d413c493885edd3b468971948b461))
+* changed max col into sync Schedule page from 3 to 4 ([3241dfc](https://github.com/randomnanastya/media-tracker/commit/3241dfc72f4c8e0e62667a871f0d9f28bc9faa49))
+
+### Bug Fixes
+
+* fixed after designer-review font and aria-label spinning icon and added CSS grid trick + fade for smooth opening blocks sync ([8d05b7d](https://github.com/randomnanastya/media-tracker/commit/8d05b7dbe719dcbe287e84f9d079d7ad71db247c))
+* linter mypy ([842a334](https://github.com/randomnanastya/media-tracker/commit/842a334a18ce47071c23ee7f7e833ed0be364473))
+
 ## [1.0.1](https://github.com/randomnanastya/media-tracker/compare/v1.0.0...v1.0.1) (2026-03-29)
 
 ### Bug Fixes
