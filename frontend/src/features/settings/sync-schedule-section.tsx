@@ -6,7 +6,11 @@ export function SyncScheduleSection() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["sync-schedules"],
     queryFn: syncScheduleApi.list,
+    refetchInterval: (query) =>
+      query.state.data?.schedules.some((s) => s.is_running) ? 3000 : false,
   });
+
+  const hasRunningJobs = data?.schedules.some((s) => s.is_running) ?? false;
 
   if (isLoading) return <p className="text-sm text-gray-500">Loading schedules...</p>;
   if (isError || !data) return <p role="alert" className="text-sm text-red-500">Failed to load schedules.</p>;
@@ -14,7 +18,7 @@ export function SyncScheduleSection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
       {data.schedules.map((schedule) => (
-        <SyncScheduleForm key={schedule.job_type} schedule={schedule} />
+        <SyncScheduleForm key={schedule.job_type} schedule={schedule} hasRunningJobs={hasRunningJobs} />
       ))}
     </div>
   );
