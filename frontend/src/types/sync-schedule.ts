@@ -27,3 +27,8 @@ export interface SyncScheduleRequest {
   preset: SchedulePreset;
   cron_expression?: string;
 }
+
+export interface SyncTriggerResponse {
+  job_type: SyncJobType;
+  message: string;
+}
