@@ -1,6 +1,7 @@
 """Constants for sync job scheduling."""
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from app.models import SchedulePreset, ServiceType, SyncJobType
 from app.services.jobs import (
@@ -13,7 +14,7 @@ from app.services.jobs import (
     sonarr_import_job,
 )
 
-JOB_REGISTRY: dict[SyncJobType, tuple[Callable[..., Awaitable[None]], ServiceType]] = {
+JOB_REGISTRY: dict[SyncJobType, tuple[Callable[[], Coroutine[Any, Any, None]], ServiceType]] = {
     SyncJobType.JELLYFIN_USERS_IMPORT: (jellyfin_import_users_job, ServiceType.JELLYFIN),
     SyncJobType.RADARR_IMPORT: (radarr_import_job, ServiceType.RADARR),
     SyncJobType.JELLYFIN_MOVIES_IMPORT: (jellyfin_import_movies_job, ServiceType.JELLYFIN),
