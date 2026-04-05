@@ -26,3 +26,8 @@ class SyncScheduleResponse(BaseModel):
 
 class SyncScheduleListResponse(BaseModel):
     schedules: list[SyncScheduleResponse]
+
+
+class SyncTriggerResponse(BaseModel):
+    job_type: SyncJobType
+    message: str
