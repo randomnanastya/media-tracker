@@ -16,7 +16,7 @@ export function SyncScheduleSection() {
   if (isError || !data) return <p role="alert" className="text-sm text-red-500">Failed to load schedules.</p>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
       {data.schedules.map((schedule) => (
         <SyncScheduleForm key={schedule.job_type} schedule={schedule} hasRunningJobs={hasRunningJobs} />
       ))}
