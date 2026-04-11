@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.database import get_session
 from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import AppUser, Base, MediaType
+from app.models import AppUser, Base, MediaType, WatchStatus
 from app.utils.security import hash_password
 from tests.factories import (
     AppUserFactory,
@@ -140,7 +140,7 @@ async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, ti
     session.add(media)
     await session.flush()
     movie = MovieFactory.build(
-        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id
+        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id, media=media
     )
 
     session.add(movie)
@@ -149,13 +149,15 @@ async def create_movie(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, ti
     return movie
 
 
-async def create_watch_history(session, user_id, media_id, is_watched=True, watched_at=None):
+async def create_watch_history(
+    session, user_id, media_id, status: WatchStatus = WatchStatus.PLANNED, watched_at=None
+):
     """Создает запись истории просмотров."""
     wh = WatchHistoryFactory.build(
         user_id=user_id,
         media_id=media_id,
         episode_id=None,
-        is_watched=is_watched,
+        status=status,
         watched_at=watched_at,
     )
     session.add(wh)
@@ -169,7 +171,9 @@ async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, t
     session.add(media)
     await session.flush()
 
-    series = SeriesFactory(id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id)
+    series = SeriesFactory(
+        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id, media=media
+    )
     session.add(series)
     media.series = series
     await session.flush()

@@ -10,7 +10,7 @@ from pytest_factoryboy import register
 
 from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import AppUser, Movie, Series, User, WatchHistory
+from app.models import AppUser, Movie, Series, User, WatchHistory, WatchStatus
 from tests.factories import (
     AppUserFactory,
     EpisodeFactory,
@@ -315,7 +315,7 @@ def existing_watch(movie: Movie, user: User) -> WatchHistory:
         user_id=user.id,
         media_id=movie.id,
         episode_id=None,
-        is_watched=True,
+        status=WatchStatus.WATCHED,
         watched_at=None,
     )
 

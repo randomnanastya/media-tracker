@@ -60,6 +60,11 @@ async def create_new_movie(
     release_date: datetime | None,
     status: str | None = None,
     source: str | None = None,
+    poster_url: str | None = None,
+    year: int | None = None,
+    genres: list[str] | None = None,
+    rating_value: float | None = None,
+    rating_votes: int | None = None,
 ) -> None:
     """Create a new movie with associated Media entry."""
     media_obj = Media(
@@ -77,6 +82,11 @@ async def create_new_movie(
         tmdb_id=tmdb_id,
         imdb_id=imdb_id,
         status=status,
+        poster_url=poster_url,
+        year=year,
+        genres=genres,
+        rating_value=rating_value,
+        rating_votes=rating_votes,
     )
     session.add(movie_obj)
 
@@ -106,6 +116,11 @@ def update_existing_movie(
     title: str,
     status: str | None = None,
     source: str | None = None,
+    poster_url: str | None = None,
+    year: int | None = None,
+    genres: list[str] | None = None,
+    rating_value: float | None = None,
+    rating_votes: int | None = None,
 ) -> bool:
     """
     Update existing movie with new data from a source (Radarr/Jellyfin).
@@ -148,6 +163,22 @@ def update_existing_movie(
 
     if status and movie.status != status:
         movie.status = status
+        was_updated = True
+
+    if poster_url and movie.poster_url != poster_url:
+        movie.poster_url = poster_url
+        was_updated = True
+    if year and movie.year != year:
+        movie.year = year
+        was_updated = True
+    if genres is not None and movie.genres != genres:
+        movie.genres = genres
+        was_updated = True
+    if rating_value is not None and movie.rating_value != rating_value:
+        movie.rating_value = rating_value
+        was_updated = True
+    if rating_votes is not None and movie.rating_votes != rating_votes:
+        movie.rating_votes = rating_votes
         was_updated = True
 
     if was_updated:

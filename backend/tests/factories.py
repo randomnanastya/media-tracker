@@ -20,6 +20,7 @@ from app.models import (
     SyncSchedule,
     User,
     WatchHistory,
+    WatchStatus,
 )
 
 fake = Faker()
@@ -189,15 +190,12 @@ class WatchHistoryFactory(factory.Factory):
     user_id = 1  # По умолчанию, можно переопределить
     media_id = 1  # По умолчанию, можно переопределить
     episode_id = None  # None для фильмов, заполняется для сериалов
-    is_watched = True
-    watched_at = LazyFunction(
-        lambda: fake.date_time_between(start_date="-2y", end_date="now").replace(tzinfo=UTC)
-    )
+    status = WatchStatus.PLANNED
+    is_manual = False
 
     class Params:
-        movie_watch = factory.Trait(episode_id=None)
-        series_watch = factory.Trait(episode_id=1)
-        not_watched = factory.Trait(is_watched=False, watched_at=None)
+        movie_watch = factory.Trait(episode_id=None, status=WatchStatus.WATCHED)
+        series_watch = factory.Trait(episode_id=1, status=WatchStatus.WATCHED)
 
 
 # === Dict Factories для API responses ===

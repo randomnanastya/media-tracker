@@ -272,7 +272,7 @@ async def test_import_radarr_movie_without_radarr_id_already_complete_skips_upda
     ):
         mock_fetch.return_value = [
             RadarrMovieDictFactory.build(
-                id=None, title="Inception", tmdbId=27205, imdbId="tt1375666"
+                id=None, title="Inception", tmdbId=27205, imdbId="tt1375666", no_date=True
             )
         ]
 
