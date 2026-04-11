@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { WatchStatus } from "../../types/media";
 
 interface Props {
@@ -42,39 +42,31 @@ export function MediaStatusFilter({ value, onChange }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-3 py-2 min-w-[160px] bg-white border border-[#c9b89a]/40 rounded-lg shadow-sm text-sm text-[#2a2520] focus-visible:ring-2 focus-visible:ring-[#ffb826] focus-visible:ring-offset-2"
+        className="flex items-center gap-2 px-3 py-2 bg-white border border-[#c9b89a]/30 rounded-lg shadow-sm text-sm text-[#2a2520] focus-visible:ring-2 focus-visible:ring-[#ffb826] focus-visible:ring-offset-2"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="flex-1 text-left">{selected.label}</span>
-        <ChevronDown size={14} className="shrink-0 text-[#2a2520]/50" />
+        {selected.label}
+        <ChevronDown size={14} />
       </button>
       {open && (
         <ul
           role="listbox"
-          className="absolute right-0 mt-1 min-w-[160px] bg-white border border-[#c9b89a]/40 rounded-lg shadow-md z-10 py-1"
+          className="absolute right-0 mt-1 w-40 bg-white border border-[#c9b89a]/30 rounded-lg shadow-sm z-10 py-1"
         >
-          {OPTIONS.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <li
-                key={opt.value ?? "all"}
-                role="option"
-                aria-selected={isSelected}
-                className={`flex items-center justify-between px-3 py-2 text-sm cursor-pointer focus-visible:outline-none ${
-                  isSelected
-                    ? "bg-[#ffb826]/10 text-[#7a5c10] font-medium"
-                    : "text-[#2a2520] hover:bg-[#ffb826]/10"
-                }`}
-                onClick={() => { onChange(opt.value); setOpen(false); }}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { onChange(opt.value); setOpen(false); } }}
-                tabIndex={0}
-              >
-                <span>{opt.label}</span>
-                {isSelected && <Check size={14} className="text-[#7a5c10]" />}
-              </li>
-            );
-          })}
+          {OPTIONS.map((opt) => (
+            <li
+              key={opt.value ?? "all"}
+              role="option"
+              aria-selected={opt.value === value}
+              className="px-3 py-2 text-sm text-[#2a2520] cursor-pointer hover:bg-[#ffb826]/10 focus-visible:bg-[#ffb826]/10 focus-visible:outline-none"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { onChange(opt.value); setOpen(false); } }}
+              tabIndex={0}
+            >
+              {opt.label}
+            </li>
+          ))}
         </ul>
       )}
     </div>

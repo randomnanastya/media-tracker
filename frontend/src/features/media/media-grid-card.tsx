@@ -10,7 +10,7 @@ interface Props {
 
 export function MediaGridCard({ item }: Props) {
   return (
-    <div className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden">
+    <div className="flex flex-col bg-white/40 border border-[#c9b89a]/30 rounded-xl overflow-hidden">
       <div className="relative">
         <MediaPoster
           src={item.poster_url}
@@ -18,7 +18,7 @@ export function MediaGridCard({ item }: Props) {
           className="w-full aspect-[2/3] rounded-t-xl"
         />
         {item.watch_status && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute bottom-2 left-2">
             <MediaStatusBadge status={item.watch_status} />
           </div>
         )}
