@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/randomnanastya/media-tracker/compare/v1.2.0...v1.3.0) (2026-04-11)
+
+### Features
+
+* show media with filter ([#101](https://github.com/randomnanastya/media-tracker/issues/101)) ([bf2279a](https://github.com/randomnanastya/media-tracker/commit/bf2279abc4a0e4ac1cf169ab6b02bc2728826528))
+
 ## [1.2.0](https://github.com/randomnanastya/media-tracker/compare/v1.1.0...v1.2.0) (2026-04-11)
 
 ### Features
