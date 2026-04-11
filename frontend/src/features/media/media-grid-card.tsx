@@ -23,20 +23,22 @@ export function MediaGridCard({ item }: Props) {
           </div>
         )}
       </div>
-      <div className="p-2 flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-1">
-          <span className="text-sm font-medium text-[#2a2520] truncate">{item.title}</span>
-          {item.rating !== null && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Star size={10} className="text-[#ffb826] fill-[#ffb826]" />
-              <span className="text-xs text-[#8B6914]">{item.rating.toFixed(1)}</span>
-            </div>
+      <div className="p-2 flex flex-col flex-1 justify-between gap-1">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-sm font-medium text-[#2a2520] truncate" title={item.title}>{item.title}</span>
+            {item.rating !== null && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Star size={12} className="text-[#ffb826] fill-[#ffb826]" />
+                <span className="text-sm font-bold text-[#2a2520]">{item.rating.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+          {item.year && <p className="text-xs text-[#2a2520]/65">{item.year}</p>}
+          {item.genres.length > 0 && (
+            <p className="text-xs text-[#2a2520]/65 truncate">{item.genres.join(", ")}</p>
           )}
         </div>
-        {item.year && <p className="text-xs text-[#2a2520]/65">{item.year}</p>}
-        {item.genres.length > 0 && (
-          <p className="text-xs text-[#2a2520]/65 truncate">{item.genres.join(", ")}</p>
-        )}
         {item.media_type === "series" &&
           item.total_episodes !== null &&
           item.watched_episodes !== null && (

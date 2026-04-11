@@ -10,7 +10,7 @@ export function MediaProgressBar({ watched, total }: Props) {
   return (
     <div className="flex items-center gap-2">
       <div
-        className="flex-1 h-1 rounded-full bg-[#2a2520]/10"
+        className="flex-1 h-2 rounded-full bg-[#2a2520]/10"
         role="progressbar"
         aria-valuenow={watched}
         aria-valuemin={0}
