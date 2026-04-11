@@ -27,7 +27,7 @@ export function MediaListCard({ item }: Props) {
           {item.rating !== null && (
             <div className="flex items-center gap-0.5 shrink-0">
               <Star size={12} className="text-[#ffb826] fill-[#ffb826]" />
-              <span className="text-xs text-[#8B6914]">{item.rating.toFixed(1)}</span>
+              <span className="text-sm font-bold text-[#2a2520]">{item.rating.toFixed(1)}</span>
             </div>
           )}
         </div>
