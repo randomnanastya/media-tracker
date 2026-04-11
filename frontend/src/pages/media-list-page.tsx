@@ -98,9 +98,9 @@ function MediaListSkeleton({ viewMode }: { viewMode: ViewMode }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="flex flex-col gap-2 animate-pulse">
-            <div className="w-full aspect-[2/3] bg-[#2a2520]/10 rounded-xl" />
-            <div className="h-3 bg-[#2a2520]/10 rounded w-3/4" />
-            <div className="h-3 bg-[#2a2520]/10 rounded w-1/2" />
+            <div className="w-full aspect-[2/3] bg-[#e4e1d7] rounded-xl" />
+            <div className="h-3 bg-[#e4e1d7] rounded w-3/4" />
+            <div className="h-3 bg-[#e4e1d7] rounded w-1/2" />
           </div>
         ))}
       </div>
@@ -110,11 +110,11 @@ function MediaListSkeleton({ viewMode }: { viewMode: ViewMode }) {
     <div className="flex flex-col gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex gap-3 p-3 bg-white/40 border border-[#c9b89a]/30 rounded-xl animate-pulse">
-          <div className="w-20 h-[110px] bg-[#2a2520]/10 rounded-lg shrink-0" />
+          <div className="w-20 h-[110px] bg-[#e4e1d7] rounded-lg shrink-0" />
           <div className="flex flex-col gap-2 flex-1">
-            <div className="h-4 bg-[#2a2520]/10 rounded w-2/3" />
-            <div className="h-3 bg-[#2a2520]/10 rounded w-1/2" />
-            <div className="h-3 bg-[#2a2520]/10 rounded w-1/4" />
+            <div className="h-4 bg-[#e4e1d7] rounded w-2/3" />
+            <div className="h-3 bg-[#e4e1d7] rounded w-1/2" />
+            <div className="h-3 bg-[#e4e1d7] rounded w-1/4" />
           </div>
         </div>
       ))}

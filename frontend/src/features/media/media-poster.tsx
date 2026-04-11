@@ -18,7 +18,7 @@ export function MediaPoster({ src, alt, className = "" }: Props) {
   }
   return (
     <div className={`flex items-center justify-center bg-gray-200 ${className}`}>
-      <Film size={32} className="text-gray-400" aria-hidden="true" />
+      <Film size={56} className="text-gray-400" aria-hidden="true" />
     </div>
   );
 }

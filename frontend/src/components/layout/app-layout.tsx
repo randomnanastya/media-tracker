@@ -9,7 +9,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ breadcrumb, children }: AppLayoutProps) {
   return (
-    <div className="flex h-screen bg-[#F5ECD7]">
+    <div className="flex h-screen bg-[#f5f1e8]">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <TopBar breadcrumb={breadcrumb} />
