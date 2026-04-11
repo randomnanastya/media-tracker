@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,7 +96,7 @@ async def get_media_list(
             return "dropped"
         return "planned"
 
-    grouped: dict[int, list] = defaultdict(list)
+    grouped: dict[int, list[Any]] = defaultdict(list)
     for row in rows:
         grouped[row["id"]].append(row)
 
