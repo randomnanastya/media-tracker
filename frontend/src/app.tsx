@@ -5,6 +5,7 @@ import { AppLayout } from "./components/layout/app-layout";
 import { AuthPage } from "./pages/auth-page";
 import { DashboardPage } from "./pages/dashboard-page";
 import { ForgotPasswordPage } from "./pages/forgot-password-page";
+import { MediaListPage } from "./pages/media-list-page";
 import { SettingsPage } from "./pages/settings-page";
 
 const queryClient = new QueryClient({
@@ -38,6 +39,36 @@ const router = createBrowserRouter([
       <AuthGuard>
         <AppLayout breadcrumb={["Settings"]}>
           <SettingsPage />
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/media",
+    element: (
+      <AuthGuard>
+        <AppLayout breadcrumb={["Dashboard", "Media"]}>
+          <MediaListPage />
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/media/movies",
+    element: (
+      <AuthGuard>
+        <AppLayout breadcrumb={["Dashboard", "Media", "Movies"]}>
+          <MediaListPage type="movie" />
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/media/series",
+    element: (
+      <AuthGuard>
+        <AppLayout breadcrumb={["Dashboard", "Media", "Series"]}>
+          <MediaListPage type="series" />
         </AppLayout>
       </AuthGuard>
     ),
