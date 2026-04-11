@@ -13,7 +13,7 @@ let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
 export const apiClient: KyInstance = ky.create({
-  prefixUrl: "",
+  prefixUrl: "/",
   credentials: "include",
   hooks: {
     afterResponse: [

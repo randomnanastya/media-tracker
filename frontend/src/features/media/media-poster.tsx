@@ -1,4 +1,4 @@
-import { Image } from "lucide-react";
+import { Film } from "lucide-react";
 
 interface Props {
   src: string | null;
@@ -17,8 +17,8 @@ export function MediaPoster({ src, alt, className = "" }: Props) {
     );
   }
   return (
-    <div className={`flex items-center justify-center bg-[#2a2520]/5 ${className}`}>
-      <Image size={32} className="text-[#2a2520]/20" aria-hidden="true" />
+    <div className={`flex items-center justify-center bg-gray-200 ${className}`}>
+      <Film size={32} className="text-gray-400" aria-hidden="true" />
     </div>
   );
 }
