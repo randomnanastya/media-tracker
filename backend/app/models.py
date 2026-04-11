@@ -2,7 +2,18 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -19,6 +30,13 @@ class ServiceType(enum.Enum):
     RADARR = "radarr"
     SONARR = "sonarr"
     JELLYFIN = "jellyfin"
+
+
+class WatchStatus(enum.Enum):
+    PLANNED = "planned"
+    WATCHING = "watching"
+    WATCHED = "watched"
+    DROPPED = "dropped"
 
 
 class Media(Base):
@@ -68,6 +86,11 @@ class Movie(Base):
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     status: Mapped[str | None] = mapped_column(String, nullable=True)
+    poster_url: Mapped[str | None] = mapped_column(String)
+    year: Mapped[int | None] = mapped_column(Integer)
+    genres: Mapped[list[str] | None] = mapped_column(JSON)
+    rating_value: Mapped[float | None] = mapped_column(Float)
+    rating_votes: Mapped[int | None] = mapped_column(Integer)
 
     media: Mapped["Media"] = relationship("Media", back_populates="movie")
 
@@ -128,7 +151,11 @@ class WatchHistory(Base):
         nullable=True,
         index=True,
     )
-    is_watched: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    status: Mapped[WatchStatus] = mapped_column(
+        Enum(WatchStatus), nullable=False, default=WatchStatus.PLANNED
+    )
+    is_manual: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    playback_position_ticks: Mapped[int | None] = mapped_column(BigInteger)
     watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

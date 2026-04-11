@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.models import WatchStatus
 from app.services.sync_jellyfin_watched_series_service import (
     sync_jellyfin_watched_series,
 )
@@ -107,7 +108,7 @@ async def test_sync_watched_episodes_update_existing(
     season.series = series
 
     existing_watch.episode_id = episode.id
-    existing_watch.is_watched = False
+    existing_watch.status = WatchStatus.PLANNED
 
     episode_data = {
         "Id": episode.jellyfin_id,
@@ -154,7 +155,7 @@ async def test_sync_watched_episodes_update_existing(
         result = await sync_jellyfin_watched_series(mock_session)
 
         assert result.watched_updated == 1
-        assert existing_watch.is_watched is True
+        assert existing_watch.status == WatchStatus.WATCHED
         assert existing_watch.watched_at == "parsed-date"
 
         mock_session.commit.assert_called()
@@ -168,7 +169,7 @@ async def test_sync_watched_episodes_mark_unwatched(
     season.series = series
 
     existing_watch.episode_id = episode.id
-    existing_watch.is_watched = True
+    existing_watch.status = WatchStatus.WATCHED
 
     episode_data = {
         "Id": episode.jellyfin_id,
@@ -209,7 +210,7 @@ async def test_sync_watched_episodes_mark_unwatched(
 
         result = await sync_jellyfin_watched_series(mock_session)
 
-        assert result.unwatched_marked == 1
-        assert existing_watch.is_watched is False
+        assert result.watched_updated == 1
+        assert existing_watch.status == WatchStatus.PLANNED
 
         mock_session.commit.assert_called()

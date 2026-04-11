@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies_for_user_all
 from app.config import logger
-from app.models import Movie, ServiceType, User, WatchHistory
+from app.models import Movie, ServiceType, User, WatchHistory, WatchStatus
 from app.schemas.jellyfin import JellyfinWatchedMoviesResponse
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
@@ -144,49 +144,80 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                 # Data about watching
                 user_data = movie_data.get("UserData", {})
                 played = user_data.get("Played", False)
+                playback_ticks = user_data.get("PlaybackPositionTicks", 0) or 0
                 last_played_date_str = user_data.get("LastPlayedDate")
 
-                # found existing row into saved dict
+                if played:
+                    jellyfin_status = WatchStatus.WATCHED
+                elif playback_ticks > 0:
+                    jellyfin_status = WatchStatus.WATCHING
+                else:
+                    jellyfin_status = WatchStatus.PLANNED
+
                 existing_watch = current_watches.get(movie.id)
 
-                # Situation 1: movie was watched
-                if played and last_played_date_str:
-                    last_played_date = parse_datetime(last_played_date_str)
-                    if not last_played_date:
-                        logger.debug("Could not parse date for: %s", movie_data.get("Name"))
-                        continue
-
-                    if existing_watch:
-                        # updating if need
-                        if (
-                            not existing_watch.is_watched
-                            or last_played_date != existing_watch.watched_at
-                        ):
-                            existing_watch.is_watched = True
+                if existing_watch:
+                    if existing_watch.is_manual:
+                        continue  # не трогаем ручные записи
+                    changed = False
+                    if existing_watch.status != jellyfin_status:
+                        existing_watch.status = jellyfin_status
+                        changed = True
+                    if existing_watch.playback_position_ticks != playback_ticks:
+                        existing_watch.playback_position_ticks = playback_ticks
+                        changed = True
+                    if jellyfin_status == WatchStatus.WATCHED and last_played_date_str:
+                        last_played_date = parse_datetime(last_played_date_str)
+                        if last_played_date and existing_watch.watched_at != last_played_date:
                             existing_watch.watched_at = last_played_date
-                            watched_updated += 1
-                            user_updated += 1
-                            logger.debug("Updated: %s", movie.id)
-                    else:
-                        # creating new
-                        watch_history = WatchHistory(
-                            user_id=user.id,
-                            media_id=movie.id,
-                            episode_id=None,
-                            is_watched=True,
-                            watched_at=last_played_date,
-                        )
-                        session.add(watch_history)
-                        watched_added += 1
-                        user_added += 1
-                        logger.debug("Added: %s", movie.id)
+                            changed = True
+                    if changed:
+                        watched_updated += 1
+                        user_updated += 1
+                        logger.debug("Updated: %s", movie.id)
+                else:
+                    watched_at = (
+                        parse_datetime(last_played_date_str) if last_played_date_str else None
+                    )
+                    watch_history = WatchHistory(
+                        user_id=user.id,
+                        media_id=movie.id,
+                        episode_id=None,
+                        status=jellyfin_status,
+                        is_manual=False,
+                        playback_position_ticks=playback_ticks,
+                        watched_at=watched_at,
+                    )
+                    session.add(watch_history)
+                    watched_added += 1
+                    user_added += 1
+                    logger.debug("Added: %s", movie.id)
 
-                # Situation 2: movie watched false
-                elif existing_watch and existing_watch.is_watched:
-                    existing_watch.is_watched = False
+            # 4b. Dropped detection: фильмы, исчезнувшие из Jellyfin
+            jellyfin_media_ids = set()
+            for movie_data in movies_data:
+                jellyfin_id = str(movie_data.get("Id")) if movie_data.get("Id") else None
+                if jellyfin_id and jellyfin_id in movies_by_jellyfin_id:
+                    jellyfin_media_ids.add(movies_by_jellyfin_id[jellyfin_id].id)
+                else:
+                    provider_ids = movie_data.get("ProviderIds", {})
+                    tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
+                    imdb_id = provider_ids.get("Imdb")
+                    if tmdb_id and tmdb_id in movies_by_tmdb_id:
+                        jellyfin_media_ids.add(movies_by_tmdb_id[tmdb_id].id)
+                    elif imdb_id and imdb_id in movies_by_imdb_id:
+                        jellyfin_media_ids.add(movies_by_imdb_id[imdb_id].id)
+
+            for media_id, wh in current_watches.items():
+                if (
+                    media_id not in jellyfin_media_ids
+                    and wh.status != WatchStatus.WATCHED
+                    and not wh.is_manual
+                ):
+                    wh.status = WatchStatus.DROPPED
                     unwatched_marked += 1
                     user_unwatched += 1
-                    logger.debug("Marked unwatched: %s", movie.id)
+                    logger.debug("Marked dropped: %s", media_id)
 
             # 5. Save changes
             await session.commit()

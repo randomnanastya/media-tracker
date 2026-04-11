@@ -17,6 +17,7 @@ from app.services.series_utils import (
 )
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime_utils import parse_iso_datetime
+from app.utils.poster_utils import extract_poster
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,6 @@ async def _find_series_by_sonarr_id(session: AsyncSession, sonarr_id: int) -> Se
     query = select(Series).where(Series.sonarr_id == sonarr_id).options(selectinload(Series.media))
     result = await session.execute(query)
     return result.scalar_one_or_none()
-
-
-def _extract_poster(images: list[dict[str, Any]]) -> str | None:
-    """Extract poster URL from images list."""
-    return next(
-        (img.get("remoteUrl") for img in images if img.get("coverType") == "poster"),
-        None,
-    )
 
 
 async def _process_seasons_and_episodes(
@@ -203,7 +196,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
                 continue
 
             release_date = parse_iso_datetime(raw.get("firstAired"), context=title)
-            poster_url = _extract_poster(raw.get("images", []))
+            poster_url = extract_poster(raw.get("images", []))
             year = raw.get("year")
             genres = raw.get("genres")
             rating_value = raw.get("ratings", {}).get("value")

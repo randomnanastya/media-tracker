@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import delete, select
 
-from app.models import WatchHistory
+from app.models import WatchHistory, WatchStatus
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
 from tests.factories import JellyfinMovieDictFactory
 from tests.integration.conftest import create_movie, create_user
@@ -52,7 +52,7 @@ async def test_sync_adds_watched_movie(session_no_expire, monkeypatch):
 
     assert len(watches) == 1
     assert watches[0].media_id == movie.id
-    assert watches[0].is_watched is True
+    assert watches[0].status == WatchStatus.WATCHED
     assert watches[0].watched_at == datetime(2024, 1, 1, 12, 0, tzinfo=UTC)
 
     assert result.watched_added == 1
@@ -111,9 +111,9 @@ async def test_sync_with_mixed_watched_status(session_no_expire, monkeypatch):
 
     watches = (await session_no_expire.execute(select(WatchHistory))).scalars().all()
 
-    assert len(watches) == 2
+    assert len(watches) == 3  # all 3 movies get entries (PLANNED for unwatched)
 
-    assert result.watched_added == 2
+    assert result.watched_added == 3
     assert result.watched_updated == 0
     assert result.unwatched_marked == 0
     assert result.total_users == 1
@@ -128,7 +128,7 @@ async def test_sync_updates_existing_watched_movie(session_no_expire, monkeypatc
     old_watch = WatchHistory(
         user_id=user.id,
         media_id=movie.id,
-        is_watched=True,
+        status=WatchStatus.WATCHED,
         watched_at=datetime(2023, 12, 1, 10, 0, tzinfo=UTC),
     )
     session_no_expire.add(old_watch)
@@ -170,7 +170,7 @@ async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
     old_watch = WatchHistory(
         user_id=user.id,
         media_id=movie.id,
-        is_watched=True,
+        status=WatchStatus.WATCHED,
         watched_at=datetime(2023, 12, 1, 10, 0, tzinfo=UTC),
     )
     session_no_expire.add(old_watch)
@@ -196,8 +196,8 @@ async def test_sync_marks_movie_unwatched(session_no_expire, monkeypatch):
     watches = (await session_no_expire.execute(select(WatchHistory))).scalars().all()
 
     assert len(watches) == 1
-    assert watches[0].is_watched is False
-    assert result.unwatched_marked == 1
+    assert watches[0].status == WatchStatus.PLANNED
+    assert result.watched_updated == 1
 
 
 async def test_sync_multiple_users(session_no_expire, monkeypatch):

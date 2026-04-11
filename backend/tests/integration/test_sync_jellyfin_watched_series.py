@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from app.models import WatchHistory
+from app.models import WatchHistory, WatchStatus
 from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
 from tests.factories import JellyfinSeriesDictFactory
 from tests.integration.conftest import create_episode, create_season, create_series, create_user
@@ -76,7 +76,7 @@ async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
     assert len(watches) == 1
     assert watches[0].episode_id == episode.id
     assert watches[0].media_id == series.id
-    assert watches[0].is_watched is True
+    assert watches[0].status == WatchStatus.WATCHED
     assert watches[0].watched_at == datetime(2024, 1, 1, 12, 0, tzinfo=UTC)
 
     assert result.watched_added == 1
@@ -112,7 +112,7 @@ async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypa
         user_id=user.id,
         media_id=series.id,
         episode_id=episode.id,
-        is_watched=True,
+        status=WatchStatus.WATCHED,
         watched_at=datetime(2023, 12, 1, 10, 0, tzinfo=UTC),
     )
     session_no_expire.add(old_watch)
@@ -184,7 +184,7 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
         user_id=user.id,
         media_id=series.id,
         episode_id=episode.id,
-        is_watched=True,
+        status=WatchStatus.WATCHED,
         watched_at=datetime(2023, 12, 1, 10, 0, tzinfo=UTC),
     )
     session_no_expire.add(old_watch)
@@ -222,10 +222,10 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
     )
 
     assert len(watches) == 1
-    assert watches[0].is_watched is False
-    assert result.unwatched_marked == 1
+    assert watches[0].status == WatchStatus.PLANNED
+    assert result.unwatched_marked == 0
     assert result.watched_added == 0
-    assert result.watched_updated == 0
+    assert result.watched_updated == 1
 
 
 async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):

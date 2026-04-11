@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+from app.models import WatchStatus
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
 
 
@@ -177,14 +178,14 @@ async def test_sync_watched_movies_update_existing(mock_session, user, movie, ex
         assert result.watched_added == 0
         assert result.unwatched_marked == 0
 
-        assert existing_watch.is_watched is True
+        assert existing_watch.status == WatchStatus.WATCHED
 
         mock_session.commit.assert_called()
 
 
 @pytest.mark.asyncio
 async def test_sync_watched_movies_mark_unwatched(mock_session, user, movie, existing_watch):
-    existing_watch.is_watched = True
+    existing_watch.status = WatchStatus.WATCHED
     movie.tmdb_id = "123"  # Match movie_data
 
     movie_data = {
@@ -241,12 +242,12 @@ async def test_sync_watched_movies_mark_unwatched(mock_session, user, movie, exi
 
         result = await sync_jellyfin_watched_movies(mock_session)
 
-        assert result.unwatched_marked == 1
+        assert result.unwatched_marked == 0
         assert result.watched_added == 0
-        assert result.watched_updated == 0
+        assert result.watched_updated == 1
         assert result.total_users == 1
         assert result.total_movies_processed == 1
 
-        assert existing_watch.is_watched is False
+        assert existing_watch.status == WatchStatus.PLANNED
 
         mock_session.commit.assert_called()

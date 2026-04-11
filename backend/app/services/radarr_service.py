@@ -12,6 +12,7 @@ from app.services.movie_utils import (
     update_existing_movie,
 )
 from app.services.service_config_repository import get_decrypted_config
+from app.utils.poster_utils import extract_poster
 
 
 async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
@@ -33,6 +34,11 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
             imdb_id = movie_data.get("imdbId")
             release_date = parse_release_date(movie_data.get("inCinemas"), title)
             status = movie_data.get("status")
+            poster_url = extract_poster(movie_data.get("images", []))
+            year = movie_data.get("year")
+            genres = movie_data.get("genres")
+            rating_value = movie_data.get("ratings", {}).get("value")
+            rating_votes = movie_data.get("ratings", {}).get("votes")
 
             existing_movie = None
 
@@ -58,6 +64,11 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                     title=title,
                     status=status,
                     source="Radarr",
+                    poster_url=poster_url,
+                    year=year,
+                    genres=genres,
+                    rating_value=rating_value,
+                    rating_votes=rating_votes,
                 ):
                     updated += 1
                 continue
@@ -77,6 +88,11 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
                 release_date=release_date,
                 status=status,
                 source="Radarr",
+                poster_url=poster_url,
+                year=year,
+                genres=genres,
+                rating_value=rating_value,
+                rating_votes=rating_votes,
             )
 
             imported += 1

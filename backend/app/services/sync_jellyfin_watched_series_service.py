@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.client.jellyfin_client import fetch_jellyfin_episodes_for_user_all
 from app.config import logger
-from app.models import Episode, Season, ServiceType, User, WatchHistory
+from app.models import Episode, Season, ServiceType, User, WatchHistory, WatchStatus
 from app.schemas.jellyfin import JellyfinWatchedSeriesResponse
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
@@ -83,49 +83,75 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
                     continue
 
                 user_data = ep_data.get("UserData") or {}
-
                 played = bool(user_data.get("Played"))
+                playback_ticks = user_data.get("PlaybackPositionTicks", 0) or 0
                 last_played_date_str = user_data.get("LastPlayedDate")
+
+                if played:
+                    jellyfin_status = WatchStatus.WATCHED
+                elif playback_ticks > 0:
+                    jellyfin_status = WatchStatus.WATCHING
+                else:
+                    jellyfin_status = WatchStatus.PLANNED
 
                 existing = watch_by_episode_id.get(episode.id)
 
-                if played and not existing:
+                if existing:
+                    if existing.is_manual:
+                        total_episodes_processed += 1
+                        continue
+                    changed = False
+                    if existing.status != jellyfin_status:
+                        existing.status = jellyfin_status
+                        changed = True
+                    if jellyfin_status == WatchStatus.WATCHED and last_played_date_str:
+                        last_played_date = parse_datetime(last_played_date_str)
+                        if last_played_date and existing.watched_at != last_played_date:
+                            existing.watched_at = last_played_date
+                            changed = True
+                    if changed:
+                        user_updated += 1
+                        watched_updated += 1
+                elif jellyfin_status in (WatchStatus.WATCHED, WatchStatus.WATCHING):
                     media_id = episode.season.series.id
-                    last_played_date = parse_datetime(last_played_date_str)
+                    watched_at = (
+                        parse_datetime(last_played_date_str) if last_played_date_str else None
+                    )
                     to_insert.append(
                         {
                             "user_id": user.id,
                             "media_id": media_id,
                             "episode_id": episode.id,
-                            "is_watched": True,
-                            "watched_at": last_played_date,
+                            "status": jellyfin_status,
+                            "is_manual": False,
+                            "playback_position_ticks": playback_ticks,
+                            "watched_at": watched_at,
                         }
                     )
                     user_added += 1
                     watched_added += 1
 
-                elif existing:
-                    if played:
-                        last_played_date = parse_datetime(last_played_date_str)
-                        if existing.is_watched != played or last_played_date != existing.watched_at:
-                            existing.is_watched = True
-                            existing.watched_at = last_played_date
-                            user_updated += 1
-                            watched_updated += 1
-                    else:
-                        if existing.is_watched != played:
-                            existing.is_watched = False
-                            user_unwatched += 1
-                            unwatched_marked += 1
-
                 total_episodes_processed += 1
-                logger.info(
-                    "User %s: added=%d updated=%d unwatched=%d",
-                    user.username,
-                    user_added,
-                    user_updated,
-                    user_unwatched,
-                )
+
+            logger.info(
+                "User %s: added=%d updated=%d unwatched=%d",
+                user.username,
+                user_added,
+                user_updated,
+                user_unwatched,
+            )
+
+            # Dropped detection: episodes that disappeared from Jellyfin
+            jellyfin_episode_ids = {ep["Id"] for ep in episodes_data if ep.get("Id")}
+            for ep_id, wh in watch_by_episode_id.items():
+                ep = next((e for e in episodes_by_jellyfin_id.values() if e.id == ep_id), None)
+                if (
+                    ep
+                    and ep.jellyfin_id not in jellyfin_episode_ids
+                    and wh.status in (WatchStatus.PLANNED, WatchStatus.WATCHING)
+                    and not wh.is_manual
+                ):
+                    wh.status = WatchStatus.DROPPED
 
             if to_insert:
                 await session.execute(insert(WatchHistory), to_insert)
