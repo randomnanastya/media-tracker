@@ -1,3 +1,9 @@
+## [1.2.0](https://github.com/randomnanastya/media-tracker/compare/v1.1.0...v1.2.0) (2026-04-11)
+
+### Features
+
+* added api media ([#100](https://github.com/randomnanastya/media-tracker/issues/100)) ([68dbc01](https://github.com/randomnanastya/media-tracker/commit/68dbc0191dc88781a31258ad93b13cd9d6a38feb))
+
 ## [1.1.0](https://github.com/randomnanastya/media-tracker/compare/v1.0.1...v1.1.0) (2026-04-05)
 
 ### Features
