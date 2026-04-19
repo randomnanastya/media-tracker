@@ -236,6 +236,8 @@ async def test_import_sonarr_episode_moved_to_different_season(
     session_for_test.add(season2)
     await session_for_test.flush()
 
+    season2_id = season2.id  # захватываем до коммита — объект просрочится после него
+
     # Эпизод был в сезоне 1
     episode = Episode(season_id=season1.id, sonarr_id=10, number=1, title="Moved Episode")
     session_for_test.add(episode)
@@ -262,4 +264,4 @@ async def test_import_sonarr_episode_moved_to_different_season(
 
     all_eps = (await session_for_test.execute(select(Episode))).scalars().all()
     assert len(all_eps) == 1, "Не должно быть дубликата эпизода"
-    assert all_eps[0].season_id == season2.id, "season_id должен обновиться на сезон 2"
+    assert all_eps[0].season_id == season2_id, "season_id должен обновиться на сезон 2"
