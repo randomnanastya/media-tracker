@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/randomnanastya/media-tracker/compare/v1.3.0...v1.3.1) (2026-04-19)
+
+### Bug Fixes
+
+* prevent duplicate seasons and episodes on Jellyfin import ([fce0ebb](https://github.com/randomnanastya/media-tracker/commit/fce0ebbb87baf66bab3a896c13d23161ddd7f2c3))
+* resolve duplicate sonarr episode insert on season migration ([79b053f](https://github.com/randomnanastya/media-tracker/commit/79b053f299dc9f64faab0c9b17e7409799341593))
+
 ## [1.3.0](https://github.com/randomnanastya/media-tracker/compare/v1.2.0...v1.3.0) (2026-04-11)
 
 ### Features
