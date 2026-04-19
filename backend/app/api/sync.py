@@ -31,6 +31,9 @@ async def trigger_sync_job(
     if schedule and schedule.is_running:
         raise HTTPException(status_code=409, detail="Job is already running")
 
+    await schedule_repo.set_running_status(session, job_type, True)
+    await session.commit()
+
     job_func = JOB_REGISTRY[job_type][0]
     asyncio.create_task(job_func())  # noqa: RUF006
 
