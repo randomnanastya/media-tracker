@@ -87,13 +87,14 @@ async def _process_seasons_and_episodes(
             if dt:
                 season.release_date = dt
 
-    # Load existing episodes
-    existing_eps_result = await session.scalars(
-        select(Episode).where(Episode.season_id.in_([s.id for s in existing_seasons.values()]))
-    )
-    existing_eps: dict[int, Episode] = {
-        ep.sonarr_id: ep for ep in existing_eps_result if ep.sonarr_id is not None
-    }
+    # Load existing episodes by sonarr_id (global search to handle episodes that moved seasons)
+    ep_sonarr_ids = [ep.get("id") for ep in episodes_raw if isinstance(ep.get("id"), int)]
+    existing_eps: dict[int, Episode] = {}
+    if ep_sonarr_ids:
+        existing_eps_result = await session.scalars(
+            select(Episode).where(Episode.sonarr_id.in_(ep_sonarr_ids))
+        )
+        existing_eps = {ep.sonarr_id: ep for ep in existing_eps_result if ep.sonarr_id is not None}
 
     new_ep_cnt = upd_ep_cnt = 0
     for ep_raw in episodes_raw:
@@ -123,6 +124,9 @@ async def _process_seasons_and_episodes(
         existing = existing_eps.get(ep_sonarr_id)
         if existing:
             updated = False
+            if existing.season_id != season.id:
+                existing.season_id = season.id
+                updated = True
             if existing.number != ep_num:
                 existing.number = ep_num
                 updated = True
@@ -197,6 +201,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
 
             release_date = parse_iso_datetime(raw.get("firstAired"), context=title)
             poster_url = extract_poster(raw.get("images", []))
+            logger.debug("Series '%s' (sonarr_id=%s): poster_url=%s", title, sonarr_id, poster_url)
             year = raw.get("year")
             genres = raw.get("genres")
             rating_value = raw.get("ratings", {}).get("value")
