@@ -121,7 +121,7 @@ async def create_new_series(
 
 def update_existing_series(
     series: Series,
-    title: str,
+    title: str | None,
     *,
     sonarr_id: int | None = None,
     jellyfin_id: str | None = None,
