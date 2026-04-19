@@ -214,3 +214,52 @@ async def test_import_sonarr_series_updates_existing_episode(
 
     ep = (await session_for_test.execute(select(Episode))).scalar_one()
     assert ep.title == "New title"
+
+
+async def test_import_sonarr_episode_moved_to_different_season(
+    client_with_db,
+    session_for_test,
+    monkeypatch,
+):
+    """Эпизод переехал из сезона 1 в сезон 2 в Sonarr — season_id обновляется, дубликат не создаётся."""
+    media = Media(media_type=MediaType.SERIES, title="Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+
+    series = Series(id=media.id, sonarr_id=1)
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    season1 = Season(series_id=series.id, number=1)
+    season2 = Season(series_id=series.id, number=2)
+    session_for_test.add(season1)
+    session_for_test.add(season2)
+    await session_for_test.flush()
+
+    # Эпизод был в сезоне 1
+    episode = Episode(season_id=season1.id, sonarr_id=10, number=1, title="Moved Episode")
+    session_for_test.add(episode)
+    await session_for_test.commit()
+
+    resp_series: list[dict] = [  # type: ignore[list-item]
+        SeriesDictFactory(id=1, title="Series", seasons=[{"seasonNumber": 1}, {"seasonNumber": 2}]),
+    ]
+    monkeypatch.setattr(
+        "app.services.sonarr_service.fetch_sonarr_series",
+        AsyncMock(return_value=resp_series),
+    )
+    # Sonarr теперь говорит что эпизод в сезоне 2
+    resp_episodes: list[dict] = [  # type: ignore[list-item]
+        SonarrEpisodeDictFactory(id=10, seasonNumber=2, episodeNumber=1, title="Moved Episode")
+    ]
+    monkeypatch.setattr(
+        "app.services.sonarr_service.fetch_sonarr_episodes",
+        AsyncMock(return_value=resp_episodes),
+    )
+
+    resp = await client_with_db.post("/api/v1/sonarr/import")
+    assert resp.status_code == 200
+
+    all_eps = (await session_for_test.execute(select(Episode))).scalars().all()
+    assert len(all_eps) == 1, "Не должно быть дубликата эпизода"
+    assert all_eps[0].season_id == season2.id, "season_id должен обновиться на сезон 2"
