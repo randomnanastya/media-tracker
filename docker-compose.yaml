@@ -25,6 +25,17 @@ services:
       timeout: 5s
       retries: 3
 
+  frontend:
+    image: ghcr.io/randomnanastya/media-tracker-frontend:latest
+    container_name: media-frontend
+    ports:
+      - "80:80"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    restart: always
+
   db:
     image: postgres:15
     container_name: media-db
