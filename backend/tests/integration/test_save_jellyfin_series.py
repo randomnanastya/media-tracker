@@ -5,7 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import Episode, Media, MediaType, Season, Series
-from tests.factories import JellyfinEpisodeDictFactory, JellyfinSeriesDictFactory
+from tests.factories import (
+    EpisodeFactory,
+    JellyfinEpisodeDictFactory,
+    JellyfinSeriesDictFactory,
+    SeasonFactory,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -35,25 +40,6 @@ async def test_import_jellyfin_series_creates_new_series_with_episodes(
             PremiereDate="2020-01-01T00:00:00Z",
         )
     ]
-
-    # jellyfin_episodes = [
-    #     {
-    #         "Id": "ep-1",
-    #         "SeasonId": "season-1",
-    #         "ParentIndexNumber": 1,
-    #         "IndexNumber": 1,
-    #         "Name": "Pilot",
-    #         "PremiereDate": "2020-01-01T00:00:00Z",
-    #     },
-    #     {
-    #         "Id": "ep-2",
-    #         "SeasonId": "season-1",
-    #         "ParentIndexNumber": 1,
-    #         "IndexNumber": 2,
-    #         "Name": "Episode 2",
-    #         "PremiereDate": "2020-01-08T00:00:00Z",
-    #     },
-    # ]
 
     jellyfin_episodes: list[dict] = [  # type: ignore[list-item]
         JellyfinEpisodeDictFactory(SeasonId=jellyfin_series[0].get("Id")),
@@ -116,16 +102,6 @@ async def test_import_jellyfin_series_updates_existing_by_tmdb(
     )
     session_for_test.add(series)
     await session_for_test.commit()
-
-    # jellyfin_series = [
-    #     {
-    #         "Id": "jf-series-1",
-    #         "Name": "New Title",
-    #         "ProductionYear": 2021,
-    #         "Status": "Ended",
-    #         "ProviderIds": {"Tmdb": "100"},
-    #     }
-    # ]
 
     jellyfin_series: list[dict] = [  # type: ignore[list-item]
         JellyfinSeriesDictFactory(
@@ -205,3 +181,108 @@ async def test_import_jellyfin_series_updates_existing_episode(
 
     ep = (await session_for_test.execute(select(Episode))).scalar_one()
     assert ep.title == "New title"
+
+
+async def test_import_jellyfin_no_duplicate_season_when_created_by_sonarr(
+    client_with_db,
+    session_for_test,
+    monkeypatch,
+):
+    """Сезон создан через Sonarr (нет jellyfin_id) — Jellyfin не создаёт дубликат, а проставляет jellyfin_id."""
+    media = Media(media_type=MediaType.SERIES, title="Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+
+    series = Series(id=media.id, jellyfin_id="jf-series-1", tmdb_id="100")
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    # Сезон создан Sonarr — jellyfin_id отсутствует
+    season = SeasonFactory.build(series_id=series.id, number=1, jellyfin_id=None)
+    session_for_test.add(season)
+    await session_for_test.commit()
+
+    jf_season_jellyfin_id = "jf-season-1"
+    episodes = [
+        JellyfinEpisodeDictFactory(
+            Id="ep-1",
+            SeasonId=jf_season_jellyfin_id,
+            ParentIndexNumber=1,
+            IndexNumber=1,
+            Name="Pilot",
+        )
+    ]
+
+    monkeypatch.setattr(
+        "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
+        AsyncMock(
+            return_value=[{"Id": "jf-series-1", "Name": "Series", "ProviderIds": {"Tmdb": "100"}}]
+        ),
+    )
+    monkeypatch.setattr(
+        "app.services.import_jellyfin_series_service.fetch_jellyfin_episodes",
+        AsyncMock(return_value=episodes),
+    )
+
+    resp = await client_with_db.post("/api/v1/jellyfin/import/series")
+    assert resp.status_code == 200
+
+    seasons = (await session_for_test.execute(select(Season))).scalars().all()
+    assert len(seasons) == 1, "Не должно быть дубликата сезона"
+    assert seasons[0].jellyfin_id == jf_season_jellyfin_id
+
+
+async def test_import_jellyfin_no_duplicate_episode_when_created_by_sonarr(
+    client_with_db,
+    session_for_test,
+    monkeypatch,
+):
+    """Эпизод создан через Sonarr (нет jellyfin_id) — Jellyfin находит по (season_id, number), не создаёт дубликат."""
+    media = Media(media_type=MediaType.SERIES, title="Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+
+    series = Series(id=media.id, jellyfin_id="jf-series-1", tmdb_id="200")
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    season = Season(series_id=series.id, number=1, jellyfin_id="jf-season-1")
+    session_for_test.add(season)
+    await session_for_test.flush()
+
+    # Эпизод создан Sonarr — jellyfin_id отсутствует
+    episode = EpisodeFactory.build(
+        season_id=season.id, number=1, jellyfin_id=None, title="Old title"
+    )
+    session_for_test.add(episode)
+    await session_for_test.commit()
+
+    ep_jellyfin_id = "jf-ep-1"
+    episodes = [
+        JellyfinEpisodeDictFactory(
+            Id=ep_jellyfin_id,
+            SeasonId="jf-season-1",
+            ParentIndexNumber=1,
+            IndexNumber=1,
+            Name="New title",
+        )
+    ]
+
+    monkeypatch.setattr(
+        "app.services.import_jellyfin_series_service.fetch_jellyfin_series",
+        AsyncMock(
+            return_value=[{"Id": "jf-series-1", "Name": "Series", "ProviderIds": {"Tmdb": "200"}}]
+        ),
+    )
+    monkeypatch.setattr(
+        "app.services.import_jellyfin_series_service.fetch_jellyfin_episodes",
+        AsyncMock(return_value=episodes),
+    )
+
+    resp = await client_with_db.post("/api/v1/jellyfin/import/series")
+    assert resp.status_code == 200
+
+    all_eps = (await session_for_test.execute(select(Episode))).scalars().all()
+    assert len(all_eps) == 1, "Не должно быть дубликата эпизода"
+    assert all_eps[0].jellyfin_id == ep_jellyfin_id
+    assert all_eps[0].title == "New title"
