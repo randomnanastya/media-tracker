@@ -1,51 +1,64 @@
-# Media Tracker Backend
+# Media Tracker — Backend
 
-This is the backend part of the Media Tracker project.
+FastAPI backend for the Media Tracker project. Collects data from Jellyfin, Radarr, and Sonarr, stores it in PostgreSQL, and exposes a REST API consumed by the frontend.
 
-Авторизация
+See the main [README.md](../README.md) for deployment instructions.
 
-Архитектура аутентификации
+## API Reference
 
-  Токены
+Interactive docs (Swagger UI) are available at:
 
-  - Access JWT (15 мин, stateless) — для каждого запроса
-  - Refresh Token (30 дней, opaque) — хранится как SHA-256 хэш в БД, ротируется при каждом обновлении
+```
+http://<your-host>:<APP_PORT>/docs
+```
 
-  Модели БД
+ReDoc alternative:
 
-  - AppUser — отдельная от существующего User (Jellyfin). Поля: username, hashed_password, recovery_code_hash, email (опц.)
-  - RefreshToken — для per-session revocation
+```
+http://<your-host>:<APP_PORT>/redoc
+```
 
-  First-time setup
+## Authentication
 
-  - GET /auth/status → {setup_required: bool}
-  - Если пользователей нет → POST /auth/register открыт, иначе → 403
+- **Access token** — JWT, 15 min lifetime, stateless, sent with every request
+- **Refresh token** — opaque, 30-day lifetime, stored as SHA-256 hash in DB, rotated on each use
 
-  Восстановление пароля (без SMTP)
+### First-time setup
 
-  Основной путь — Recovery Code:
-  1. При регистрации генерируется код формата XXXXX-XXXXX-XXXXX-XXXXX (bcrypt в БД)
-  2. Показывается один раз в ответе — пользователь обязан сохранить
-  3. POST /auth/reset-password { recovery_code, new_password } → сбрасывает пароль и возвращает новый recovery code
-  4. GET /auth/recovery-code (с авторизацией) — сгенерировать новый код (инвалидирует старый)
+```
+GET /api/v1/auth/status  →  { "setup_required": true/false }
+```
 
-  Резервный путь — CLI:
-  docker exec media-tracker python -m app.cli reset-password --new-password newpass123
-  Для случая, когда потеряны и пароль, и recovery code.
+If no users exist, `POST /api/v1/auth/register` is open. Once an account is created it returns 403.
 
-  Опциональный SMTP:
-  Если все SMTP_* переменные заданы → дополнительно доступен email reset. Не обязателен.
+### Password recovery
 
-  Добавление ключа для авторизации
-  В env добавьте сгенерированный ключ HS256
-  Сгенерировать ключ можно командой
-  ```shell
-   python -c "import secrets; print(secrets.token_hex(32))"
-  ```
-  В env добавляем:
-  - JWT_SECRET=<random-256-bit-key-run: python -c "import secrets; print(secrets.token_hex(32))">
-  - JWT_ALGORITHM=HS256
-  - ACCESS_TOKEN_EXPIRE_MINUTES=15
-  - REFRESH_TOKEN_EXPIRE_DAYS=30
+Primary path — recovery code (no email required):
 
-👉 See the main [README.md](../README.md) for overall project info.
+1. A code in the format `XXXXX-XXXXX-XXXXX-XXXXX` is generated at registration
+2. It is shown once in the response — save it
+3. `POST /api/v1/auth/reset-password { "recovery_code": "...", "new_password": "..." }` resets the password and returns a new recovery code
+4. `GET /api/v1/auth/recovery-code` (authenticated) — generate a new code, invalidates the old one
+
+Fallback — CLI (when both password and recovery code are lost):
+
+```bash
+docker exec media-backend python -m app.cli reset-password --new-password newpass123
+```
+
+### JWT secret
+
+Generate a secret key for signing tokens:
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Required env variables:
+
+```
+JWT_SECRET=<generated-key>
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_EXPIRE_DAYS=30
+```
