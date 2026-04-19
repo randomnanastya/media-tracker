@@ -189,7 +189,7 @@ def update_existing_series(
         was_updated = True
 
     # Update optional fields only if not already set
-    if poster_url and series.poster_url is None:
+    if poster_url and series.poster_url != poster_url:
         series.poster_url = poster_url
         was_updated = True
 
