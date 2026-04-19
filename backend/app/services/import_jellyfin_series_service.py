@@ -45,21 +45,22 @@ async def _process_seasons_and_episodes(
     if not episodes_raw:
         return 0, 0
 
-    # Load existing seasons
+    # Load existing seasons by number
     existing_seasons_result = await session.scalars(
         select(Season).where(Season.series_id == series.id)
     )
-    existing_seasons: dict[tuple[int, str | None], Season] = {
-        (s.number, s.jellyfin_id): s for s in existing_seasons_result
-    }
+    existing_seasons: dict[int, Season] = {s.number: s for s in existing_seasons_result}
 
-    # Load existing episodes by jellyfin_id
+    # Load existing episodes by jellyfin_id and by (season_id, number) for deduplication
     existing_eps_result = await session.scalars(
         select(Episode).where(Episode.season_id.in_([s.id for s in existing_seasons.values()]))
     )
-    existing_eps: dict[str, Episode] = {
-        ep.jellyfin_id: ep for ep in existing_eps_result if ep.jellyfin_id is not None
-    }
+    existing_eps_by_jellyfin: dict[str, Episode] = {}
+    existing_eps_by_num: dict[tuple[int, int], Episode] = {}
+    for ep in existing_eps_result:
+        if ep.jellyfin_id is not None:
+            existing_eps_by_jellyfin[ep.jellyfin_id] = ep
+        existing_eps_by_num[(ep.season_id, ep.number)] = ep
 
     new_ep_cnt = upd_ep_cnt = 0
     season_first_air: dict[int, datetime] = {}
@@ -90,9 +91,8 @@ async def _process_seasons_and_episodes(
         ):
             season_first_air[season_num] = air_date
 
-        # Get or create season
-        season_key = (season_num, season_jellyfin_id)
-        season = existing_seasons.get(season_key)
+        # Get or create season by number
+        season = existing_seasons.get(season_num)
         if not season:
             season = Season(
                 series_id=series.id,
@@ -101,16 +101,24 @@ async def _process_seasons_and_episodes(
             )
             session.add(season)
             await session.flush()
-            existing_seasons[season_key] = season
+            existing_seasons[season_num] = season
+        elif season.jellyfin_id is None and season_jellyfin_id:
+            season.jellyfin_id = season_jellyfin_id
 
         # Update season release_date if missing
         if season.release_date is None and season_num in season_first_air:
             season.release_date = season_first_air[season_num]
 
-        # Update or create episode
-        existing = existing_eps.get(ep_jellyfin_id)
+        # Find existing episode: first by jellyfin_id, then by (season_id, number)
+        existing = existing_eps_by_jellyfin.get(ep_jellyfin_id) or existing_eps_by_num.get(
+            (season.id, ep_num)
+        )
         if existing:
             updated = False
+            if existing.jellyfin_id is None:
+                existing.jellyfin_id = ep_jellyfin_id
+                existing_eps_by_jellyfin[ep_jellyfin_id] = existing
+                updated = True
             if existing.number != ep_num:
                 existing.number = ep_num
                 updated = True
@@ -132,7 +140,8 @@ async def _process_seasons_and_episodes(
             )
             session.add(episode)
             new_ep_cnt += 1
-            existing_eps[ep_jellyfin_id] = episode
+            existing_eps_by_jellyfin[ep_jellyfin_id] = episode
+            existing_eps_by_num[(season.id, ep_num)] = episode
 
     if new_ep_cnt or upd_ep_cnt:
         await session.flush()
