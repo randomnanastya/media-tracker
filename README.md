@@ -6,7 +6,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-AGPL--v3-blue)
 [![GitHub release](https://img.shields.io/github/v/release/randomnanastya/media-tracker)](https://github.com/randomnanastya/media-tracker/releases)
 [![CI](https://github.com/randomnanastya/media-tracker/actions/workflows/backend-ci.yaml/badge.svg)](https://github.com/randomnanastya/media-tracker/actions/workflows/backend-ci.yaml)
 
@@ -108,6 +108,33 @@ docker compose up -d
 ```
 
 The UI is available at `http://<your-host>`. On first visit you will be prompted to create an admin account. **Save the recovery code** shown after registration — it is the only way to reset your password without CLI access.
+
+## HTTPS / Reverse Proxy
+
+The compose file above listens on plain HTTP. To serve the app over HTTPS (required for `APP_ENV=production`), put it behind a reverse proxy that terminates TLS — for example **Traefik**, **Caddy**, or **nginx**.
+
+**Traefik example** — remove the `ports` block from the `frontend` service and add labels:
+
+```yaml
+services:
+  frontend:
+    image: ghcr.io/randomnanastya/media-tracker-frontend:latest
+    container_name: media-frontend
+    environment:
+      - BACKEND_URL=http://backend:8000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.media.rule=Host(`media.example.com`)"
+      - "traefik.http.routers.media.entrypoints=websecure"
+      - "traefik.http.routers.media.tls=true"
+    depends_on:
+      - backend
+    restart: always
+```
+
+Then set `APP_ENV=production` in `.env` and connect the container to your Traefik network. Certificate management (Let's Encrypt, self-signed, etc.) is handled by the proxy — see your proxy's documentation.
+
+> If you access the app only over HTTP on a local/internal network, keep `APP_ENV=development` — no proxy or certificates needed.
 
 ## Configuration
 
