@@ -6,7 +6,6 @@ from sqlalchemy.orm import selectinload
 
 from app.config import logger
 from app.models import Media, MediaType, Movie
-from app.utils.datetime_utils import parse_iso_datetime
 
 
 async def find_movie_by_external_ids(
@@ -41,13 +40,6 @@ async def find_movie_by_jellyfin_id(session: AsyncSession, jellyfin_id: str) -> 
     query = select(Movie).where(Movie.jellyfin_id == jellyfin_id).options(selectinload(Movie.media))
     result = await session.execute(query)
     return result.scalar_one_or_none()
-
-
-def parse_release_date(
-    release_date_str: str | None, movie_title: str = "Unknown"
-) -> datetime | None:
-    """Parsing release date from string (DEPRECATED: use parse_iso_datetime instead)."""
-    return parse_iso_datetime(release_date_str, context=movie_title)
 
 
 async def create_new_movie(
@@ -141,19 +133,19 @@ def update_existing_movie(
     """
     was_updated = False
 
-    if radarr_id and not movie.radarr_id:
+    if radarr_id is not None and movie.radarr_id is None:
         movie.radarr_id = radarr_id
         was_updated = True
 
-    if jellyfin_id and not movie.jellyfin_id:
+    if jellyfin_id is not None and movie.jellyfin_id is None:
         movie.jellyfin_id = jellyfin_id
         was_updated = True
 
-    if tmdb_id and not movie.tmdb_id:
+    if tmdb_id is not None and movie.tmdb_id is None:
         movie.tmdb_id = tmdb_id
         was_updated = True
 
-    if imdb_id and not movie.imdb_id:
+    if imdb_id is not None and movie.imdb_id is None:
         movie.imdb_id = imdb_id
         was_updated = True
 
@@ -172,7 +164,7 @@ def update_existing_movie(
     if poster_url and movie.poster_url != poster_url:
         movie.poster_url = poster_url
         was_updated = True
-    if year and movie.year != year:
+    if year is not None and movie.year != year:
         movie.year = year
         was_updated = True
     if genres is not None and movie.genres != genres:
