@@ -19,21 +19,35 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _rename_if_exists(old: str, new: str) -> None:
+    op.execute(
+        f"""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_enum
+                       WHERE enumlabel = '{old}'
+                       AND enumtypid = 'moviestatus'::regtype) THEN
+                ALTER TYPE moviestatus RENAME VALUE '{old}' TO '{new}';
+            END IF;
+        END $$;
+        """
+    )
+
+
 def upgrade() -> None:
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'rumored' TO 'RUMORED'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'announced' TO 'ANNOUNCED'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'in_production' TO 'IN_PRODUCTION'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'post_production' TO 'POST_PRODUCTION'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'in_cinemas' TO 'IN_CINEMAS'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'released' TO 'RELEASED'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'canceled' TO 'CANCELED'")
+    _rename_if_exists("rumored", "RUMORED")
+    _rename_if_exists("announced", "ANNOUNCED")
+    _rename_if_exists("in_production", "IN_PRODUCTION")
+    _rename_if_exists("post_production", "POST_PRODUCTION")
+    _rename_if_exists("in_cinemas", "IN_CINEMAS")
+    _rename_if_exists("released", "RELEASED")
+    _rename_if_exists("canceled", "CANCELED")
 
 
 def downgrade() -> None:
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'RUMORED' TO 'rumored'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'ANNOUNCED' TO 'announced'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'IN_PRODUCTION' TO 'in_production'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'POST_PRODUCTION' TO 'post_production'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'IN_CINEMAS' TO 'in_cinemas'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'RELEASED' TO 'released'")
-    op.execute("ALTER TYPE moviestatus RENAME VALUE 'CANCELED' TO 'canceled'")
+    _rename_if_exists("RUMORED", "rumored")
+    _rename_if_exists("ANNOUNCED", "announced")
+    _rename_if_exists("IN_PRODUCTION", "in_production")
+    _rename_if_exists("POST_PRODUCTION", "post_production")
+    _rename_if_exists("IN_CINEMAS", "in_cinemas")
+    _rename_if_exists("RELEASED", "released")
+    _rename_if_exists("CANCELED", "canceled")
