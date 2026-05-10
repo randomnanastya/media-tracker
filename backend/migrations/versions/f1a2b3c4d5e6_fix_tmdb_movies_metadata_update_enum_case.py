@@ -1,7 +1,7 @@
-"""fix TMDB_MOVIES_METADATA_UPDATE enum case
+"""fix TMDB_MOVIES_METADATA_UPDATE enum case in syncjobtype
 
 Revision ID: f1a2b3c4d5e6
-Revises: aedcba8d6c2c
+Revises: c3d4e5f6a7b8
 Create Date: 2026-05-10 10:00:00.000000
 
 """
@@ -20,10 +20,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Add uppercase TMDB_MOVIES_METADATA_UPDATE to syncjobtype enum."""
     op.execute("ALTER TYPE syncjobtype ADD VALUE IF NOT EXISTS 'TMDB_MOVIES_METADATA_UPDATE'")
 
 
 def downgrade() -> None:
-    """Downgrade schema — PostgreSQL does not support removing enum values."""
     pass
