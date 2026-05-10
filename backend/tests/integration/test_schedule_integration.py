@@ -85,8 +85,8 @@ async def test_list_schedules_empty_db_default_presets(client_with_db) -> None:
         assert preset_map[job_type.value] == DEFAULT_PRESETS[job_type].value
 
 
-async def test_list_schedules_all_disabled_when_no_service_configs(client_with_db) -> None:
-    """Without any ServiceConfig rows → all jobs have is_enabled=False."""
+async def test_list_schedules_service_jobs_disabled_when_no_service_configs(client_with_db) -> None:
+    """Without any ServiceConfig rows → jobs requiring a service are disabled."""
     from app.dependencies.scheduler import get_scheduler
     from app.main import app
 
@@ -99,8 +99,30 @@ async def test_list_schedules_all_disabled_when_no_service_configs(client_with_d
         app.dependency_overrides.pop(get_scheduler, None)
 
     data = response.json()
-    for schedule in data["schedules"]:
-        assert schedule["is_enabled"] is False
+    schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
+    service_jobs = [jt for jt in schedules_by_type if jt != "tmdb_movies_metadata_update"]
+    for job_type in service_jobs:
+        assert schedules_by_type[job_type]["is_enabled"] is False
+
+
+async def test_list_schedules_tmdb_job_always_enabled_without_service_configs(
+    client_with_db,
+) -> None:
+    """tmdb_movies_metadata_update requires no external service → is_enabled=True even with no configs."""
+    from app.dependencies.scheduler import get_scheduler
+    from app.main import app
+
+    mock_scheduler = _mock_scheduler_with_no_jobs()
+    app.dependency_overrides[get_scheduler] = lambda: mock_scheduler
+
+    try:
+        response = await client_with_db.get("/api/v1/settings/schedules")
+    finally:
+        app.dependency_overrides.pop(get_scheduler, None)
+
+    data = response.json()
+    schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
+    assert schedules_by_type["tmdb_movies_metadata_update"]["is_enabled"] is True
 
 
 # ---------------------------------------------------------------------------
