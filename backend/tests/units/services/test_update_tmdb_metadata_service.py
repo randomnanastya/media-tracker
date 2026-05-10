@@ -22,7 +22,7 @@ def _make_movie(**kwargs):  # type: ignore[no-untyped-def]
 
 def _make_payload(**kwargs) -> TmdbBridgeMovieResponse:
     defaults: dict = {
-        "tmdb_id": 123,
+        "tmdb_id": "123",
         "title": "New Title",
         "original_title": "New Original",
         "overview": "Some overview",
@@ -184,7 +184,7 @@ def _mock_execute_result(movies: list) -> Mock:
 
 
 _VALID_RAW = {
-    "tmdb_id": 123,
+    "tmdb_id": "123",
     "title": "Updated",
     "original_title": "Updated Orig",
     "overview": "desc",
