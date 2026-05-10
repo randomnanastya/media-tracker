@@ -5,7 +5,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import logger
-from app.models import Media, MediaType, Movie
+from app.models import Media, MediaType, Movie, MovieStatus
+
+_RADARR_STATUS_MAP: dict[str, MovieStatus] = {
+    "announced": MovieStatus.ANNOUNCED,
+    "tba": MovieStatus.ANNOUNCED,
+    "inCinemas": MovieStatus.IN_CINEMAS,
+    "released": MovieStatus.RELEASED,
+    "deleted": MovieStatus.CANCELED,
+}
+
+_TMDB_STATUS_MAP: dict[str, MovieStatus] = {
+    "Rumored": MovieStatus.RUMORED,
+    "Planned": MovieStatus.ANNOUNCED,
+    "In Production": MovieStatus.IN_PRODUCTION,
+    "Post Production": MovieStatus.POST_PRODUCTION,
+    "Released": MovieStatus.RELEASED,
+    "Canceled": MovieStatus.CANCELED,
+}
+
+
+def map_radarr_status(raw: str | None) -> MovieStatus | None:
+    if not raw:
+        return None
+    result = _RADARR_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown Radarr movie status: %s", raw)
+    return result
+
+
+def map_tmdb_status(raw: str | None) -> MovieStatus | None:
+    if not raw:
+        return None
+    result = _TMDB_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown TMDB movie status: %s", raw)
+    return result
 
 
 async def find_movie_by_external_ids(
@@ -50,7 +85,7 @@ async def create_new_movie(
     tmdb_id: str | None,
     imdb_id: str | None,
     release_date: datetime | None,
-    status: str | None = None,
+    status: MovieStatus | None = None,
     source: str | None = None,
     poster_url: str | None = None,
     year: int | None = None,
@@ -106,7 +141,7 @@ def update_existing_movie(
     imdb_id: str | None,
     release_date: datetime | None,
     title: str,
-    status: str | None = None,
+    status: MovieStatus | None = None,
     source: str | None = None,
     poster_url: str | None = None,
     year: int | None = None,
