@@ -1,3 +1,11 @@
+## [1.5.1](https://github.com/randomnanastya/media-tracker/compare/v1.5.0...v1.5.1) (2026-05-10)
+
+### Bug Fixes
+
+* fix enum case in migrations and tmdb_id type in bridge schema ([e0d4df7](https://github.com/randomnanastya/media-tracker/commit/e0d4df721285e9bad9003697d1ef8963ee8aaa64))
+* fix enum tbdb movies metadata ([4a1de00](https://github.com/randomnanastya/media-tracker/commit/4a1de003e33a3971a4a625858e65a639762ec521))
+* **migrations:** fix TMDB_MOVIES_METADATA_UPDATE enum case in syncjobtype ([2904140](https://github.com/randomnanastya/media-tracker/commit/2904140a80a836d6240139a1f7eb5327b0e68a59))
+
 ## [1.5.0](https://github.com/randomnanastya/media-tracker/compare/v1.4.0...v1.5.0) (2026-05-10)
 
 ### Features
