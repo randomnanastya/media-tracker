@@ -192,7 +192,7 @@ def update_existing_movie(
         movie.media.release_date = release_date
         was_updated = True
 
-    if status and movie.status != status:
+    if status is not None and movie.status != status:
         movie.status = status
         was_updated = True
 

@@ -128,6 +128,32 @@ async def test_import_radarr_movies_unknown_status_saves_movie_without_status(
     assert movie.status is None
 
 
+async def test_import_radarr_movies_updates_status_of_existing_movie(
+    client_with_db, session_for_test, monkeypatch
+):
+    existing_media = Media(media_type=MediaType.MOVIE, title="Status Movie", release_date=None)
+    session_for_test.add(existing_media)
+    await session_for_test.flush()
+
+    existing_movie = Movie(id=existing_media.id, radarr_id=791, status=MovieStatus.ANNOUNCED)
+    session_for_test.add(existing_movie)
+    await session_for_test.commit()
+
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(id=791, status="released")
+    ]
+    monkeypatch.setattr(
+        "app.services.radarr_service.fetch_radarr_movies", AsyncMock(return_value=mock_movies)
+    )
+
+    response = await client_with_db.post("/api/v1/radarr/import")
+    assert response.status_code == 200
+    assert response.json()["updated_count"] == 1
+
+    await session_for_test.refresh(existing_movie)
+    assert existing_movie.status == MovieStatus.RELEASED
+
+
 async def test_import_radarr_movies_invalid_data(client_with_db, session_for_test, monkeypatch):
     # Mock the fetch_radarr_movies to return invalid movie (no id)
     mock_movies: list[dict] = [  # type: ignore[list-item]
