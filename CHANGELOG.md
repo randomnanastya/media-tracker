@@ -1,3 +1,9 @@
+## [1.5.2](https://github.com/randomnanastya/media-tracker/compare/v1.5.1...v1.5.2) (2026-05-10)
+
+### Bug Fixes
+
+* **migrations:** add IF EXISTS guard to moviestatus rename migration ([08d9cda](https://github.com/randomnanastya/media-tracker/commit/08d9cdad24fac346bebd84f930db6597d054852f))
+
 ## [1.5.1](https://github.com/randomnanastya/media-tracker/compare/v1.5.0...v1.5.1) (2026-05-10)
 
 ### Bug Fixes
