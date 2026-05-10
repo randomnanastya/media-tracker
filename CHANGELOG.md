@@ -1,3 +1,17 @@
+## [1.4.0](https://github.com/randomnanastya/media-tracker/compare/v1.3.3...v1.4.0) (2026-05-10)
+
+### Features
+
+* fetch and update movie metadata from TMDB Bridge API ([50a1106](https://github.com/randomnanastya/media-tracker/commit/50a11060fd9456ed9a3a1a78d6a786ce527bef11))
+* **movies:** fetch metadata from TMDB Bridge and unify statuses with MovieStatus enum ([cf42476](https://github.com/randomnanastya/media-tracker/commit/cf42476128f959ea5d7370b2d66ff299bb4e5949))
+* unify movie statuses with MovieStatus enum and source mapping ([4a23318](https://github.com/randomnanastya/media-tracker/commit/4a233186fe58321a7750e0110fe378ac2c570688))
+
+### Bug Fixes
+
+* service tests ([1245632](https://github.com/randomnanastya/media-tracker/commit/124563240c05265baac68d564dcd30c320fe7b56))
+* update movie title only bridge and only if not equal ([79cd9e1](https://github.com/randomnanastya/media-tracker/commit/79cd9e1512ede437a43c3a74aecdf4bda5e5247e))
+* use explicit None check for MovieStatus and add status update integration test ([25790b4](https://github.com/randomnanastya/media-tracker/commit/25790b477f7b73aa2648b8c0ef42165b55493a51))
+
 ## [1.3.3](https://github.com/randomnanastya/media-tracker/compare/v1.3.2...v1.3.3) (2026-04-19)
 
 ### Bug Fixes
