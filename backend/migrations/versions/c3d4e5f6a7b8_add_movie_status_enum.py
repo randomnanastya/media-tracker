@@ -19,13 +19,13 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 movie_status_enum = postgresql.ENUM(
-    "rumored",
-    "announced",
-    "in_production",
-    "post_production",
-    "in_cinemas",
-    "released",
-    "canceled",
+    "RUMORED",
+    "ANNOUNCED",
+    "IN_PRODUCTION",
+    "POST_PRODUCTION",
+    "IN_CINEMAS",
+    "RELEASED",
+    "CANCELED",
     name="moviestatus",
 )
 
@@ -37,13 +37,13 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE movies SET status = CASE
-            WHEN status IN ('announced', 'tba', 'Planned') THEN 'announced'
-            WHEN status = 'inCinemas' THEN 'in_cinemas'
-            WHEN status IN ('released', 'Released') THEN 'released'
-            WHEN status IN ('deleted', 'Canceled') THEN 'canceled'
-            WHEN status = 'Rumored' THEN 'rumored'
-            WHEN status = 'In Production' THEN 'in_production'
-            WHEN status = 'Post Production' THEN 'post_production'
+            WHEN status IN ('announced', 'tba', 'Planned') THEN 'ANNOUNCED'
+            WHEN status = 'inCinemas' THEN 'IN_CINEMAS'
+            WHEN status IN ('released', 'Released') THEN 'RELEASED'
+            WHEN status IN ('deleted', 'Canceled') THEN 'CANCELED'
+            WHEN status = 'Rumored' THEN 'RUMORED'
+            WHEN status = 'In Production' THEN 'IN_PRODUCTION'
+            WHEN status = 'Post Production' THEN 'POST_PRODUCTION'
             ELSE NULL
         END
     """

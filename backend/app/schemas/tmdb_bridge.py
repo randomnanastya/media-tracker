@@ -20,7 +20,7 @@ class TmdbBridgeMovieResponse(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    tmdb_id: str
+    tmdb_id: int
     title: str | None = None
     original_title: str | None = None
     overview: str | None = None
