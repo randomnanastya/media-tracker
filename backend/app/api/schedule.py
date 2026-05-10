@@ -41,7 +41,7 @@ async def list_schedules(
         last_run_at = db_schedule.last_run_at if db_schedule else None
 
         required_service = JOB_REGISTRY[job_type][1]
-        is_enabled = required_service in configured_services
+        is_enabled = required_service is None or required_service in configured_services
 
         job = scheduler.get_job(job_type.value)
         next_run_at = job.next_run_time if job else None
@@ -119,7 +119,7 @@ async def update_schedule(
     all_configs = await config_repo.get_all_configs(session)
     configured_services = {c.service_type for c in all_configs}
     required_service = JOB_REGISTRY[job_type][1]
-    is_enabled = required_service in configured_services
+    is_enabled = required_service is None or required_service in configured_services
 
     job = scheduler.get_job(job_type.value)
     next_run_at = job.next_run_time if job else None
