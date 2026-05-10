@@ -1,3 +1,14 @@
+## [1.5.0](https://github.com/randomnanastya/media-tracker/compare/v1.4.0...v1.5.0) (2026-05-10)
+
+### Features
+
+* **settings:** add TMDB metadata update job to sync schedule UI ([0d70e5a](https://github.com/randomnanastya/media-tracker/commit/0d70e5a057586002441aa6ef1877671437d52513))
+
+### Bug Fixes
+
+* **schedule:** enable TMDB metadata job regardless of ext services ([39c50c3](https://github.com/randomnanastya/media-tracker/commit/39c50c363587d45d9d68ed65956e8b71a2a0c444))
+* **schedule:** enable TMDB metadata job regardless of external service config ([09dfc44](https://github.com/randomnanastya/media-tracker/commit/09dfc44c853eb973b4f734077c4f1059cf588130))
+
 ## [1.4.0](https://github.com/randomnanastya/media-tracker/compare/v1.3.3...v1.4.0) (2026-05-10)
 
 ### Features
