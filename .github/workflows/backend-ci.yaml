@@ -9,8 +9,6 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-ci.yaml'
   pull_request:
-    branches:
-      - main
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yaml'
