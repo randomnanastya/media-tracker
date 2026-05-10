@@ -132,7 +132,7 @@ def update_existing_movie(
         tmdb_id: TMDB ID to set if not already set
         imdb_id: IMDb ID to set if not already set
         release_date: Release date to set if not already set
-        title: Movie title for logging
+        title: Movie title — set only if currently empty (TMDB is authoritative for overwrites)
         status: Status to update if different
         source: Source of the update (Radarr/Jellyfin) for logging
 
@@ -155,6 +155,10 @@ def update_existing_movie(
 
     if imdb_id and not movie.imdb_id:
         movie.imdb_id = imdb_id
+        was_updated = True
+
+    if title and movie.media and not movie.media.title:
+        movie.media.title = title
         was_updated = True
 
     if release_date and movie.media and movie.media.release_date is None:
