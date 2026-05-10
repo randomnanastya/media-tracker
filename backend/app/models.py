@@ -91,6 +91,12 @@ class Movie(Base):
     genres: Mapped[list[str] | None] = mapped_column(JSON)
     rating_value: Mapped[float | None] = mapped_column(Float)
     rating_votes: Mapped[int | None] = mapped_column(Integer)
+    original_title: Mapped[str | None] = mapped_column(String, nullable=True)
+    overview: Mapped[str | None] = mapped_column(String, nullable=True)
+    backdrop_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    tmdb_metadata_fetched_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     media: Mapped["Media"] = relationship("Media", back_populates="movie")
 
@@ -220,6 +226,7 @@ class SyncJobType(enum.Enum):
     SONARR_IMPORT = "sonarr_import"
     JELLYFIN_SERIES_IMPORT = "jellyfin_import_series"
     JELLYFIN_SERIES_WATCH_HISTORY = "jellyfin_series_watch_history"
+    TMDB_MOVIES_METADATA_UPDATE = "tmdb_movies_metadata_update"
 
 
 class SyncSchedule(Base):

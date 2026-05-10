@@ -12,9 +12,12 @@ from app.services.jobs import (
     jellyfin_sync_series_watch_history_job,
     radarr_import_job,
     sonarr_import_job,
+    tmdb_movies_metadata_update_job,
 )
 
-JOB_REGISTRY: dict[SyncJobType, tuple[Callable[[], Coroutine[Any, Any, None]], ServiceType]] = {
+JOB_REGISTRY: dict[
+    SyncJobType, tuple[Callable[[], Coroutine[Any, Any, None]], ServiceType | None]
+] = {
     SyncJobType.JELLYFIN_USERS_IMPORT: (jellyfin_import_users_job, ServiceType.JELLYFIN),
     SyncJobType.RADARR_IMPORT: (radarr_import_job, ServiceType.RADARR),
     SyncJobType.JELLYFIN_MOVIES_IMPORT: (jellyfin_import_movies_job, ServiceType.JELLYFIN),
@@ -28,11 +31,13 @@ JOB_REGISTRY: dict[SyncJobType, tuple[Callable[[], Coroutine[Any, Any, None]], S
         jellyfin_sync_series_watch_history_job,
         ServiceType.JELLYFIN,
     ),
+    SyncJobType.TMDB_MOVIES_METADATA_UPDATE: (tmdb_movies_metadata_update_job, None),
 }
 
 DEFAULT_SCHEDULES: dict[SyncJobType, str] = {
     SyncJobType.JELLYFIN_USERS_IMPORT: "0 1 1 * *",
     SyncJobType.RADARR_IMPORT: "10 1 * * *",
+    SyncJobType.TMDB_MOVIES_METADATA_UPDATE: "15 1 * * *",
     SyncJobType.JELLYFIN_MOVIES_IMPORT: "20 1 * * *",
     SyncJobType.JELLYFIN_MOVIE_WATCH_HISTORY: "30 1 * * *",
     SyncJobType.SONARR_IMPORT: "40 1 * * *",
@@ -43,6 +48,7 @@ DEFAULT_SCHEDULES: dict[SyncJobType, str] = {
 DEFAULT_PRESETS: dict[SyncJobType, SchedulePreset] = {
     SyncJobType.JELLYFIN_USERS_IMPORT: SchedulePreset.MONTHLY,
     SyncJobType.RADARR_IMPORT: SchedulePreset.DAILY,
+    SyncJobType.TMDB_MOVIES_METADATA_UPDATE: SchedulePreset.DAILY,
     SyncJobType.JELLYFIN_MOVIES_IMPORT: SchedulePreset.DAILY,
     SyncJobType.JELLYFIN_MOVIE_WATCH_HISTORY: SchedulePreset.DAILY,
     SyncJobType.SONARR_IMPORT: SchedulePreset.DAILY,

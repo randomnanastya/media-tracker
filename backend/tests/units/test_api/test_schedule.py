@@ -49,7 +49,7 @@ async def test_list_schedules_with_db_schedules(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data["schedules"]) == 7
+    assert len(data["schedules"]) == 8
 
 
 @pytest.mark.asyncio
@@ -73,7 +73,7 @@ async def test_list_schedules_empty_db_uses_defaults(
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data["schedules"]) == 7
+    assert len(data["schedules"]) == 8
     cron_map = {s["job_type"]: s["cron_expression"] for s in data["schedules"]}
     for job_type in SyncJobType:
         assert cron_map[job_type.value] == DEFAULT_SCHEDULES[job_type]
