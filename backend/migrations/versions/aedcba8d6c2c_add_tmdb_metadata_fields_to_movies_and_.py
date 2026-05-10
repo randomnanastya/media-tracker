@@ -29,7 +29,7 @@ def upgrade() -> None:
     op.add_column(
         "movies", sa.Column("tmdb_metadata_fetched_at", sa.DateTime(timezone=True), nullable=True)
     )
-    op.execute("ALTER TYPE syncjobtype ADD VALUE IF NOT EXISTS 'tmdb_movies_metadata_update'")
+    op.execute("ALTER TYPE syncjobtype ADD VALUE IF NOT EXISTS 'TMDB_MOVIES_METADATA_UPDATE'")
     # ### end Alembic commands ###
 
 
