@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from sqlalchemy import select
@@ -8,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
+from app.config import logger
 from app.models import Episode, Season, Series, ServiceType
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.series_utils import (
@@ -18,8 +18,6 @@ from app.services.series_utils import (
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime_utils import parse_iso_datetime
 from app.utils.poster_utils import extract_poster
-
-logger = logging.getLogger(__name__)
 
 
 async def _find_series_by_sonarr_id(session: AsyncSession, sonarr_id: int) -> Series | None:

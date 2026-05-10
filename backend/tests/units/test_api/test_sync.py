@@ -125,3 +125,31 @@ async def test_trigger_sync_creates_asyncio_task(async_client, mock_session) -> 
 
     assert response.status_code == 202
     mock_job.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_trigger_tmdb_job_skips_service_config_check(async_client, mock_session) -> None:
+    """TMDB job has required_service=None → 202 without calling get_config_by_service."""
+    mock_job = AsyncMock()
+    fake_registry = {SyncJobType.TMDB_MOVIES_METADATA_UPDATE: (mock_job, None)}
+    not_running_schedule = SyncScheduleFactory.build(
+        job_type=SyncJobType.TMDB_MOVIES_METADATA_UPDATE, is_running=False
+    )
+
+    with (
+        patch("app.api.sync.JOB_REGISTRY", fake_registry),
+        patch(
+            "app.api.sync.schedule_repo.get_schedule_by_job",
+            new_callable=AsyncMock,
+            return_value=not_running_schedule,
+        ),
+        patch(
+            "app.api.sync.config_repo.get_config_by_service",
+            new_callable=AsyncMock,
+        ) as mock_get_config,
+    ):
+        response = await async_client.post("/api/v1/sync/trigger/tmdb_movies_metadata_update")
+
+    assert response.status_code == 202
+    assert response.json()["job_type"] == "tmdb_movies_metadata_update"
+    mock_get_config.assert_not_called()

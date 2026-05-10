@@ -5,8 +5,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import logger
-from app.models import Media, MediaType, Movie
-from app.utils.datetime_utils import parse_iso_datetime
+from app.models import Media, MediaType, Movie, MovieStatus
+
+_RADARR_STATUS_MAP: dict[str, MovieStatus] = {
+    "announced": MovieStatus.ANNOUNCED,
+    "tba": MovieStatus.ANNOUNCED,
+    "inCinemas": MovieStatus.IN_CINEMAS,
+    "released": MovieStatus.RELEASED,
+    "deleted": MovieStatus.CANCELED,
+}
+
+_TMDB_STATUS_MAP: dict[str, MovieStatus] = {
+    "Rumored": MovieStatus.RUMORED,
+    "Planned": MovieStatus.ANNOUNCED,
+    "In Production": MovieStatus.IN_PRODUCTION,
+    "Post Production": MovieStatus.POST_PRODUCTION,
+    "Released": MovieStatus.RELEASED,
+    "Canceled": MovieStatus.CANCELED,
+}
+
+
+def map_radarr_status(raw: str | None) -> MovieStatus | None:
+    if not raw:
+        return None
+    result = _RADARR_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown Radarr movie status: %s", raw)
+    return result
+
+
+def map_tmdb_status(raw: str | None) -> MovieStatus | None:
+    if not raw:
+        return None
+    result = _TMDB_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown TMDB movie status: %s", raw)
+    return result
 
 
 async def find_movie_by_external_ids(
@@ -43,13 +77,6 @@ async def find_movie_by_jellyfin_id(session: AsyncSession, jellyfin_id: str) -> 
     return result.scalar_one_or_none()
 
 
-def parse_release_date(
-    release_date_str: str | None, movie_title: str = "Unknown"
-) -> datetime | None:
-    """Parsing release date from string (DEPRECATED: use parse_iso_datetime instead)."""
-    return parse_iso_datetime(release_date_str, context=movie_title)
-
-
 async def create_new_movie(
     session: AsyncSession,
     title: str,
@@ -58,7 +85,7 @@ async def create_new_movie(
     tmdb_id: str | None,
     imdb_id: str | None,
     release_date: datetime | None,
-    status: str | None = None,
+    status: MovieStatus | None = None,
     source: str | None = None,
     poster_url: str | None = None,
     year: int | None = None,
@@ -114,7 +141,7 @@ def update_existing_movie(
     imdb_id: str | None,
     release_date: datetime | None,
     title: str,
-    status: str | None = None,
+    status: MovieStatus | None = None,
     source: str | None = None,
     poster_url: str | None = None,
     year: int | None = None,
@@ -132,7 +159,7 @@ def update_existing_movie(
         tmdb_id: TMDB ID to set if not already set
         imdb_id: IMDb ID to set if not already set
         release_date: Release date to set if not already set
-        title: Movie title for logging
+        title: Movie title — set only if currently empty (TMDB is authoritative for overwrites)
         status: Status to update if different
         source: Source of the update (Radarr/Jellyfin) for logging
 
@@ -141,34 +168,38 @@ def update_existing_movie(
     """
     was_updated = False
 
-    if radarr_id and not movie.radarr_id:
+    if radarr_id is not None and movie.radarr_id is None:
         movie.radarr_id = radarr_id
         was_updated = True
 
-    if jellyfin_id and not movie.jellyfin_id:
+    if jellyfin_id is not None and movie.jellyfin_id is None:
         movie.jellyfin_id = jellyfin_id
         was_updated = True
 
-    if tmdb_id and not movie.tmdb_id:
+    if tmdb_id is not None and movie.tmdb_id is None:
         movie.tmdb_id = tmdb_id
         was_updated = True
 
-    if imdb_id and not movie.imdb_id:
+    if imdb_id is not None and movie.imdb_id is None:
         movie.imdb_id = imdb_id
+        was_updated = True
+
+    if title and movie.media and not movie.media.title:
+        movie.media.title = title
         was_updated = True
 
     if release_date and movie.media and movie.media.release_date is None:
         movie.media.release_date = release_date
         was_updated = True
 
-    if status and movie.status != status:
+    if status is not None and movie.status != status:
         movie.status = status
         was_updated = True
 
     if poster_url and movie.poster_url != poster_url:
         movie.poster_url = poster_url
         was_updated = True
-    if year and movie.year != year:
+    if year is not None and movie.year != year:
         movie.year = year
         was_updated = True
     if genres is not None and movie.genres != genres:

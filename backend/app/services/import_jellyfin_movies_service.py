@@ -8,10 +8,10 @@ from app.services.movie_utils import (
     create_new_movie,
     find_movie_by_external_ids,
     find_movie_by_jellyfin_id,
-    parse_release_date,
     update_existing_movie,
 )
 from app.services.service_config_repository import get_decrypted_config
+from app.utils.datetime_utils import parse_iso_datetime
 
 
 async def import_jellyfin_movies(session: AsyncSession) -> JellyfinImportMoviesResponse:
@@ -30,7 +30,7 @@ async def import_jellyfin_movies(session: AsyncSession) -> JellyfinImportMoviesR
             jellyfin_id_raw = movie_data.get("Id")
             jellyfin_id = str(jellyfin_id_raw) if jellyfin_id_raw is not None else None
             title = movie_data.get("Name", "Unknown Title")
-            release_date = parse_release_date(movie_data.get("PremiereDate"), title)
+            release_date = parse_iso_datetime(movie_data.get("PremiereDate"), context=title)
             tmdb_id_raw = movie_data.get("ProviderIds", {}).get("Tmdb")
             tmdb_id = str(tmdb_id_raw) if tmdb_id_raw is not None else None
             imdb_id_raw = movie_data.get("ProviderIds", {}).get("Imdb")

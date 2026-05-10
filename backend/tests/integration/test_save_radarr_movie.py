@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from app.models import Media, MediaType, Movie
+from app.models import Media, MediaType, Movie, MovieStatus
 from tests.factories import RadarrMovieDictFactory
 from tests.utils.db_asserts import assert_model_matches
 
@@ -89,6 +89,69 @@ async def test_import_radarr_movies_existing_movie(client_with_db, session_for_t
     # Verify no new data was added
     movie_count = await session_for_test.execute(select(Movie))
     assert len(movie_count.scalars().all()) == 1  # Only the existing one
+
+
+async def test_import_radarr_movies_known_status_saved(
+    client_with_db, session_for_test, monkeypatch
+):
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(id=789, status="released")
+    ]
+    monkeypatch.setattr(
+        "app.services.radarr_service.fetch_radarr_movies", AsyncMock(return_value=mock_movies)
+    )
+
+    response = await client_with_db.post("/api/v1/radarr/import")
+    assert response.status_code == 200
+
+    movie_result = await session_for_test.execute(select(Movie).where(Movie.radarr_id == 789))
+    movie = movie_result.scalar_one()
+    assert movie.status == MovieStatus.RELEASED
+
+
+async def test_import_radarr_movies_unknown_status_saves_movie_without_status(
+    client_with_db, session_for_test, monkeypatch
+):
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(id=790, status="unknownFutureStatus")
+    ]
+    monkeypatch.setattr(
+        "app.services.radarr_service.fetch_radarr_movies", AsyncMock(return_value=mock_movies)
+    )
+
+    response = await client_with_db.post("/api/v1/radarr/import")
+    assert response.status_code == 200
+    assert response.json()["imported_count"] == 1
+
+    movie_result = await session_for_test.execute(select(Movie).where(Movie.radarr_id == 790))
+    movie = movie_result.scalar_one()
+    assert movie.status is None
+
+
+async def test_import_radarr_movies_updates_status_of_existing_movie(
+    client_with_db, session_for_test, monkeypatch
+):
+    existing_media = Media(media_type=MediaType.MOVIE, title="Status Movie", release_date=None)
+    session_for_test.add(existing_media)
+    await session_for_test.flush()
+
+    existing_movie = Movie(id=existing_media.id, radarr_id=791, status=MovieStatus.ANNOUNCED)
+    session_for_test.add(existing_movie)
+    await session_for_test.commit()
+
+    mock_movies: list[dict] = [  # type: ignore[list-item]
+        RadarrMovieDictFactory(id=791, status="released")
+    ]
+    monkeypatch.setattr(
+        "app.services.radarr_service.fetch_radarr_movies", AsyncMock(return_value=mock_movies)
+    )
+
+    response = await client_with_db.post("/api/v1/radarr/import")
+    assert response.status_code == 200
+    assert response.json()["updated_count"] == 1
+
+    await session_for_test.refresh(existing_movie)
+    assert existing_movie.status == MovieStatus.RELEASED
 
 
 async def test_import_radarr_movies_invalid_data(client_with_db, session_for_test, monkeypatch):

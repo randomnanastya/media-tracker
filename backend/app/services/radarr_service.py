@@ -8,10 +8,11 @@ from app.services.movie_utils import (
     create_new_movie,
     find_movie_by_external_ids,
     find_movie_by_radarr_id,
-    parse_release_date,
+    map_radarr_status,
     update_existing_movie,
 )
 from app.services.service_config_repository import get_decrypted_config
+from app.utils.datetime_utils import parse_iso_datetime
 from app.utils.poster_utils import extract_poster
 
 
@@ -32,8 +33,8 @@ async def import_radarr_movies(session: AsyncSession) -> RadarrImportResponse:
             title = movie_data.get("title", "Unknown Title")
             tmdb_id = str(movie_data.get("tmdbId")) if movie_data.get("tmdbId") else None
             imdb_id = movie_data.get("imdbId")
-            release_date = parse_release_date(movie_data.get("inCinemas"), title)
-            status = movie_data.get("status")
+            release_date = parse_iso_datetime(movie_data.get("inCinemas"), context=title)
+            status = map_radarr_status(movie_data.get("status"))
             poster_url = extract_poster(movie_data.get("images", []))
             year = movie_data.get("year")
             genres = movie_data.get("genres")

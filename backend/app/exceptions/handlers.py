@@ -17,13 +17,16 @@ from app.schemas.error_codes import (
     JellyfinErrorCode,
     RadarrErrorCode,
     SonarrErrorCode,
+    TmdbBridgeErrorCode,
 )
 from app.schemas.responses import ErrorDetail
 from app.schemas.service_errors import SonarrServiceError
 
 
 def _get_status_by_code(
-    code_enum: ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode,
+    code_enum: (
+        ErrorCode | SonarrErrorCode | RadarrErrorCode | JellyfinErrorCode | TmdbBridgeErrorCode
+    ),
 ) -> int:
     """Определяет HTTP-статус по Enum-объекту ошибки."""
     code_str = code_enum.value
@@ -40,8 +43,10 @@ def _get_status_by_code(
 
 def _get_service_code(
     path: str,
-    mapping: dict[str, ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode],
-) -> ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode:
+    mapping: dict[
+        str, ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode | TmdbBridgeErrorCode
+    ],
+) -> ErrorCode | RadarrErrorCode | SonarrErrorCode | JellyfinErrorCode | TmdbBridgeErrorCode:
     """Возвращает Enum-объект по пути."""
     lower_path = path.lower()
     if "radarr" in lower_path:

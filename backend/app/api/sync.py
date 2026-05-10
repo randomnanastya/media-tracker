@@ -23,9 +23,10 @@ async def trigger_sync_job(
 ) -> SyncTriggerResponse:
     required_service = JOB_REGISTRY[job_type][1]
 
-    config = await config_repo.get_config_by_service(session, required_service)
-    if config is None:
-        raise HTTPException(status_code=422, detail="Service not configured")
+    if required_service is not None:
+        config = await config_repo.get_config_by_service(session, required_service)
+        if config is None:
+            raise HTTPException(status_code=422, detail="Service not configured")
 
     schedule = await schedule_repo.get_schedule_by_job(session, job_type)
     if schedule and schedule.is_running:
