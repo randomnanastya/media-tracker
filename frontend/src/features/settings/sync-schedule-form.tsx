@@ -15,6 +15,7 @@ const JOB_LABELS: Record<SyncJobType, string> = {
   sonarr_import: "Sonarr: Import Series",
   jellyfin_import_series: "Jellyfin: Match Series",
   jellyfin_series_watch_history: "Jellyfin: Series Watch History",
+  tmdb_movies_metadata_update: "TMDB: Fetch Movie Metadata",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {

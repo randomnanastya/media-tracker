@@ -5,7 +5,8 @@ export type SyncJobType =
   | "jellyfin_movie_watch_history"
   | "sonarr_import"
   | "jellyfin_import_series"
-  | "jellyfin_series_watch_history";
+  | "jellyfin_series_watch_history"
+  | "tmdb_movies_metadata_update";
 
 export type SchedulePreset = "daily" | "weekly" | "monthly" | "custom";
 
