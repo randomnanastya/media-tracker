@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Media, MediaType, Movie
+from app.models import Media, MediaType, Movie, MovieStatus
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from tests.factories import JellyfinMovieDictFactory
 
@@ -79,7 +79,7 @@ async def test_import_jellyfin_movies_updates_existing_movie_by_tmdb(
         tmdb_id="222",
         imdb_id=None,
         jellyfin_id=None,
-        status="released",
+        status=MovieStatus.RELEASED,
     )
     session_for_test.add(movie)
     await session_for_test.commit()

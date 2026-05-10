@@ -39,6 +39,16 @@ class WatchStatus(enum.Enum):
     DROPPED = "dropped"
 
 
+class MovieStatus(enum.Enum):
+    RUMORED = "rumored"
+    ANNOUNCED = "announced"
+    IN_PRODUCTION = "in_production"
+    POST_PRODUCTION = "post_production"
+    IN_CINEMAS = "in_cinemas"
+    RELEASED = "released"
+    CANCELED = "canceled"
+
+
 class Media(Base):
     __tablename__ = "media"
 
@@ -85,7 +95,7 @@ class Movie(Base):
     tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    status: Mapped[str | None] = mapped_column(String, nullable=True)
+    status: Mapped[MovieStatus | None] = mapped_column(Enum(MovieStatus), nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String)
     year: Mapped[int | None] = mapped_column(Integer)
     genres: Mapped[list[str] | None] = mapped_column(JSON)

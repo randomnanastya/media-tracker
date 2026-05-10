@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.client.tmdb_bridge_client import TmdbBridgeClientError
+from app.models import MovieStatus
 from app.schemas.error_codes import TmdbBridgeErrorCode
 from app.schemas.tmdb_bridge import TmdbBridgeMovieResponse, TmdbGenre
 from app.services.update_tmdb_metadata_service import (
@@ -58,7 +59,7 @@ def test_title_no_change() -> None:
         overview="text",
         backdrop_path="/b.jpg",
         poster_url="http://p.jpg",
-        status="Released",
+        status=MovieStatus.RELEASED,
         genres=["Action"],
         rating_value=8.5,
         rating_votes=1000,
@@ -137,7 +138,7 @@ def test_tmdb_metadata_fetched_at_always_set() -> None:
         overview="text",
         backdrop_path="/b.jpg",
         poster_url="http://p.jpg",
-        status="Released",
+        status=MovieStatus.RELEASED,
         genres=["Action"],
         rating_value=8.5,
         rating_votes=1000,
@@ -164,12 +165,12 @@ def test_tmdb_metadata_fetched_at_always_set() -> None:
 
 
 def test_status_overwrite() -> None:
-    movie = _make_movie(status="announced")
+    movie = _make_movie(status=MovieStatus.ANNOUNCED)
     payload = _make_payload(status="Released")
 
     _apply_tmdb_update(movie, payload)
 
-    assert movie.status == "Released"
+    assert movie.status == MovieStatus.RELEASED
 
 
 # --- update_movies_tmdb_metadata ---

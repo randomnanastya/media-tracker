@@ -11,6 +11,7 @@ from app.client.tmdb_bridge_client import TmdbBridgeClientError, fetch_tmdb_movi
 from app.config import logger
 from app.models import Movie
 from app.schemas.tmdb_bridge import TmdbBridgeMovieResponse, TmdbMetadataUpdateResponse
+from app.services.movie_utils import map_tmdb_status
 
 CONCURRENCY_LIMIT = 10
 
@@ -127,8 +128,9 @@ def _apply_tmdb_update(movie: Movie, payload: TmdbBridgeMovieResponse) -> bool:
         changed = True
 
     # status: overwrite (TMDB tracks release lifecycle)
-    if payload.status and movie.status != payload.status:
-        movie.status = payload.status
+    mapped_status = map_tmdb_status(payload.status)
+    if mapped_status is not None and movie.status != mapped_status:
+        movie.status = mapped_status
         changed = True
 
     # genres: fill-if-empty
