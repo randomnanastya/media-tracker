@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 
 from sqlalchemy import select
@@ -11,6 +10,7 @@ from app.client.jellyfin_client import (
     fetch_jellyfin_episodes,
     fetch_jellyfin_series,
 )
+from app.config import logger
 from app.models import Episode, Season, Series, ServiceType
 from app.schemas.jellyfin import JellyfinImportSeriesResponse
 from app.services.series_utils import (
@@ -20,8 +20,6 @@ from app.services.series_utils import (
 )
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime_utils import parse_iso_datetime
-
-logger = logging.getLogger(__name__)
 
 
 async def _find_series_by_jellyfin_id(session: AsyncSession, jellyfin_id: str) -> Series | None:
