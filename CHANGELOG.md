@@ -1,3 +1,19 @@
+## [1.6.0](https://github.com/randomnanastya/media-tracker/compare/v1.5.2...v1.6.0) (2026-05-11)
+
+### Features
+
+* **assets:** add logo-mark svg with yellow accent palette ([16abea6](https://github.com/randomnanastya/media-tracker/commit/16abea67460047fccd4e548780910189591ea152))
+* **series:** fetch and store TMDB metadata for series, seasons, and episodes ([8b3a6cc](https://github.com/randomnanastya/media-tracker/commit/8b3a6cc0fa9061f6572ae9f82a39dea180b0da79))
+* **ui:** add hover shadow effect to media and dashboard cards ([ac5ff83](https://github.com/randomnanastya/media-tracker/commit/ac5ff83b8132cf0314b7fc905ea9239afb135110))
+* **ui:** replace auth logo text with logo mark and wordmark ([18af593](https://github.com/randomnanastya/media-tracker/commit/18af59369c85d33280e29fc3c0410a14de469487))
+* **ui:** replace sidebar brand text with logo mark and navlink ([9f7b6ca](https://github.com/randomnanastya/media-tracker/commit/9f7b6ca216f5d295277b284f8c57e9bfcef0ffc1))
+
+### Bug Fixes
+
+* **migrations:** fix series enum into migrations ([50176fa](https://github.com/randomnanastya/media-tracker/commit/50176fad2dffe72c3ffeb74b34db8dd9e494aa11))
+* **settings:** disable all run-now buttons during active trigger and fix tmdb job label ([1fbb98b](https://github.com/randomnanastya/media-tracker/commit/1fbb98bb45fea46aa2990cc407b4f73c1a3deaa2))
+* **tmdb-series:** fix enum case in migration and concurrent session writes ([1b23038](https://github.com/randomnanastya/media-tracker/commit/1b23038a51ead32a729cff6293932326321dd32e))
+
 ## [1.5.2](https://github.com/randomnanastya/media-tracker/compare/v1.5.1...v1.5.2) (2026-05-10)
 
 ### Bug Fixes
