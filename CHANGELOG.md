@@ -1,3 +1,12 @@
+## [1.6.1](https://github.com/randomnanastya/media-tracker/compare/v1.6.0...v1.6.1) (2026-05-11)
+
+### Bug Fixes
+
+* **series:** preserve title on sonarr/jellyfin import ([4df5979](https://github.com/randomnanastya/media-tracker/commit/4df59790e3a661435d87c377b78ae6db8f0def8d))
+* **test:** fix integration test after feat must not overwrite sonarr title ([e7ba284](https://github.com/randomnanastya/media-tracker/commit/e7ba2846ea6b84058537d916b4d665fc5e908f7d))
+* **test:** fix integration test after feat must not overwrite sonarr title ([49c76af](https://github.com/randomnanastya/media-tracker/commit/49c76af4486be1f77e70633aae8ba7f049ab4705))
+* **test:** fix unit test after feat must not overwrite sonarr title ([8533886](https://github.com/randomnanastya/media-tracker/commit/853388645f096fc2deb73dadddd00f649bdc6afd))
+
 ## [1.6.0](https://github.com/randomnanastya/media-tracker/compare/v1.5.2...v1.6.0) (2026-05-11)
 
 ### Features
