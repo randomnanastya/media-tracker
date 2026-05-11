@@ -126,7 +126,7 @@ async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
         await session_for_test.execute(select(Series).options(selectinload(Series.media)))
     ).scalar_one()
 
-    assert updated.media.title == "New Title"
+    assert updated.media.title == "Old Title"  # sonarr title must not overwrite
     assert updated.status == SeriesStatus.CONTINUING
 
 
