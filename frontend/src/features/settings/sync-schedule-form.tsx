@@ -15,7 +15,7 @@ const JOB_LABELS: Record<SyncJobType, string> = {
   sonarr_import: "Sonarr: Import Series",
   jellyfin_import_series: "Jellyfin: Match Series",
   jellyfin_series_watch_history: "Jellyfin: Series Watch History",
-  tmdb_metadata_update: "TMDB: Sync Metadata",
+  tmdb_movies_metadata_update: "TMDB: Fetch Movie Metadata",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -31,11 +31,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 interface SyncScheduleFormProps {
   schedule: SyncScheduleResponse;
   hasRunningJobs: boolean;
-  onTriggerStart: () => void;
-  onTriggerEnd: () => void;
 }
 
-export function SyncScheduleForm({ schedule, hasRunningJobs, onTriggerStart, onTriggerEnd }: SyncScheduleFormProps) {
+export function SyncScheduleForm({ schedule, hasRunningJobs }: SyncScheduleFormProps) {
   const [preset, setPreset] = useState<SchedulePreset>(schedule.preset);
   const [cronExpression, setCronExpression] = useState(schedule.cron_expression);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,10 +67,7 @@ export function SyncScheduleForm({ schedule, hasRunningJobs, onTriggerStart, onT
   });
 
   const triggerMutation = useMutation({
-    mutationFn: () => {
-      onTriggerStart();
-      return syncScheduleApi.trigger(schedule.job_type);
-    },
+    mutationFn: () => syncScheduleApi.trigger(schedule.job_type),
     onSuccess: () => {
       setTriggerStarted(true);
       setTimeout(() => setTriggerStarted(false), 2000);
@@ -91,9 +86,6 @@ export function SyncScheduleForm({ schedule, hasRunningJobs, onTriggerStart, onT
       } else {
         setErrorMessage("An error occurred");
       }
-    },
-    onSettled: () => {
-      onTriggerEnd();
     },
   });
 
@@ -136,7 +128,7 @@ export function SyncScheduleForm({ schedule, hasRunningJobs, onTriggerStart, onT
     <div className={`border rounded-xl p-4 bg-white/40 flex flex-col items-center transition-colors duration-200 ${isDirty ? "border-mt-accent/60" : "border-[#c9b89a]/30"}`}>
       <div className="flex items-center gap-2 mb-3">
         <h3 className="text-[#2a2520] font-medium text-sm">{JOB_LABELS[schedule.job_type]}</h3>
-        {(schedule.is_running || triggerMutation.isPending) && (
+        {schedule.is_running && (
           <span role="status" aria-live="polite">
             <RefreshCw size={14} aria-hidden="true" className="text-amber-600 animate-spin" />
             <span className="sr-only">Synchronization in progress</span>
@@ -228,7 +220,7 @@ export function SyncScheduleForm({ schedule, hasRunningJobs, onTriggerStart, onT
           {runButtonLabel}
         </button>
         <div
-          className={`grid transition-[grid-template-rows,opacity] duration-200 ${hasRunningJobs && !schedule.is_running && !triggerMutation.isPending ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+          className={`grid transition-[grid-template-rows,opacity] duration-200 ${hasRunningJobs && !schedule.is_running ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
         >
           <div className="overflow-hidden">
             <p className="text-[#2a2520]/70 text-xs">Another sync is running</p>

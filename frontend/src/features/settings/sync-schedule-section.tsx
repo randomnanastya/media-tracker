@@ -1,14 +1,8 @@
-import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { syncScheduleApi } from "../../api/sync-schedule";
 import { SyncScheduleForm } from "./sync-schedule-form";
 
 export function SyncScheduleSection() {
-  const [pendingTriggerCount, setPendingTriggerCount] = useState(0);
-
-  const handleTriggerStart = useCallback(() => setPendingTriggerCount((n) => n + 1), []);
-  const handleTriggerEnd = useCallback(() => setPendingTriggerCount((n) => n - 1), []);
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ["sync-schedules"],
     queryFn: syncScheduleApi.list,
@@ -16,7 +10,7 @@ export function SyncScheduleSection() {
       query.state.data?.schedules.some((s) => s.is_running) ? 3000 : false,
   });
 
-  const hasRunningJobs = (data?.schedules.some((s) => s.is_running) ?? false) || pendingTriggerCount > 0;
+  const hasRunningJobs = data?.schedules.some((s) => s.is_running) ?? false;
 
   if (isLoading) return <p className="text-sm text-gray-500">Loading schedules...</p>;
   if (isError || !data) return <p role="alert" className="text-sm text-red-500">Failed to load schedules.</p>;
@@ -24,13 +18,7 @@ export function SyncScheduleSection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
       {data.schedules.map((schedule) => (
-        <SyncScheduleForm
-          key={schedule.job_type}
-          schedule={schedule}
-          hasRunningJobs={hasRunningJobs}
-          onTriggerStart={handleTriggerStart}
-          onTriggerEnd={handleTriggerEnd}
-        />
+        <SyncScheduleForm key={schedule.job_type} schedule={schedule} hasRunningJobs={hasRunningJobs} />
       ))}
     </div>
   );
