@@ -29,7 +29,7 @@ export function DashboardPage() {
         {STAT_CARDS.map(({ icon: Icon, label }) => (
           <div
             key={label}
-            className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5 flex items-start gap-4 transition-shadow duration-200 ease-out hover:shadow-md hover:shadow-[rgba(150,85,29,0.08)]"
+            className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5 flex items-start gap-4"
           >
             <div className="w-10 h-10 rounded-lg bg-[#ffb826]/15 flex items-center justify-center shrink-0">
               <Icon size={20} className="text-[#ffb826]" />
@@ -43,7 +43,7 @@ export function DashboardPage() {
       </div>
 
       {/* Chart Placeholder */}
-      <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-6 mb-6 transition-shadow duration-200 ease-out hover:shadow-md hover:shadow-[rgba(150,85,29,0.08)]">
+      <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-[#2a2520] text-sm font-medium">Watch Activity</p>
@@ -72,7 +72,7 @@ export function DashboardPage() {
       {/* Bottom Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Recent Activity */}
-        <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5 transition-shadow duration-200 ease-out hover:shadow-md hover:shadow-[rgba(150,85,29,0.08)]">
+        <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5">
           <p className="text-[#2a2520] text-sm font-medium mb-4">Recent Activity</p>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
@@ -88,7 +88,7 @@ export function DashboardPage() {
         </div>
 
         {/* Top Watched */}
-        <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5 transition-shadow duration-200 ease-out hover:shadow-md hover:shadow-[rgba(150,85,29,0.08)]">
+        <div className="bg-white/40 border border-[#c9b89a]/30 rounded-xl p-5">
           <p className="text-[#2a2520] text-sm font-medium mb-4">Top Watched</p>
           <div className="space-y-3">
             {TOP_WATCHED_WIDTHS.map((width, i) => (
