@@ -130,7 +130,7 @@ async def test_import_jellyfin_series_updates_existing_by_tmdb(
     ).scalar_one()
 
     assert updated.jellyfin_id == "jf-series-1"
-    assert updated.media.title == "New Title"
+    assert updated.media.title == "Old Title"  # jellyfin must not overwrite title
     assert updated.status == SeriesStatus.ENDED
     assert updated.year == 2021
 

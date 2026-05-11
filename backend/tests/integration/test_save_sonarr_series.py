@@ -164,7 +164,7 @@ async def test_import_sonarr_series_updates_by_external_ids(
     ).scalar_one()
 
     assert updated.sonarr_id == 2
-    assert updated.media.title == "Existing Updated"
+    assert updated.media.title == "Existing"  # sonarr must not overwrite title
 
 
 async def test_import_sonarr_series_updates_existing_episode(
