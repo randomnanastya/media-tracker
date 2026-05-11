@@ -51,12 +51,12 @@ def upgrade() -> None:
 
     # --- Convert series.status String -> Enum(SeriesStatus) ---
     seriesstatus = postgresql.ENUM(
-        "continuing",
-        "in_production",
-        "planned",
-        "ended",
-        "canceled",
-        "deleted",
+        "CONTINUING",
+        "IN_PRODUCTION",
+        "PLANNED",
+        "ENDED",
+        "CANCELED",
+        "DELETED",
         name="seriesstatus",
     )
     seriesstatus.create(op.get_bind(), checkfirst=True)
@@ -65,12 +65,12 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE series SET status = CASE
-            WHEN status IN ('continuing', 'Continuing') THEN 'continuing'
-            WHEN status IN ('upcoming', 'Unreleased') THEN 'in_production'
-            WHEN status IN ('ended', 'Ended') THEN 'ended'
-            WHEN status = 'deleted' THEN 'deleted'
-            WHEN status IN ('canceled', 'Canceled') THEN 'canceled'
-            WHEN status = 'planned' THEN 'planned'
+            WHEN status IN ('continuing', 'Continuing') THEN 'CONTINUING'
+            WHEN status IN ('upcoming', 'Unreleased') THEN 'IN_PRODUCTION'
+            WHEN status IN ('ended', 'Ended') THEN 'ENDED'
+            WHEN status = 'deleted' THEN 'DELETED'
+            WHEN status IN ('canceled', 'Canceled') THEN 'CANCELED'
+            WHEN status = 'planned' THEN 'PLANNED'
             ELSE NULL
         END
     """
@@ -81,12 +81,12 @@ def upgrade() -> None:
         "status",
         existing_type=sa.String(),
         type_=postgresql.ENUM(
-            "continuing",
-            "in_production",
-            "planned",
-            "ended",
-            "canceled",
-            "deleted",
+            "CONTINUING",
+            "IN_PRODUCTION",
+            "PLANNED",
+            "ENDED",
+            "CANCELED",
+            "DELETED",
             name="seriesstatus",
             create_type=False,
         ),
@@ -102,9 +102,9 @@ def upgrade() -> None:
             IF EXISTS (
                 SELECT 1 FROM pg_enum
                 WHERE enumtypid = 'syncjobtype'::regtype
-                  AND enumlabel = 'tmdb_movies_metadata_update'
+                  AND enumlabel = 'TMDB_MOVIES_METADATA_UPDATE'
             ) THEN
-                ALTER TYPE syncjobtype RENAME VALUE 'tmdb_movies_metadata_update' TO 'tmdb_metadata_update';
+                ALTER TYPE syncjobtype RENAME VALUE 'TMDB_MOVIES_METADATA_UPDATE' TO 'TMDB_METADATA_UPDATE';
             END IF;
         END$$;
     """
@@ -121,9 +121,9 @@ def downgrade() -> None:
             IF EXISTS (
                 SELECT 1 FROM pg_enum
                 WHERE enumtypid = 'syncjobtype'::regtype
-                  AND enumlabel = 'tmdb_metadata_update'
+                  AND enumlabel = 'TMDB_METADATA_UPDATE'
             ) THEN
-                ALTER TYPE syncjobtype RENAME VALUE 'tmdb_metadata_update' TO 'tmdb_movies_metadata_update';
+                ALTER TYPE syncjobtype RENAME VALUE 'TMDB_METADATA_UPDATE' TO 'TMDB_MOVIES_METADATA_UPDATE';
             END IF;
         END$$;
     """
@@ -134,12 +134,12 @@ def downgrade() -> None:
         "series",
         "status",
         existing_type=postgresql.ENUM(
-            "continuing",
-            "in_production",
-            "planned",
-            "ended",
-            "canceled",
-            "deleted",
+            "CONTINUING",
+            "IN_PRODUCTION",
+            "PLANNED",
+            "ENDED",
+            "CANCELED",
+            "DELETED",
             name="seriesstatus",
             create_type=False,
         ),
