@@ -321,7 +321,7 @@ async def test_import_sonarr_series_finds_by_tvdb_id_when_no_sonarr_id(
     assert existing_series.imdb_id == "tt5232792"
     assert existing_series.tvdb_id == "123456"
     assert existing_series.sonarr_id == 999
-    assert media.title == "Lost in Space"
+    assert media.title == "Old Title"  # title preserved; Sonarr must not overwrite
 
 
 @pytest.mark.asyncio
