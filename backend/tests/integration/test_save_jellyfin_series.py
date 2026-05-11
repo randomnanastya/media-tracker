@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Episode, Media, MediaType, Season, Series
+from app.models import Episode, Media, MediaType, Season, Series, SeriesStatus
 from tests.factories import (
     EpisodeFactory,
     JellyfinEpisodeDictFactory,
@@ -72,7 +72,7 @@ async def test_import_jellyfin_series_creates_new_series_with_episodes(
     assert series.tmdb_id == "100"
     assert series.tvdb_id == "200"
     assert series.imdb_id == "tt0000100"
-    assert series.status == "Continuing"
+    assert series.status == SeriesStatus.CONTINUING
     assert series.year == 2020
     assert series.media.title == "Test Series"
 
@@ -131,7 +131,7 @@ async def test_import_jellyfin_series_updates_existing_by_tmdb(
 
     assert updated.jellyfin_id == "jf-series-1"
     assert updated.media.title == "New Title"
-    assert updated.status == "Ended"
+    assert updated.status == SeriesStatus.ENDED
     assert updated.year == 2021
 
 

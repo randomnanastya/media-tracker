@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.exceptions.client_errors import ClientError
-from app.models import Episode, Media, MediaType, Season, Series
+from app.models import Episode, Media, MediaType, Season, Series, SeriesStatus
 from app.schemas.error_codes import SonarrErrorCode
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series
@@ -620,7 +620,7 @@ async def test_import_sonarr_series_no_changes_when_all_match(
         genres=["Crime", "Drama"],
         rating_value=9.5,
         rating_votes=2_000_000,
-        status="ended",
+        status=SeriesStatus.ENDED,
     )
     existing_series.media = media
 

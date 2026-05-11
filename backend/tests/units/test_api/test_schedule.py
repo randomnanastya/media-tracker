@@ -149,7 +149,7 @@ async def test_list_schedules_is_enabled_false_when_service_not_configured(
 
     data = response.json()
     schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
-    service_jobs = [jt for jt in schedules_by_type if jt != "tmdb_movies_metadata_update"]
+    service_jobs = [jt for jt in schedules_by_type if jt != "tmdb_metadata_update"]
     for job_type in service_jobs:
         assert schedules_by_type[job_type]["is_enabled"] is False
 
@@ -158,7 +158,7 @@ async def test_list_schedules_is_enabled_false_when_service_not_configured(
 async def test_list_schedules_tmdb_job_always_enabled(
     async_client, mock_session, override_scheduler_dependency
 ) -> None:
-    """tmdb_movies_metadata_update requires no external service → is_enabled=True even with no configs."""
+    """tmdb_metadata_update requires no external service → is_enabled=True even with no configs."""
     with (
         patch(
             "app.api.schedule.schedule_repo.get_all_schedules",
@@ -175,7 +175,7 @@ async def test_list_schedules_tmdb_job_always_enabled(
 
     data = response.json()
     schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
-    assert schedules_by_type["tmdb_movies_metadata_update"]["is_enabled"] is True
+    assert schedules_by_type["tmdb_metadata_update"]["is_enabled"] is True
 
 
 @pytest.mark.asyncio

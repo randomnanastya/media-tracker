@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Episode, Media, MediaType, Season, Series
+from app.models import Episode, Media, MediaType, Season, Series, SeriesStatus
 from tests.factories import SeriesDictFactory, SonarrEpisodeDictFactory
 
 
@@ -102,7 +102,7 @@ async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
     session_for_test.add(media)
     await session_for_test.flush()
 
-    series = Series(id=media.id, sonarr_id=1, status="ended")
+    series = Series(id=media.id, sonarr_id=1, status=SeriesStatus.ENDED)
     session_for_test.add(series)
     await session_for_test.commit()
 
@@ -127,7 +127,7 @@ async def test_import_sonarr_series_updates_existing_series_by_sonarr_id(
     ).scalar_one()
 
     assert updated.media.title == "New Title"
-    assert updated.status == "continuing"
+    assert updated.status == SeriesStatus.CONTINUING
 
 
 async def test_import_sonarr_series_updates_by_external_ids(

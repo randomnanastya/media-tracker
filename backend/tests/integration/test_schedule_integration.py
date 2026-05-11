@@ -100,7 +100,7 @@ async def test_list_schedules_service_jobs_disabled_when_no_service_configs(clie
 
     data = response.json()
     schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
-    service_jobs = [jt for jt in schedules_by_type if jt != "tmdb_movies_metadata_update"]
+    service_jobs = [jt for jt in schedules_by_type if jt != "tmdb_metadata_update"]
     for job_type in service_jobs:
         assert schedules_by_type[job_type]["is_enabled"] is False
 
@@ -108,7 +108,7 @@ async def test_list_schedules_service_jobs_disabled_when_no_service_configs(clie
 async def test_list_schedules_tmdb_job_always_enabled_without_service_configs(
     client_with_db,
 ) -> None:
-    """tmdb_movies_metadata_update requires no external service → is_enabled=True even with no configs."""
+    """tmdb_metadata_update requires no external service → is_enabled=True even with no configs."""
     from app.dependencies.scheduler import get_scheduler
     from app.main import app
 
@@ -122,7 +122,7 @@ async def test_list_schedules_tmdb_job_always_enabled_without_service_configs(
 
     data = response.json()
     schedules_by_type = {s["job_type"]: s for s in data["schedules"]}
-    assert schedules_by_type["tmdb_movies_metadata_update"]["is_enabled"] is True
+    assert schedules_by_type["tmdb_metadata_update"]["is_enabled"] is True
 
 
 # ---------------------------------------------------------------------------
