@@ -5,7 +5,56 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import logger
-from app.models import Media, MediaType, Series
+from app.models import Media, MediaType, Series, SeriesStatus
+
+_TMDB_SERIES_STATUS_MAP: dict[str, SeriesStatus] = {
+    "Returning Series": SeriesStatus.CONTINUING,
+    "In Production": SeriesStatus.IN_PRODUCTION,
+    "Planned": SeriesStatus.PLANNED,
+    "Pilot": SeriesStatus.PLANNED,
+    "Ended": SeriesStatus.ENDED,
+    "Canceled": SeriesStatus.CANCELED,
+}
+
+_SONARR_SERIES_STATUS_MAP: dict[str, SeriesStatus] = {
+    "continuing": SeriesStatus.CONTINUING,
+    "upcoming": SeriesStatus.IN_PRODUCTION,
+    "ended": SeriesStatus.ENDED,
+    "deleted": SeriesStatus.DELETED,
+}
+
+_JELLYFIN_SERIES_STATUS_MAP: dict[str, SeriesStatus] = {
+    "Continuing": SeriesStatus.CONTINUING,
+    "Unreleased": SeriesStatus.IN_PRODUCTION,
+    "Ended": SeriesStatus.ENDED,
+}
+
+
+def map_tmdb_series_status(raw: str | None) -> SeriesStatus | None:
+    if raw is None:
+        return None
+    result = _TMDB_SERIES_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown TMDB series status: %s", raw)
+    return result
+
+
+def map_sonarr_series_status(raw: str | None) -> SeriesStatus | None:
+    if raw is None:
+        return None
+    result = _SONARR_SERIES_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown Sonarr series status: %s", raw)
+    return result
+
+
+def map_jellyfin_series_status(raw: str | None) -> SeriesStatus | None:
+    if raw is None:
+        return None
+    result = _JELLYFIN_SERIES_STATUS_MAP.get(raw)
+    if result is None:
+        logger.warning("Unknown Jellyfin series status: %s", raw)
+    return result
 
 
 async def find_series_by_external_ids(
@@ -43,7 +92,7 @@ async def create_new_series(
     imdb_id: str | None = None,
     tmdb_id: str | None = None,
     release_date: datetime | None = None,
-    status: str | None = None,
+    status: SeriesStatus | None = None,
     year: int | None = None,
     poster_url: str | None = None,
     genres: list[str] | None = None,
@@ -134,7 +183,7 @@ def update_existing_series(
     genres: list[str] | None = None,
     rating_value: float | None = None,
     rating_votes: int | None = None,
-    status: str | None = None,
+    status: SeriesStatus | None = None,
     source: str | None = None,
 ) -> bool:
     """

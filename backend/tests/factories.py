@@ -16,6 +16,7 @@ from app.models import (
     SchedulePreset,
     Season,
     Series,
+    SeriesStatus,
     SyncJobType,
     SyncSchedule,
     User,
@@ -86,7 +87,7 @@ class SeriesFactory(factory.Factory):
     tmdb_id = Sequence(lambda n: str(12345 + n))
     imdb_id = Sequence(lambda n: f"tt{1000000 + n}")
     jellyfin_id = LazyFunction(lambda: str(uuid.uuid4()))
-    status = "continuing"
+    status = SeriesStatus.CONTINUING
     poster_url = "https://artworks.thetvdb.com/banners/v4/series/415089/posters/63e7c53b4c2a8.jpg"
     year = LazyAttribute(lambda _: fake.random_int(min=1930, max=2030))
     genres = LazyFunction(
@@ -129,7 +130,7 @@ class SeriesFactory(factory.Factory):
         no_ids = factory.Trait(
             jellyfin_id=None, tvdb_id=None, imdb_id=None, tmdb_id=None, sonarr_id=None
         )
-        ended = factory.Trait(status="ended")
+        ended = factory.Trait(status=SeriesStatus.ENDED)
 
 
 class SeasonFactory(factory.Factory):
