@@ -204,7 +204,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             if existing_series:
                 if update_existing_series(
                     series=existing_series,
-                    title=None if existing_series.sonarr_id else title,
+                    title=title,
                     jellyfin_id=jellyfin_id,
                     tvdb_id=tvdb_id,
                     imdb_id=imdb_id,
