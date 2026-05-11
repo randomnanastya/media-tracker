@@ -46,17 +46,28 @@ async def update_series_tmdb_metadata(session: AsyncSession) -> TmdbMetadataUpda
     semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)
     counters = _Counters()
 
+    # Phase 1: fetch from TMDB concurrently
     async with httpx.AsyncClient() as http_client:
-        results = await asyncio.gather(
-            *[
-                _process_one_series(s, semaphore, counters, http_client, session)
-                for s in series_list
-            ],
+        fetch_results = await asyncio.gather(
+            *[_fetch_one_series(s, semaphore, counters, http_client) for s in series_list],
             return_exceptions=True,
         )
-    for result in results:
+
+    # Phase 2: apply DB writes sequentially (session is not concurrency-safe)
+    for result in fetch_results:
         if isinstance(result, BaseException):
             logger.error("Unexpected error processing series: %s", result)
+            counters.failed += 1
+            continue
+        if result is None:
+            continue
+        series, payload = result
+        try:
+            changed = await _apply_tmdb_series_update(series, payload, session)
+            if changed:
+                counters.updated += 1
+        except Exception as e:
+            logger.error("Unexpected error processing series: %s", e)
             counters.failed += 1
 
     try:
@@ -81,14 +92,13 @@ async def update_series_tmdb_metadata(session: AsyncSession) -> TmdbMetadataUpda
     )
 
 
-async def _process_one_series(
+async def _fetch_one_series(
     series: Series,
     semaphore: asyncio.Semaphore,
     counters: _Counters,
     client: httpx.AsyncClient,
-    session: AsyncSession,
-) -> None:
-    """Fetch + validate + apply for one series."""
+) -> tuple[Series, TmdbBridgeSeriesResponse] | None:
+    """Fetch + validate TMDB data for one series. Returns (series, payload) or None."""
     async with semaphore:
         tmdb_id = series.tmdb_id
         assert tmdb_id is not None  # guaranteed by WHERE tmdb_id IS NOT NULL
@@ -99,22 +109,20 @@ async def _process_one_series(
         except TmdbBridgeClientError as e:
             logger.error("Skip tmdb_id=%s due to Bridge error: %s", tmdb_id, e.message)
             counters.failed += 1
-            return
+            return None
 
         if raw is None:
             counters.skipped += 1
-            return
+            return None
 
         try:
             payload = TmdbBridgeSeriesResponse.model_validate(raw)
         except ValidationError as e:
             logger.error("Bridge payload validation failed for series tmdb_id=%s: %s", tmdb_id, e)
             counters.failed += 1
-            return
+            return None
 
-        changed = await _apply_tmdb_series_update(series, payload, session)
-        if changed:
-            counters.updated += 1
+        return series, payload
 
 
 async def _apply_tmdb_series_update(
