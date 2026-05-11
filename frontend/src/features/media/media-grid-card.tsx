@@ -10,7 +10,7 @@ interface Props {
 
 export function MediaGridCard({ item }: Props) {
   return (
-    <div className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden">
+    <div className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden group cursor-pointer transition-shadow duration-200 ease-out hover:shadow-lg hover:shadow-[rgba(150,85,29,0.10)]">
       <div className="relative">
         <MediaPoster
           src={item.poster_url}
