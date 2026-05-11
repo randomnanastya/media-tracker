@@ -15,7 +15,7 @@ from app.services.service_config_repository import get_config_by_service
 from app.services.sonarr_service import import_sonarr_series
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
 from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
-from app.services.update_tmdb_metadata_service import update_movies_tmdb_metadata
+from app.services.update_tmdb_metadata_service import update_tmdb_metadata
 
 _JOB_FUNC_TO_TYPE: dict[str, SyncJobType] = {}
 
@@ -96,14 +96,14 @@ async def _run_jellyfin_sync_series_watch_history() -> None:
 
 
 @log_job_execution
-async def _run_tmdb_movies_metadata_update() -> None:
+async def _run_tmdb_metadata_update() -> None:
     async with AsyncSessionLocal() as session:
-        await update_movies_tmdb_metadata(session)
+        await update_tmdb_metadata(session)
 
 
-async def tmdb_movies_metadata_update_job() -> None:
+async def tmdb_metadata_update_job() -> None:
     """No service config check — Bridge is public, always runs."""
-    await _run_tmdb_movies_metadata_update()
+    await _run_tmdb_metadata_update()
 
 
 _JOB_FUNC_TO_TYPE.update(
@@ -115,7 +115,7 @@ _JOB_FUNC_TO_TYPE.update(
         _run_sonarr_import.__name__: SyncJobType.SONARR_IMPORT,
         _run_jellyfin_import_series.__name__: SyncJobType.JELLYFIN_SERIES_IMPORT,
         _run_jellyfin_sync_series_watch_history.__name__: SyncJobType.JELLYFIN_SERIES_WATCH_HISTORY,
-        _run_tmdb_movies_metadata_update.__name__: SyncJobType.TMDB_MOVIES_METADATA_UPDATE,
+        _run_tmdb_metadata_update.__name__: SyncJobType.TMDB_METADATA_UPDATE,
     }
 )
 

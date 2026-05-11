@@ -13,6 +13,7 @@ from app.schemas.sonarr import SonarrImportResponse
 from app.services.series_utils import (
     create_new_series,
     find_series_by_external_ids,
+    map_sonarr_series_status,
     update_existing_series,
 )
 from app.services.service_config_repository import get_decrypted_config
@@ -204,7 +205,7 @@ async def import_sonarr_series(session: AsyncSession) -> SonarrImportResponse:
             genres = raw.get("genres")
             rating_value = raw.get("ratings", {}).get("value")
             rating_votes = raw.get("ratings", {}).get("votes")
-            status = raw.get("status")
+            status = map_sonarr_series_status(raw.get("status"))
 
             existing_series = None
 

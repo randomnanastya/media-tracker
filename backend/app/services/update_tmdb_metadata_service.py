@@ -12,6 +12,7 @@ from app.config import logger
 from app.models import Movie
 from app.schemas.tmdb_bridge import TmdbBridgeMovieResponse, TmdbMetadataUpdateResponse
 from app.services.movie_utils import map_tmdb_status
+from app.services.update_tmdb_series_metadata_service import update_series_tmdb_metadata
 
 CONCURRENCY_LIMIT = 10
 
@@ -149,3 +150,14 @@ def _apply_tmdb_update(movie: Movie, payload: TmdbBridgeMovieResponse) -> bool:
     movie.tmdb_metadata_fetched_at = datetime.now(UTC)
 
     return changed
+
+
+async def update_tmdb_metadata(session: AsyncSession) -> TmdbMetadataUpdateResponse:
+    movies_result = await update_movies_tmdb_metadata(session)
+    series_result = await update_series_tmdb_metadata(session)
+    return TmdbMetadataUpdateResponse(
+        processed_count=movies_result.processed_count + series_result.processed_count,
+        updated_count=movies_result.updated_count + series_result.updated_count,
+        skipped_count=movies_result.skipped_count + series_result.skipped_count,
+        failed_count=movies_result.failed_count + series_result.failed_count,
+    )

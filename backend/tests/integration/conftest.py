@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.database import get_session
@@ -31,6 +32,15 @@ async def engine_for_test():
     engine = create_async_engine(TEST_DATABASE_URL, echo=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+        # Drop custom PostgreSQL enum types that survive drop_all
+        for stmt in [
+            "DROP TYPE IF EXISTS seriesstatus CASCADE",
+            "DROP TYPE IF EXISTS moviestatus CASCADE",
+            "DROP TYPE IF EXISTS syncjobtype CASCADE",
+            "DROP TYPE IF EXISTS mediatype CASCADE",
+            "DROP TYPE IF EXISTS watchstatus CASCADE",
+        ]:
+            await conn.execute(text(stmt))
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine

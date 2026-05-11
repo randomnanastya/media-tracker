@@ -49,6 +49,15 @@ class MovieStatus(enum.Enum):
     CANCELED = "canceled"
 
 
+class SeriesStatus(enum.Enum):
+    CONTINUING = "continuing"
+    IN_PRODUCTION = "in_production"
+    PLANNED = "planned"
+    ENDED = "ended"
+    CANCELED = "canceled"
+    DELETED = "deleted"
+
+
 class Media(Base):
     __tablename__ = "media"
 
@@ -76,12 +85,22 @@ class Series(Base):
     tmdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     imdb_id: Mapped[str | None] = mapped_column(String, nullable=True, unique=True)
     jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    status: Mapped[str | None] = mapped_column(String, nullable=True)
+    status: Mapped[SeriesStatus | None] = mapped_column(Enum(SeriesStatus), nullable=True)
     poster_url: Mapped[str | None] = mapped_column(String)
     year: Mapped[int | None] = mapped_column(Integer)
     genres: Mapped[list[str] | None] = mapped_column(JSON)
     rating_value: Mapped[float | None] = mapped_column(Float)
     rating_votes: Mapped[int | None] = mapped_column(Integer)
+    original_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    overview: Mapped[str | None] = mapped_column(String, nullable=True)
+    backdrop_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    first_air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tmdb_metadata_fetched_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    number_of_seasons: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    number_of_episodes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     media: Mapped["Media"] = relationship("Media", back_populates="series")
     seasons: Mapped[list["Season"]] = relationship("Season", back_populates="series")
@@ -119,6 +138,10 @@ class Season(Base):
     jellyfin_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     release_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tmdb_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    overview: Mapped[str | None] = mapped_column(String, nullable=True)
+    poster_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    vote_average: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     series: Mapped["Series"] = relationship("Series", back_populates="seasons")
     episodes: Mapped[list["Episode"]] = relationship("Episode", back_populates="season")
@@ -135,6 +158,10 @@ class Episode(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     air_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     overview: Mapped[str | None] = mapped_column(String)
+    tmdb_id: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    episode_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    still_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    vote_average: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     season: Mapped["Season"] = relationship("Season", back_populates="episodes")
 
@@ -236,7 +263,7 @@ class SyncJobType(enum.Enum):
     SONARR_IMPORT = "sonarr_import"
     JELLYFIN_SERIES_IMPORT = "jellyfin_import_series"
     JELLYFIN_SERIES_WATCH_HISTORY = "jellyfin_series_watch_history"
-    TMDB_MOVIES_METADATA_UPDATE = "tmdb_movies_metadata_update"
+    TMDB_METADATA_UPDATE = "tmdb_metadata_update"
 
 
 class SyncSchedule(Base):

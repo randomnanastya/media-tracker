@@ -16,6 +16,7 @@ from app.schemas.jellyfin import JellyfinImportSeriesResponse
 from app.services.series_utils import (
     create_new_series,
     find_series_by_external_ids,
+    map_jellyfin_series_status,
     update_existing_series,
 )
 from app.services.service_config_repository import get_decrypted_config
@@ -187,7 +188,7 @@ async def import_jellyfin_series(session: AsyncSession) -> JellyfinImportSeriesR
             imdb_id = provider_ids.get("Imdb")
             tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
             release_date = parse_iso_datetime(raw.get("PremiereDate"))
-            status = raw.get("Status")
+            status = map_jellyfin_series_status(raw.get("Status"))
             year = raw.get("ProductionYear")
 
             # 1. Search by jellyfin_id
