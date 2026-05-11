@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router";
+import logoMark from "../../assets/logo-mark.svg";
 import {
   ChevronDown,
   ChevronLeft,
@@ -73,15 +74,21 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-56"
       }`}
     >
-      <div className="h-14 flex items-center justify-center px-4 overflow-hidden">
+      <NavLink
+        to="/"
+        className="h-14 flex items-center px-4 overflow-hidden border-b border-white/5 shrink-0"
+      >
         {collapsed ? (
-          <span className="text-mt-accent font-bold text-base tracking-tight">MT</span>
+          <img src={logoMark} alt="Media Tracker" className="w-8 h-8 mx-auto" />
         ) : (
-          <span className="text-mt-accent font-semibold text-lg whitespace-nowrap">
-            Media Tracker
-          </span>
+          <div className="flex items-center gap-2">
+            <img src={logoMark} alt="" className="w-7 h-7 shrink-0" />
+            <span className="text-mt-light font-semibold text-base whitespace-nowrap tracking-tight lowercase">
+              mediatracker
+            </span>
+          </div>
         )}
-      </div>
+      </NavLink>
 
       <nav className="flex-1 flex flex-col gap-1 px-2 py-2">
         {sidebarItems.map((item) => {
