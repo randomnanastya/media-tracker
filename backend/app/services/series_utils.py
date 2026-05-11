@@ -191,7 +191,7 @@ def update_existing_series(
 
     Args:
         series: The Series instance to update
-        title: Series title
+        title: Series title — set only if currently empty (TMDB is authoritative for overwrites)
         sonarr_id: Sonarr ID to set if not already set
         jellyfin_id: Jellyfin ID to set if not already set
         tvdb_id: TVDB ID to set if not already set
@@ -232,8 +232,8 @@ def update_existing_series(
         series.tmdb_id = tmdb_id
         was_updated = True
 
-    # Update title only if different
-    if title and series.media.title != title:
+    # Update title only if not already set (TMDB is authoritative for overwrites)
+    if title and not series.media.title:
         series.media.title = title
         was_updated = True
 
