@@ -6,7 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, WatchStatus
-from app.schemas.media import MediaDetailResponse, MediaItem, MediaListResponse
+from app.schemas.media import MediaDetailResponse, MediaItem, MediaListResponse, SeasonDetail
 
 STATUS_PRIORITY = {
     WatchStatus.WATCHED: 4,
@@ -236,6 +236,40 @@ async def get_media_detail_by_id(
         watch_status = compute_series_status(watched, watching, dropped, total)
         tvdb_id = row["tvdb_id"]
 
+    seasons: list[SeasonDetail] = []
+    if media_type_val == "SERIES":
+        seasons_query = text(
+            """
+            SELECT
+                sea.number,
+                sea.poster_url,
+                sea.vote_average,
+                sea.release_date,
+                COUNT(e.id) AS total_episodes,
+                COUNT(*) FILTER (WHERE wh.status = 'WATCHED') AS watched_episodes
+            FROM seasons sea
+            LEFT JOIN episodes e ON e.season_id = sea.id
+            LEFT JOIN watch_history wh ON wh.episode_id = e.id
+            WHERE sea.series_id = :media_id
+            GROUP BY sea.id, sea.number, sea.poster_url, sea.vote_average, sea.release_date
+            ORDER BY sea.number
+            """
+        )
+        season_rows = (
+            (await session.execute(seasons_query, {"media_id": media_id})).mappings().all()
+        )
+        seasons = [
+            SeasonDetail(
+                number=s["number"],
+                poster_url=s["poster_url"],
+                vote_average=s["vote_average"],
+                release_date=s["release_date"],
+                total_episodes=s["total_episodes"] or 0,
+                watched_episodes=s["watched_episodes"] or 0,
+            )
+            for s in season_rows
+        ]
+
     media_type_typed = cast(Literal["movie", "series"], media_type_lower)
     watch_status_typed = cast(
         Literal["watched", "watching", "planned", "dropped"] | None, watch_status
@@ -255,4 +289,5 @@ async def get_media_detail_by_id(
         tmdb_id=row["tmdb_id"],
         imdb_id=row["imdb_id"],
         tvdb_id=tvdb_id,
+        seasons=seasons,
     )
