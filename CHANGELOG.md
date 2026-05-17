@@ -1,3 +1,9 @@
+## [1.8.0](https://github.com/randomnanastya/media-tracker/compare/v1.7.0...v1.8.0) (2026-05-17)
+
+### Features
+
+* **api:** add season details to media detail endpoint ([6688362](https://github.com/randomnanastya/media-tracker/commit/6688362180204e9858575e8d82809d3bd7cee64f))
+
 ## [1.7.0](https://github.com/randomnanastya/media-tracker/compare/v1.6.1...v1.7.0) (2026-05-17)
 
 ### Features
