@@ -222,7 +222,7 @@ class TestToPercent:
         assert _to_percent(10.0) == 100
 
     def test_rounds_correctly(self) -> None:
-        assert _to_percent(7.55) == round(7.55 * 10)
+        assert _to_percent(7.56) == 76
 
     def test_typical_value(self) -> None:
         assert _to_percent(7.5) == 75

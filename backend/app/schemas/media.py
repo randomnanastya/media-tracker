@@ -6,12 +6,12 @@ from pydantic import BaseModel
 class MediaItem(BaseModel):
     id: int
     title: str
-    media_type: str  # "movie" | "series"
+    media_type: Literal["movie", "series"]
     year: int | None = None
     genres: list[str] = []
     poster_url: str | None = None
     rating: float | None = None
-    watch_status: str | None = None  # "planned" | "watching" | "watched" | "dropped"
+    watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
     total_episodes: int | None = None
     watched_episodes: int | None = None
 
