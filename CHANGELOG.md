@@ -1,3 +1,10 @@
+## [1.9.0](https://github.com/randomnanastya/media-tracker/compare/v1.8.0...v1.9.0) (2026-05-17)
+
+### Features
+
+* **ui:** add seasons section to series detail page ([e2ddfcf](https://github.com/randomnanastya/media-tracker/commit/e2ddfcfdce5ef7d0cb2f5cc6de60372e00ceca35))
+* **ui:** redesign media detail page layout and add dynamic breadcrumb ([9d94aae](https://github.com/randomnanastya/media-tracker/commit/9d94aae3b45956afb031ed45b7593a28742f76e3))
+
 ## [1.8.0](https://github.com/randomnanastya/media-tracker/compare/v1.7.0...v1.8.0) (2026-05-17)
 
 ### Features
