@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { MediaListResponse } from "../types/media";
+import type { MediaDetailResponse, MediaListResponse } from "../types/media";
 
 interface MediaListParams {
   type?: string;
@@ -12,4 +12,6 @@ export const mediaApi = {
     apiClient
       .get("api/v1/media", { searchParams: (params as Record<string, string | number>) ?? {} })
       .json<MediaListResponse>(),
+  detail: (id: number): Promise<MediaDetailResponse> =>
+    apiClient.get(`api/v1/media/${id}`).json<MediaDetailResponse>(),
 };
