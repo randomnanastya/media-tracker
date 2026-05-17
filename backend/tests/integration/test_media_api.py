@@ -1,5 +1,11 @@
-from app.models import WatchStatus
-from tests.factories import UserFactory, WatchHistoryFactory
+from app.models import MediaType, MovieStatus, SeriesStatus, WatchStatus
+from tests.factories import (
+    MediaFactory,
+    MovieFactory,
+    SeriesFactory,
+    UserFactory,
+    WatchHistoryFactory,
+)
 from tests.integration.conftest import (
     create_episode,
     create_movie,
@@ -141,3 +147,177 @@ async def test_get_media_series_all_episodes_watched(client_with_db, session_for
     item = data["items"][0]
     assert item["title"] == "Fully Watched Series"
     assert item["watch_status"] == "watched"
+
+
+async def test_get_media_detail_movie_basic(client_with_db, session_for_test):
+    movie = await create_movie(session_for_test, title="Basic Movie")
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == movie.id
+    assert data["title"] == "Basic Movie"
+    assert data["media_type"] == "movie"
+    assert data["tvdb_id"] is None
+
+
+async def test_get_media_detail_series_basic(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="Basic Series")
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["media_type"] == "series"
+    assert data["tvdb_id"] is not None
+
+
+async def test_get_media_detail_404(client_with_db, session_for_test):
+    resp = await client_with_db.get("/api/v1/media/999999")
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "Media not found"}
+
+
+async def test_get_media_detail_movie_watch_status(client_with_db, session_for_test):
+    user = UserFactory.build()
+    session_for_test.add(user)
+    await session_for_test.flush()
+
+    movie = await create_movie(session_for_test, title="Planned Movie")
+
+    wh = WatchHistoryFactory.build(
+        user_id=user.id, media_id=movie.id, episode_id=None, status=WatchStatus.PLANNED
+    )
+    session_for_test.add(wh)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    assert resp.json()["watch_status"] == "planned"
+
+
+async def test_get_media_detail_series_watch_status(client_with_db, session_for_test):
+    user = UserFactory.build()
+    session_for_test.add(user)
+    await session_for_test.flush()
+
+    series = await create_series(session_for_test, title="Watched Series")
+    season = await create_season(session_for_test, series_id=series.id)
+    episode1 = await create_episode(session_for_test, season_id=season.id, number=1, title="Ep 1")
+    episode2 = await create_episode(session_for_test, season_id=season.id, number=2, title="Ep 2")
+
+    wh1 = WatchHistoryFactory.build(
+        user_id=user.id, media_id=series.id, episode_id=episode1.id, status=WatchStatus.WATCHED
+    )
+    session_for_test.add(wh1)
+    wh2 = WatchHistoryFactory.build(
+        user_id=user.id, media_id=series.id, episode_id=episode2.id, status=WatchStatus.WATCHED
+    )
+    session_for_test.add(wh2)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    assert resp.json()["watch_status"] == "watched"
+
+
+async def test_get_media_detail_rating_percent_null(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.MOVIE, title="No Rating Movie")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    movie = MovieFactory.build(id=media.id, rating_value=None, media=media)
+    session_for_test.add(movie)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    assert resp.json()["tmdb_rating_percent"] is None
+
+
+async def test_get_media_detail_rating_percent_computed(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.MOVIE, title="Rated Movie")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    movie = MovieFactory.build(id=media.id, rating_value=7.5, media=media)
+    session_for_test.add(movie)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    assert resp.json()["tmdb_rating_percent"] == 75
+
+
+async def test_get_media_detail_status_lowercase(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.MOVIE, title="Released Movie")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    movie = MovieFactory.build(id=media.id, status=MovieStatus.RELEASED, media=media)
+    session_for_test.add(movie)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "released"
+
+
+async def test_get_media_detail_invalid_id(client_with_db, session_for_test):
+    resp = await client_with_db.get("/api/v1/media/abc")
+    assert resp.status_code == 422
+
+
+async def test_get_media_detail_series_status_lowercase(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.SERIES, title="Ended Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    series = SeriesFactory.build(id=media.id, status=SeriesStatus.ENDED, media=media)
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ended"
+
+
+async def test_get_media_detail_genres_returned_as_list(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.SERIES, title="Genre Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    series = SeriesFactory.build(id=media.id, genres=["Drama", "Thriller"], media=media)
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data["genres"], list)
+    assert set(data["genres"]) == {"Drama", "Thriller"}
+
+
+async def test_get_media_detail_no_watch_history_watch_status_is_none(
+    client_with_db, session_for_test
+):
+    movie = await create_movie(session_for_test, title="Unwatched Movie")
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    assert resp.json()["watch_status"] is None
+
+
+async def test_get_media_detail_series_tvdb_id_null(client_with_db, session_for_test):
+    media = MediaFactory(media_type=MediaType.SERIES, title="No TVDB Series")
+    session_for_test.add(media)
+    await session_for_test.flush()
+    series = SeriesFactory.build(id=media.id, tvdb_id=None, media=media)
+    session_for_test.add(series)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{media.id}")
+    assert resp.status_code == 200
+    assert resp.json()["tvdb_id"] is None
+
+
+async def test_get_media_detail_movie_tvdb_id_always_null(client_with_db, session_for_test):
+    movie = await create_movie(session_for_test, title="Movie No TVDB")
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    assert resp.json()["tvdb_id"] is None

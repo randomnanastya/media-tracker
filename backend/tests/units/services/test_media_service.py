@@ -3,7 +3,12 @@
 from unittest.mock import AsyncMock, Mock
 
 from app.schemas.media import MediaListResponse
-from app.services.media_service import get_media_list
+from app.services.media_service import (
+    _pick_movie_status,
+    _to_percent,
+    compute_series_status,
+    get_media_list,
+)
 
 
 def _make_session(rows: list[dict]) -> AsyncMock:
@@ -204,3 +209,88 @@ class TestFilterByStatus:
         session = _make_session([watched_row, planned_row])
         result = await get_media_list(session, status=None)
         assert result.total == 2
+
+
+class TestToPercent:
+    def test_none_returns_none(self) -> None:
+        assert _to_percent(None) is None
+
+    def test_zero_returns_zero(self) -> None:
+        assert _to_percent(0.0) == 0
+
+    def test_ten_returns_100(self) -> None:
+        assert _to_percent(10.0) == 100
+
+    def test_rounds_correctly(self) -> None:
+        assert _to_percent(7.55) == round(7.55 * 10)
+
+    def test_typical_value(self) -> None:
+        assert _to_percent(7.5) == 75
+
+
+class TestPickMovieStatus:
+    def test_empty_rows_returns_none(self) -> None:
+        assert _pick_movie_status([]) is None
+
+    def test_single_watched_returns_watched(self) -> None:
+        assert _pick_movie_status([{"movie_status": "WATCHED"}]) == "watched"
+
+    def test_priority_watched_over_planned(self) -> None:
+        rows = [{"movie_status": "WATCHED"}, {"movie_status": "PLANNED"}]
+        assert _pick_movie_status(rows) == "watched"
+
+    def test_priority_watching_over_dropped(self) -> None:
+        rows = [{"movie_status": "WATCHING"}, {"movie_status": "DROPPED"}]
+        assert _pick_movie_status(rows) == "watching"
+
+    def test_all_none_statuses_returns_none(self) -> None:
+        rows = [{"movie_status": None}, {"movie_status": None}]
+        assert _pick_movie_status(rows) is None
+
+    def test_duplicate_same_status_returns_that_status(self) -> None:
+        rows = [{"movie_status": "PLANNED"}, {"movie_status": "PLANNED"}]
+        assert _pick_movie_status(rows) == "planned"
+
+    def test_all_four_statuses_returns_watched(self) -> None:
+        rows = [
+            {"movie_status": "WATCHED"},
+            {"movie_status": "WATCHING"},
+            {"movie_status": "PLANNED"},
+            {"movie_status": "DROPPED"},
+        ]
+        assert _pick_movie_status(rows) == "watched"
+
+    def test_mixed_none_and_valid_returns_valid(self) -> None:
+        rows = [{"movie_status": None}, {"movie_status": "DROPPED"}]
+        assert _pick_movie_status(rows) == "dropped"
+
+
+class TestComputeSeriesStatus:
+    def test_total_zero_returns_none(self) -> None:
+        assert compute_series_status(watched=0, watching=0, dropped=0, total=0) is None
+
+    def test_all_watched_returns_watched(self) -> None:
+        assert compute_series_status(watched=5, watching=0, dropped=0, total=5) == "watched"
+
+    def test_partial_watched_no_watching_returns_watching(self) -> None:
+        assert compute_series_status(watched=2, watching=0, dropped=0, total=5) == "watching"
+
+    def test_only_watching_no_watched_returns_watching(self) -> None:
+        assert compute_series_status(watched=0, watching=1, dropped=0, total=5) == "watching"
+
+    def test_watched_and_watching_both_nonzero_returns_watching(self) -> None:
+        assert compute_series_status(watched=2, watching=1, dropped=0, total=10) == "watching"
+
+    def test_only_dropped_no_watched_no_watching_returns_dropped(self) -> None:
+        assert compute_series_status(watched=0, watching=0, dropped=3, total=5) == "dropped"
+
+    def test_all_zeros_with_total_returns_planned(self) -> None:
+        assert compute_series_status(watched=0, watching=0, dropped=0, total=10) == "planned"
+
+    def test_watched_equals_total_takes_priority_over_dropped(self) -> None:
+        # edge: watched == total even though dropped > 0 is logically impossible in real data,
+        # but the function must return "watched" based solely on the condition order
+        assert compute_series_status(watched=5, watching=0, dropped=2, total=5) == "watched"
+
+    def test_total_one_episode_watched_returns_watched(self) -> None:
+        assert compute_series_status(watched=1, watching=0, dropped=0, total=1) == "watched"
