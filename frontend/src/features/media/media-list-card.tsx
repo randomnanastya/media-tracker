@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { Link } from "react-router";
 import type { MediaItem } from "../../types/media";
 import { MediaPoster } from "./media-poster";
 import { MediaStatusBadge } from "./media-status-badge";
@@ -15,7 +16,7 @@ export function MediaListCard({ item }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group cursor-pointer transition-shadow hover:shadow-md">
+    <Link to={`/media/${item.id}`} className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group transition-shadow hover:shadow-md">
       <MediaPoster
         src={item.poster_url}
         alt={item.title}
@@ -46,6 +47,6 @@ export function MediaListCard({ item }: Props) {
             <MediaProgressBar watched={item.watched_episodes} total={item.total_episodes} />
           )}
       </div>
-    </div>
+    </Link>
   );
 }

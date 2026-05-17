@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { AuthGuard } from "./auth/auth-guard";
+import { BreadcrumbProvider } from "./contexts/breadcrumb-context";
 import { AppLayout } from "./components/layout/app-layout";
 import { AuthPage } from "./pages/auth-page";
 import { DashboardPage } from "./pages/dashboard-page";
 import { ForgotPasswordPage } from "./pages/forgot-password-page";
+import { MediaDetailPage } from "./pages/media-detail-page";
 import { MediaListPage } from "./pages/media-list-page";
 import { SettingsPage } from "./pages/settings-page";
 
@@ -74,6 +76,16 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/media/:id",
+    element: (
+      <AuthGuard>
+        <AppLayout breadcrumb={["Dashboard", "Media", "Detail"]}>
+          <MediaDetailPage />
+        </AppLayout>
+      </AuthGuard>
+    ),
+  },
+  {
     path: "*",
     element: <Navigate to="/auth" replace />,
   },
@@ -82,7 +94,9 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <BreadcrumbProvider>
+        <RouterProvider router={router} />
+      </BreadcrumbProvider>
     </QueryClientProvider>
   );
 }
