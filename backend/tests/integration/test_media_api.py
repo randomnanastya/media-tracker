@@ -168,7 +168,7 @@ async def test_get_media_detail_series_basic(client_with_db, session_for_test):
     assert resp.status_code == 200
     data = resp.json()
     assert data["media_type"] == "series"
-    assert data["tvdb_id"] is not None
+    assert data["tvdb_id"] == series.tvdb_id
 
 
 async def test_get_media_detail_404(client_with_db, session_for_test):
@@ -321,3 +321,29 @@ async def test_get_media_detail_movie_tvdb_id_always_null(client_with_db, sessio
     resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
     assert resp.status_code == 200
     assert resp.json()["tvdb_id"] is None
+
+
+async def test_get_media_detail_movie_two_users_returns_highest_priority_status(
+    client_with_db, session_for_test
+):
+    user1 = UserFactory.build()
+    user2 = UserFactory.build()
+    session_for_test.add(user1)
+    session_for_test.add(user2)
+    await session_for_test.flush()
+
+    movie = await create_movie(session_for_test, title="Shared Movie")
+
+    wh1 = WatchHistoryFactory.build(
+        user_id=user1.id, media_id=movie.id, episode_id=None, status=WatchStatus.WATCHED
+    )
+    wh2 = WatchHistoryFactory.build(
+        user_id=user2.id, media_id=movie.id, episode_id=None, status=WatchStatus.PLANNED
+    )
+    session_for_test.add(wh1)
+    session_for_test.add(wh2)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    assert resp.json()["watch_status"] == "watched"

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any
+from typing import Any, Literal, cast
 
 from fastapi import HTTPException
 from sqlalchemy import select, text
@@ -17,10 +17,19 @@ STATUS_PRIORITY = {
 
 
 def _pick_movie_status(rows: list[Any]) -> str | None:
-    statuses = [r["movie_status"].lower() for r in rows if r["movie_status"] is not None]
+    statuses: list[str] = [
+        str(r["movie_status"]).lower() for r in rows if r["movie_status"] is not None
+    ]
     if not statuses:
         return None
-    return max(statuses, key=lambda s: STATUS_PRIORITY.get(WatchStatus(s), 0))
+
+    def _priority(s: str) -> int:
+        try:
+            return STATUS_PRIORITY.get(WatchStatus(s), 0)
+        except ValueError:
+            return 0
+
+    return max(statuses, key=_priority)
 
 
 def _to_percent(v: float | None) -> int | None:
@@ -216,16 +225,20 @@ async def get_media_detail_by_id(
     else:
         raw_status = row["series_status"]
         status_val = None if raw_status is None else raw_status.lower()
-        total = sum(r["total_count"] or 0 for r in rows)
-        watched = sum(r["watched_count"] or 0 for r in rows)
-        watching = sum(r["watching_count"] or 0 for r in rows)
-        dropped = sum(r["dropped_count"] or 0 for r in rows)
+        total = row["total_count"] or 0
+        watched = row["watched_count"] or 0
+        watching = row["watching_count"] or 0
+        dropped = row["dropped_count"] or 0
         watch_status = compute_series_status(watched, watching, dropped, total)
         tvdb_id = row["tvdb_id"]
 
+    media_type_typed = cast(Literal["movie", "series"], media_type_lower)
+    watch_status_typed = cast(
+        Literal["watched", "watching", "planned", "dropped"] | None, watch_status
+    )
     return MediaDetailResponse(
         id=row["id"],
-        media_type=media_type_lower,  # type: ignore[arg-type]
+        media_type=media_type_typed,
         title=row["title"],
         year=row["year"],
         poster_url=row["poster_url"],
@@ -234,7 +247,7 @@ async def get_media_detail_by_id(
         genres=row["genres"] or [],
         status=status_val,
         tmdb_rating_percent=_to_percent(row["rating_value"]),
-        watch_status=watch_status,  # type: ignore[arg-type]
+        watch_status=watch_status_typed,
         tmdb_id=row["tmdb_id"],
         imdb_id=row["imdb_id"],
         tvdb_id=tvdb_id,
