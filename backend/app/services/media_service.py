@@ -141,16 +141,20 @@ async def get_media_list(
             continue
 
         genres = row["genres"] or []
+        media_type_item = cast(Literal["movie", "series"], media_type_val.lower())
+        watch_status_item = cast(
+            Literal["watched", "watching", "planned", "dropped"] | None, watch_status
+        )
         items.append(
             MediaItem(
                 id=media_id,
                 title=row["title"],
-                media_type=media_type_val.lower(),
+                media_type=media_type_item,
                 year=row["year"],
                 genres=genres,
                 poster_url=row["poster_url"],
                 rating=row["rating"],
-                watch_status=watch_status,
+                watch_status=watch_status_item,
                 total_episodes=row["total_count"] if media_type_val == "SERIES" else None,
                 watched_episodes=(
                     (row["watched_count"] or 0) if media_type_val == "SERIES" else None
