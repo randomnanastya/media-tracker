@@ -59,6 +59,5 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
-
-## Docs
+# Docs
 docs/src_tmp

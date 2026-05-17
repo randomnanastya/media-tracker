@@ -15,7 +15,7 @@ export function MediaListCard({ item }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group cursor-pointer transition-shadow duration-200 ease-out hover:shadow-lg hover:shadow-[rgba(150,85,29,0.10)]">
+    <div className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group cursor-pointer transition-shadow hover:shadow-md">
       <MediaPoster
         src={item.poster_url}
         alt={item.title}
