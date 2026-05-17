@@ -1,3 +1,14 @@
+## [1.7.0](https://github.com/randomnanastya/media-tracker/compare/v1.6.1...v1.7.0) (2026-05-17)
+
+### Features
+
+* **media:** add media detail endpoint with rating percent and watch status ([1daa519](https://github.com/randomnanastya/media-tracker/commit/1daa5195c11d2093ae781413684a750ace92b56b))
+
+### Bug Fixes
+
+* **media:** fix linter ([34639de](https://github.com/randomnanastya/media-tracker/commit/34639de87ac5bb51fa0e6c4857ee3ccf29eb1a2e))
+* **media:** fix type safety and test quality in media detail endpoint ([6bf482e](https://github.com/randomnanastya/media-tracker/commit/6bf482e13e21f2fad61c0dc94bc64b64a96e0af6))
+
 ## [1.6.1](https://github.com/randomnanastya/media-tracker/compare/v1.6.0...v1.6.1) (2026-05-11)
 
 ### Bug Fixes
