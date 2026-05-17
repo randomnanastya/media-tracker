@@ -1,6 +1,16 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel
+
+
+class SeasonDetail(BaseModel):
+    number: int
+    poster_url: str | None = None
+    vote_average: float | None = None
+    release_date: datetime | None = None
+    total_episodes: int = 0
+    watched_episodes: int = 0
 
 
 class MediaItem(BaseModel):
@@ -36,3 +46,4 @@ class MediaDetailResponse(BaseModel):
     tmdb_id: str | None = None
     imdb_id: str | None = None
     tvdb_id: str | None = None
+    seasons: list[SeasonDetail] = []
