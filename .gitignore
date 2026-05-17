@@ -58,3 +58,7 @@ CLAUDE.md
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+
+
+## Docs
+docs/src_tmp
