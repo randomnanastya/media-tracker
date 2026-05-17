@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { authApi } from "../../api/auth";
+import { useDynamicCrumb } from "../../contexts/breadcrumb-context";
 
 interface TopBarProps {
   breadcrumb: [string, ...string[]];
@@ -18,6 +19,7 @@ const BREADCRUMB_PATHS: Record<string, string> = {
 
 export function TopBar({ breadcrumb }: TopBarProps) {
   const navigate = useNavigate();
+  const { dynamicCrumb } = useDynamicCrumb();
 
   const mutation = useMutation({
     mutationFn: authApi.logout,
@@ -34,19 +36,20 @@ export function TopBar({ breadcrumb }: TopBarProps) {
       <div className="flex items-center gap-1.5 text-sm">
         {breadcrumb.map((segment, i) => {
           const isLast = i === breadcrumb.length - 1;
+          const displaySegment = isLast && dynamicCrumb ? dynamicCrumb : segment;
           const path = BREADCRUMB_PATHS[segment];
           return (
             <Fragment key={i}>
               {i > 0 && <span className="text-[#2a2520]/30">›</span>}
               {isLast || !path ? (
-                <span className="text-[#2a2520] font-medium">{segment}</span>
+                <span className="text-[#2a2520] font-medium">{displaySegment}</span>
               ) : (
                 <button
                   type="button"
                   onClick={() => void navigate(path)}
                   className="text-[#2a2520]/50 hover:text-[#2a2520] transition-colors"
                 >
-                  {segment}
+                  {displaySegment}
                 </button>
               )}
             </Fragment>

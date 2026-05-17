@@ -19,3 +19,20 @@ export interface MediaListResponse {
   items: MediaItem[];
   total: number;
 }
+
+export interface MediaDetailResponse {
+  id: number;
+  media_type: MediaType;
+  title: string;
+  year: number | null;
+  poster_url: string | null;
+  backdrop_path: string | null;
+  overview: string | null;
+  genres: string[];
+  status: string | null;
+  tmdb_rating_percent: number | null;
+  watch_status: WatchStatus | null;
+  tmdb_id: string | null;
+  imdb_id: string | null;
+  tvdb_id: string | null;
+}
