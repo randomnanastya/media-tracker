@@ -20,6 +20,15 @@ export interface MediaListResponse {
   total: number;
 }
 
+export interface SeasonDetail {
+  number: number;
+  poster_url: string | null;
+  vote_average: number | null;
+  release_date: string | null;
+  total_episodes: number;
+  watched_episodes: number;
+}
+
 export interface MediaDetailResponse {
   id: number;
   media_type: MediaType;
@@ -35,4 +44,5 @@ export interface MediaDetailResponse {
   tmdb_id: string | null;
   imdb_id: string | null;
   tvdb_id: string | null;
+  seasons: SeasonDetail[];
 }

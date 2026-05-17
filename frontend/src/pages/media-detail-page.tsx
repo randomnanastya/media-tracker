@@ -8,6 +8,7 @@ import { mediaApi } from "../api/media";
 import type { MediaType } from "../types/media";
 import { MediaPoster } from "../features/media/media-poster";
 import { MediaStatusBadge } from "../features/media/media-status-badge";
+import { MediaSeasonsSection } from "../features/media/media-seasons-section";
 import { useDynamicCrumb } from "../contexts/breadcrumb-context";
 
 function getExternalUrl(label: string, value: string, mediaType: MediaType): string | null {
@@ -222,6 +223,10 @@ export function MediaDetailPage() {
           </h2>
           <p className="text-base text-[#2a2520]/80 leading-relaxed">{data.overview}</p>
         </div>
+      )}
+
+      {data.media_type === "series" && data.seasons && data.seasons.length > 0 && (
+        <MediaSeasonsSection seasons={data.seasons} />
       )}
     </div>
   );
