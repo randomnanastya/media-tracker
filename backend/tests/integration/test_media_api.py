@@ -1,6 +1,9 @@
+from datetime import UTC, datetime
+
 from app.models.media import MediaType, MovieStatus, SeriesStatus
 from app.models.user import WatchStatus
 from tests.factories import (
+    EpisodeFactory,
     MediaFactory,
     MovieFactory,
     SeriesFactory,
@@ -348,3 +351,169 @@ async def test_get_media_detail_movie_two_users_returns_highest_priority_status(
     resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
     assert resp.status_code == 200
     assert resp.json()["watch_status"] == "watched"
+
+
+# --- Episodes in season detail ---
+
+
+async def test_get_media_detail_series_season_without_episodes_returns_empty_list(
+    client_with_db, session_for_test
+):
+    series = await create_series(session_for_test, title="Empty Season Series")
+    await create_season(session_for_test, series_id=series.id, number=1)
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    season = resp.json()["seasons"][0]
+    assert season["episodes"] == []
+
+
+async def test_get_media_detail_episode_no_watch_history_status_is_none(
+    client_with_db, session_for_test
+):
+    series = await create_series(session_for_test, title="Unwatched Episodes")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    await create_episode(session_for_test, season_id=season.id, number=1, title="Pilot")
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["number"] == 1
+    assert ep["title"] == "Pilot"
+    assert ep["watch_status"] is None
+
+
+async def test_get_media_detail_episode_watched_status(client_with_db, session_for_test):
+    user = UserFactory.build()
+    session_for_test.add(user)
+    await session_for_test.flush()
+
+    series = await create_series(session_for_test, title="Watched Ep Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = await create_episode(session_for_test, season_id=season.id, number=1, title="Ep 1")
+
+    wh = WatchHistoryFactory.build(
+        user_id=user.id, media_id=series.id, episode_id=episode.id, status=WatchStatus.WATCHED
+    )
+    session_for_test.add(wh)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["watch_status"] == "watched"
+
+
+async def test_get_media_detail_episode_watching_status(client_with_db, session_for_test):
+    user = UserFactory.build()
+    session_for_test.add(user)
+    await session_for_test.flush()
+
+    series = await create_series(session_for_test, title="Watching Ep Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = await create_episode(session_for_test, season_id=season.id, number=1, title="Ep 1")
+
+    wh = WatchHistoryFactory.build(
+        user_id=user.id, media_id=series.id, episode_id=episode.id, status=WatchStatus.WATCHING
+    )
+    session_for_test.add(wh)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["watch_status"] == "watching"
+
+
+async def test_get_media_detail_episodes_ordered_by_number(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="Ordered Episodes")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    await create_episode(session_for_test, season_id=season.id, number=3, title="Ep 3")
+    await create_episode(session_for_test, season_id=season.id, number=1, title="Ep 1")
+    await create_episode(session_for_test, season_id=season.id, number=2, title="Ep 2")
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    episodes = resp.json()["seasons"][0]["episodes"]
+    assert [ep["number"] for ep in episodes] == [1, 2, 3]
+
+
+async def test_get_media_detail_episodes_grouped_per_season(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="Multi Season")
+    season1 = await create_season(session_for_test, series_id=series.id, number=1)
+    season2 = await create_season(session_for_test, series_id=series.id, number=2)
+    await create_episode(session_for_test, season_id=season1.id, number=1, title="S1E1")
+    await create_episode(session_for_test, season_id=season1.id, number=2, title="S1E2")
+    await create_episode(session_for_test, season_id=season2.id, number=1, title="S2E1")
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    seasons = resp.json()["seasons"]
+    assert len(seasons[0]["episodes"]) == 2
+    assert len(seasons[1]["episodes"]) == 1
+    assert seasons[1]["episodes"][0]["title"] == "S2E1"
+
+
+async def test_get_media_detail_episode_priority_watched_over_planned(
+    client_with_db, session_for_test
+):
+    user1 = UserFactory.build()
+    user2 = UserFactory.build()
+    session_for_test.add(user1)
+    session_for_test.add(user2)
+    await session_for_test.flush()
+
+    series = await create_series(session_for_test, title="Priority Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = await create_episode(session_for_test, season_id=season.id, number=1, title="Ep 1")
+
+    wh1 = WatchHistoryFactory.build(
+        user_id=user1.id, media_id=series.id, episode_id=episode.id, status=WatchStatus.WATCHED
+    )
+    wh2 = WatchHistoryFactory.build(
+        user_id=user2.id, media_id=series.id, episode_id=episode.id, status=WatchStatus.PLANNED
+    )
+    session_for_test.add(wh1)
+    session_for_test.add(wh2)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["watch_status"] == "watched"
+
+
+async def test_get_media_detail_episode_with_air_date(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="Aired Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    air_date = datetime(2024, 3, 15, tzinfo=UTC)
+    episode = EpisodeFactory(season_id=season.id, number=1, title="Aired Ep", air_date=air_date)
+    session_for_test.add(episode)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["air_date"] is not None
+    assert "2024-03-15" in ep["air_date"]
+
+
+async def test_get_media_detail_episode_air_date_null(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="No Air Date Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = EpisodeFactory(season_id=season.id, number=1, title="No Date Ep", air_date=None)
+    session_for_test.add(episode)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["air_date"] is None
+
+
+async def test_get_media_detail_movie_has_no_seasons(client_with_db, session_for_test):
+    movie = await create_movie(session_for_test, title="Just a Movie")
+
+    resp = await client_with_db.get(f"/api/v1/media/{movie.id}")
+    assert resp.status_code == 200
+    assert resp.json()["seasons"] == []
