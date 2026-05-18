@@ -1,3 +1,10 @@
+## [1.10.0](https://github.com/randomnanastya/media-tracker/compare/v1.9.0...v1.10.0) (2026-05-18)
+
+### Features
+
+* **api:** add episodes list to series detail endpoint ([7a6ddc6](https://github.com/randomnanastya/media-tracker/commit/7a6ddc68515e36a2fe3c7972615b438fefdbfe4b))
+* **api:** add episodes list to series detail endpoint ([a7d580e](https://github.com/randomnanastya/media-tracker/commit/a7d580e2be1f0fe3ab4176bd933f580a97171e93))
+
 ## [1.9.0](https://github.com/randomnanastya/media-tracker/compare/v1.8.0...v1.9.0) (2026-05-17)
 
 ### Features
