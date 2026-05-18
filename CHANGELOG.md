@@ -1,3 +1,9 @@
+## [1.11.0](https://github.com/randomnanastya/media-tracker/compare/v1.10.0...v1.11.0) (2026-05-18)
+
+### Features
+
+* **api:** include still_url in episode detail response ([0a5b616](https://github.com/randomnanastya/media-tracker/commit/0a5b61660b14174b62f442de6c3a9f74d75b9362))
+
 ## [1.10.0](https://github.com/randomnanastya/media-tracker/compare/v1.9.0...v1.10.0) (2026-05-18)
 
 ### Features
