@@ -268,6 +268,7 @@ async def get_media_detail_by_id(
                 e.number AS episode_number,
                 e.title,
                 e.air_date,
+                e.still_url,
                 CASE
                     WHEN bool_or(wh.status = 'WATCHED') THEN 'WATCHED'
                     WHEN bool_or(wh.status = 'WATCHING') THEN 'WATCHING'
@@ -279,7 +280,7 @@ async def get_media_detail_by_id(
             JOIN episodes e ON e.season_id = sea.id
             LEFT JOIN watch_history wh ON wh.episode_id = e.id
             WHERE sea.series_id = :media_id
-            GROUP BY sea.id, sea.number, e.id, e.number, e.title, e.air_date
+            GROUP BY sea.id, sea.number, e.id, e.number, e.title, e.air_date, e.still_url
             ORDER BY sea.number, e.number
             """
         )
@@ -299,6 +300,7 @@ async def get_media_detail_by_id(
                     number=ep["episode_number"],
                     title=ep["title"],
                     air_date=ep["air_date"],
+                    still_url=ep["still_url"],
                     watch_status=cast(
                         Literal["watched", "watching", "planned", "dropped"] | None, ep_status
                     ),
