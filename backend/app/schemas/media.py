@@ -4,6 +4,13 @@ from typing import Literal
 from pydantic import BaseModel
 
 
+class EpisodeDetail(BaseModel):
+    number: int
+    title: str
+    air_date: datetime | None = None
+    watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
+
+
 class SeasonDetail(BaseModel):
     number: int
     poster_url: str | None = None
@@ -11,6 +18,7 @@ class SeasonDetail(BaseModel):
     release_date: datetime | None = None
     total_episodes: int = 0
     watched_episodes: int = 0
+    episodes: list[EpisodeDetail] = []
 
 
 class MediaItem(BaseModel):

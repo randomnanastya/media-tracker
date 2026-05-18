@@ -6,7 +6,13 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User, WatchStatus
-from app.schemas.media import MediaDetailResponse, MediaItem, MediaListResponse, SeasonDetail
+from app.schemas.media import (
+    EpisodeDetail,
+    MediaDetailResponse,
+    MediaItem,
+    MediaListResponse,
+    SeasonDetail,
+)
 
 STATUS_PRIORITY = {
     WatchStatus.WATCHED: 4,
@@ -255,9 +261,50 @@ async def get_media_detail_by_id(
             ORDER BY sea.number
             """
         )
+        episodes_query = text(
+            """
+            SELECT
+                sea.number AS season_number,
+                e.number AS episode_number,
+                e.title,
+                e.air_date,
+                CASE
+                    WHEN bool_or(wh.status = 'WATCHED') THEN 'WATCHED'
+                    WHEN bool_or(wh.status = 'WATCHING') THEN 'WATCHING'
+                    WHEN bool_or(wh.status = 'DROPPED') THEN 'DROPPED'
+                    WHEN bool_or(wh.status = 'PLANNED') THEN 'PLANNED'
+                    ELSE NULL
+                END AS episode_status
+            FROM seasons sea
+            JOIN episodes e ON e.season_id = sea.id
+            LEFT JOIN watch_history wh ON wh.episode_id = e.id
+            WHERE sea.series_id = :media_id
+            GROUP BY sea.id, sea.number, e.id, e.number, e.title, e.air_date
+            ORDER BY sea.number, e.number
+            """
+        )
         season_rows = (
             (await session.execute(seasons_query, {"media_id": media_id})).mappings().all()
         )
+        episode_rows = (
+            (await session.execute(episodes_query, {"media_id": media_id})).mappings().all()
+        )
+
+        episodes_by_season: dict[int, list[EpisodeDetail]] = defaultdict(list)
+        for ep in episode_rows:
+            raw_ep_status = ep["episode_status"]
+            ep_status = raw_ep_status.lower() if raw_ep_status else None
+            episodes_by_season[ep["season_number"]].append(
+                EpisodeDetail(
+                    number=ep["episode_number"],
+                    title=ep["title"],
+                    air_date=ep["air_date"],
+                    watch_status=cast(
+                        Literal["watched", "watching", "planned", "dropped"] | None, ep_status
+                    ),
+                )
+            )
+
         seasons = [
             SeasonDetail(
                 number=s["number"],
@@ -266,6 +313,7 @@ async def get_media_detail_by_id(
                 release_date=s["release_date"],
                 total_episodes=s["total_episodes"] or 0,
                 watched_episodes=s["watched_episodes"] or 0,
+                episodes=episodes_by_season.get(s["number"], []),
             )
             for s in season_rows
         ]
