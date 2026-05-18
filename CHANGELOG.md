@@ -1,3 +1,9 @@
+## [1.12.1](https://github.com/randomnanastya/media-tracker/compare/v1.12.0...v1.12.1) (2026-05-18)
+
+### Bug Fixes
+
+* **ui:** replace ternary statement with if/else to satisfy eslint no-unused-expressions ([0895b1f](https://github.com/randomnanastya/media-tracker/commit/0895b1f6087ea1e1dce523003e19807912472310))
+
 ## [1.12.0](https://github.com/randomnanastya/media-tracker/compare/v1.11.0...v1.12.0) (2026-05-18)
 
 ### Features
