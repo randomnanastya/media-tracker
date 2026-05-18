@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.client.tmdb_bridge_client import TmdbBridgeClientError, fetch_tmdb_series
 from app.config import logger
-from app.models import Episode, Season, Series
+from app.models.media import Episode, Season, Series
 from app.schemas.tmdb_bridge import (
     TmdbBridgeEpisodeResponse,
     TmdbBridgeSeasonResponse,

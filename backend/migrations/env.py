@@ -5,7 +5,11 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.models import Base
+from app.models.auth import AppUser, RefreshToken  # noqa: F401
+from app.models.base import Base
+from app.models.media import Episode, Media, Movie, Season, Series  # noqa: F401
+from app.models.schedule import ServiceConfig, SyncSchedule  # noqa: F401
+from app.models.user import User, WatchHistory  # noqa: F401
 
 try:
     from typing import Union
@@ -15,8 +19,6 @@ except ImportError:
 from collections.abc import Sequence
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from app.models import Base
 
 # Alembic Config object
 config = context.config

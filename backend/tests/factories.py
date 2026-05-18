@@ -6,23 +6,10 @@ import factory
 from factory import LazyAttribute, LazyFunction, Sequence, SubFactory
 from faker import Faker
 
-from app.models import (
-    AppUser,
-    Episode,
-    Media,
-    MediaType,
-    Movie,
-    RefreshToken,
-    SchedulePreset,
-    Season,
-    Series,
-    SeriesStatus,
-    SyncJobType,
-    SyncSchedule,
-    User,
-    WatchHistory,
-    WatchStatus,
-)
+from app.models.auth import AppUser, RefreshToken
+from app.models.media import Episode, Media, MediaType, Movie, Season, Series, SeriesStatus
+from app.models.schedule import SchedulePreset, SyncJobType, SyncSchedule
+from app.models.user import User, WatchHistory, WatchStatus
 
 fake = Faker()
 

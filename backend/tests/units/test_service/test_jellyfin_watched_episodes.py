@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.models import WatchStatus
+from app.models.user import WatchStatus
 from app.services.sync_jellyfin_watched_series_service import (
     sync_jellyfin_watched_series,
 )

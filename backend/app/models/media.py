@@ -2,41 +2,15 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import (
-    JSON,
-    BigInteger,
-    Boolean,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    func,
-)
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
-class Base(DeclarativeBase):
-    pass
+from app.models.base import Base
 
 
 class MediaType(enum.Enum):
     MOVIE = "movie"
     SERIES = "series"
-
-
-class ServiceType(enum.Enum):
-    RADARR = "radarr"
-    SONARR = "sonarr"
-    JELLYFIN = "jellyfin"
-
-
-class WatchStatus(enum.Enum):
-    PLANNED = "planned"
-    WATCHING = "watching"
-    WATCHED = "watched"
-    DROPPED = "dropped"
 
 
 class MovieStatus(enum.Enum):
@@ -69,7 +43,6 @@ class Media(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    # связи
     series: Mapped[Optional["Series"]] = relationship(
         "Series", back_populates="media", uselist=False
     )
@@ -164,143 +137,3 @@ class Episode(Base):
     vote_average: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     season: Mapped["Season"] = relationship("Season", back_populates="episodes")
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    jellyfin_user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, unique=True)
-
-    watch_history: Mapped[list["WatchHistory"]] = relationship(
-        "WatchHistory", back_populates="user"
-    )
-
-
-class WatchHistory(Base):
-    __tablename__ = "watch_history"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.id"), nullable=False, index=True
-    )
-    media_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("media.id"), nullable=False, index=True
-    )
-    episode_id: Mapped[int | None] = mapped_column(
-        Integer,
-        ForeignKey("episodes.id"),
-        nullable=True,
-        index=True,
-    )
-    status: Mapped[WatchStatus] = mapped_column(
-        Enum(WatchStatus), nullable=False, default=WatchStatus.PLANNED
-    )
-    is_manual: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    playback_position_ticks: Mapped[int | None] = mapped_column(BigInteger)
-    watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),  # Автоматическое обновление при изменении
-    )
-
-    user: Mapped["User"] = relationship("User", back_populates="watch_history")
-    media: Mapped["Media"] = relationship("Media")
-    episode: Mapped[Optional["Episode"]] = relationship("Episode")
-
-
-class AppUser(Base):
-    __tablename__ = "app_users"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    username: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    recovery_code_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
-        "RefreshToken", back_populates="user", cascade="all, delete-orphan"
-    )
-
-
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("app_users.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    user: Mapped["AppUser"] = relationship("AppUser", back_populates="refresh_tokens")
-
-
-class SchedulePreset(enum.Enum):
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    CUSTOM = "custom"
-
-
-class SyncJobType(enum.Enum):
-    JELLYFIN_USERS_IMPORT = "jellyfin_users_import"
-    RADARR_IMPORT = "radarr_import"
-    JELLYFIN_MOVIES_IMPORT = "jellyfin_import_movies"
-    JELLYFIN_MOVIE_WATCH_HISTORY = "jellyfin_movie_watch_history"
-    SONARR_IMPORT = "sonarr_import"
-    JELLYFIN_SERIES_IMPORT = "jellyfin_import_series"
-    JELLYFIN_SERIES_WATCH_HISTORY = "jellyfin_series_watch_history"
-    TMDB_METADATA_UPDATE = "tmdb_metadata_update"
-
-
-class SyncSchedule(Base):
-    __tablename__ = "sync_schedules"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    job_type: Mapped[SyncJobType] = mapped_column(Enum(SyncJobType), nullable=False, unique=True)
-    preset: Mapped[SchedulePreset] = mapped_column(Enum(SchedulePreset), nullable=False)
-    cron_expression: Mapped[str] = mapped_column(String(100), nullable=False)
-    is_running: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-
-class ServiceConfig(Base):
-    __tablename__ = "service_configs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    service_type: Mapped[ServiceType] = mapped_column(
-        Enum(ServiceType), nullable=False, unique=True
-    )
-    url: Mapped[str] = mapped_column(String(500), nullable=False)
-    encrypted_api_key: Mapped[str] = mapped_column(String(1024), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
-    )

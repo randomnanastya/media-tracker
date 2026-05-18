@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import logger
-from app.models import Media, MediaType, Series, SeriesStatus
+from app.models.media import Media, MediaType, Series, SeriesStatus
 
 _TMDB_SERIES_STATUS_MAP: dict[str, SeriesStatus] = {
     "Returning Series": SeriesStatus.CONTINUING,

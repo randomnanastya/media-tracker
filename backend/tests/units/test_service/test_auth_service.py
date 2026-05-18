@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from fastapi import HTTPException
 
-from app.models import RefreshToken
+from app.models.auth import RefreshToken
 from app.services import auth_service
 from app.utils.security import (
     generate_recovery_code,

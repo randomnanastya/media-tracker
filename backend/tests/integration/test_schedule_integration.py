@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from sqlalchemy import select
 
-from app.models import SchedulePreset, ServiceType, SyncJobType, SyncSchedule
+from app.models.schedule import SchedulePreset, ServiceType, SyncJobType, SyncSchedule
 from app.services.schedule_constants import DEFAULT_PRESETS, DEFAULT_SCHEDULES
 
 # ---------------------------------------------------------------------------

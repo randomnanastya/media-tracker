@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import AppUser
+from app.models.auth import AppUser
 from app.schemas.error_codes import AuthErrorCode
 from app.utils.security import decode_access_token, get_jwt_secret
 

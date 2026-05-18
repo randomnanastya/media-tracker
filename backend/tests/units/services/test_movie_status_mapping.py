@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.models import MovieStatus
+from app.models.media import MovieStatus
 from app.services.movie_utils import map_radarr_status, map_tmdb_status
 
 # --- map_radarr_status ---

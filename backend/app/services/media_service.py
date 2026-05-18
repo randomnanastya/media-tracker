@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User, WatchStatus
+from app.models.user import User, WatchStatus
 from app.schemas.media import MediaDetailResponse, MediaItem, MediaListResponse, SeasonDetail
 
 STATUS_PRIORITY = {

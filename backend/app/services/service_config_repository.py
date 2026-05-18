@@ -3,7 +3,7 @@
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import ServiceConfig, ServiceType
+from app.models.schedule import ServiceConfig, ServiceType
 from app.utils.encryption import decrypt_api_key, encrypt_api_key
 
 

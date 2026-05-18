@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from app.models import WatchHistory, WatchStatus
+from app.models.user import WatchHistory, WatchStatus
 from app.services.sync_jellyfin_watched_series_service import sync_jellyfin_watched_series
 from tests.factories import JellyfinSeriesDictFactory
 from tests.integration.conftest import create_episode, create_season, create_series, create_user

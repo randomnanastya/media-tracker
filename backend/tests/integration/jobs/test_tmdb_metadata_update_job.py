@@ -9,17 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import (
-    Episode,
-    MediaType,
-    Movie,
-    SchedulePreset,
-    Season,
-    Series,
-    SeriesStatus,
-    SyncJobType,
-    SyncSchedule,
-)
+from app.models.media import Episode, MediaType, Movie, Season, Series, SeriesStatus
+from app.models.schedule import SchedulePreset, SyncJobType, SyncSchedule
 from app.services.update_tmdb_metadata_service import update_tmdb_metadata
 from app.services.update_tmdb_series_metadata_service import update_series_tmdb_metadata
 from tests.factories import MediaFactory, MovieFactory, SeriesFactory, SyncScheduleFactory

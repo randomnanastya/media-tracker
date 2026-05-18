@@ -12,7 +12,7 @@ from app.config import logger
 from app.database import AsyncSessionLocal
 from app.dependencies.auth import get_current_user
 from app.exceptions.handlers import register_exception_handlers
-from app.models import SyncJobType
+from app.models.schedule import SyncJobType
 from app.services import schedule_repository as schedule_repo
 from app.services.schedule_constants import DEFAULT_SCHEDULES, JOB_REGISTRY
 from app.utils.cron_utils import parse_cron_to_apscheduler

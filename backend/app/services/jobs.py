@@ -5,7 +5,7 @@ from typing import Any
 
 from app.config import logger
 from app.database import AsyncSessionLocal
-from app.models import ServiceType, SyncJobType
+from app.models.schedule import ServiceType, SyncJobType
 from app.services import schedule_repository as schedule_repo
 from app.services.import_jellyfin_movies_service import import_jellyfin_movies
 from app.services.import_jellyfin_series_service import import_jellyfin_series

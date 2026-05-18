@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.radarr_client import fetch_radarr_movies
 from app.config import logger
-from app.models import ServiceType
+from app.models.schedule import ServiceType
 from app.schemas.radarr import RadarrImportResponse
 from app.services.movie_utils import (
     create_new_movie,

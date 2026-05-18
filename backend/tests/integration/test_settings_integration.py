@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 from sqlalchemy import select
 
-from app.models import ServiceConfig, ServiceType
+from app.models.schedule import ServiceConfig, ServiceType
 
 # ---------------------------------------------------------------------------
 # Helpers

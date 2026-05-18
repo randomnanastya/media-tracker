@@ -13,7 +13,7 @@ import asyncio
 from sqlalchemy import select
 
 from app.database import AsyncSessionLocal
-from app.models import AppUser
+from app.models.auth import AppUser
 from app.utils.security import generate_recovery_code, hash_password, hash_token
 
 

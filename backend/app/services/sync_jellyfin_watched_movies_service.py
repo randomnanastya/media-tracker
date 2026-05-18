@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies_for_user_all
 from app.config import logger
-from app.models import Movie, ServiceType, User, WatchHistory, WatchStatus
+from app.models.media import Movie
+from app.models.schedule import ServiceType
+from app.models.user import User, WatchHistory, WatchStatus
 from app.schemas.jellyfin import JellyfinWatchedMoviesResponse
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime

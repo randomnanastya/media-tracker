@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import SchedulePreset, SyncJobType, SyncSchedule
+from app.models.schedule import SchedulePreset, SyncJobType, SyncSchedule
 
 
 async def get_all_schedules(session: AsyncSession) -> list[SyncSchedule]:

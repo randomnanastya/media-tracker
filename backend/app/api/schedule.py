@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.dependencies.scheduler import get_scheduler
-from app.models import SchedulePreset, SyncJobType
+from app.models.schedule import SchedulePreset, SyncJobType
 from app.schemas.sync_schedule import (
     SyncScheduleListResponse,
     SyncScheduleRequest,

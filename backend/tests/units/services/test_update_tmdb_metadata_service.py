@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.client.tmdb_bridge_client import TmdbBridgeClientError
-from app.models import MovieStatus
+from app.models.media import MovieStatus
 from app.schemas.error_codes import TmdbBridgeErrorCode
 from app.schemas.tmdb_bridge import TmdbBridgeMovieResponse, TmdbGenre
 from app.services.update_tmdb_metadata_service import (

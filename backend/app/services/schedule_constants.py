@@ -3,7 +3,7 @@
 from collections.abc import Callable, Coroutine
 from typing import Any
 
-from app.models import SchedulePreset, ServiceType, SyncJobType
+from app.models.schedule import SchedulePreset, ServiceType, SyncJobType
 from app.services.jobs import (
     jellyfin_import_movies_job,
     jellyfin_import_series_job,

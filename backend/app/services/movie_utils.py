@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import logger
-from app.models import Media, MediaType, Movie, MovieStatus
+from app.models.media import Media, MediaType, Movie, MovieStatus
 
 _RADARR_STATUS_MAP: dict[str, MovieStatus] = {
     "announced": MovieStatus.ANNOUNCED,

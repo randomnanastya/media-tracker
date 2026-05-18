@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import delete, select
 
-from app.models import WatchHistory, WatchStatus
+from app.models.user import WatchHistory, WatchStatus
 from app.services.sync_jellyfin_watched_movies_service import sync_jellyfin_watched_movies
 from tests.factories import JellyfinMovieDictFactory
 from tests.integration.conftest import create_movie, create_user

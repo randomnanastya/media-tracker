@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from app.models import Media, MediaType, Movie, MovieStatus
+from app.models.media import Media, MediaType, Movie, MovieStatus
 from tests.factories import RadarrMovieDictFactory
 from tests.utils.db_asserts import assert_model_matches
 

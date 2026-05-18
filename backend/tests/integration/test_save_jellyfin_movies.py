@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Media, MediaType, Movie, MovieStatus
+from app.models.media import Media, MediaType, Movie, MovieStatus
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from tests.factories import JellyfinMovieDictFactory
 
