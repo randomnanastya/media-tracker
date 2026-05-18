@@ -1,3 +1,9 @@
+## [1.12.0](https://github.com/randomnanastya/media-tracker/compare/v1.11.0...v1.12.0) (2026-05-18)
+
+### Features
+
+* **ui:** add seasons and episodes section to series detail page ([e187f74](https://github.com/randomnanastya/media-tracker/commit/e187f742aca30b2fda7c6018710869733444f1f1))
+
 ## [1.11.0](https://github.com/randomnanastya/media-tracker/compare/v1.10.0...v1.11.0) (2026-05-18)
 
 ### Features
