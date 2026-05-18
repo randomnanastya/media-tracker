@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.models import SyncJobType
+from app.models.schedule import SyncJobType
 
 
 class TestLogJobExecution:

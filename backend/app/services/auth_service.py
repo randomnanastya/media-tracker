@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AppUser, RefreshToken
+from app.models.auth import AppUser, RefreshToken
 from app.schemas.error_codes import AuthErrorCode
 from app.utils.security import (
     create_access_token,

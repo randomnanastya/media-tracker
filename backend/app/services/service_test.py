@@ -2,7 +2,7 @@
 
 import httpx
 
-from app.models import ServiceType
+from app.models.schedule import ServiceType
 
 
 async def test_service_connection(

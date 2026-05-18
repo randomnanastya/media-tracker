@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.models import ServiceType, SyncJobType
+from app.models.schedule import ServiceType, SyncJobType
 from tests.factories import SyncScheduleFactory
 
 

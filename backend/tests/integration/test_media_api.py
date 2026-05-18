@@ -1,4 +1,5 @@
-from app.models import MediaType, MovieStatus, SeriesStatus, WatchStatus
+from app.models.media import MediaType, MovieStatus, SeriesStatus
+from app.models.user import WatchStatus
 from tests.factories import (
     MediaFactory,
     MovieFactory,

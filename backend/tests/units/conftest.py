@@ -10,7 +10,9 @@ from pytest_factoryboy import register
 
 from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import AppUser, Movie, Series, User, WatchHistory, WatchStatus
+from app.models.auth import AppUser
+from app.models.media import Movie, Series
+from app.models.user import User, WatchHistory, WatchStatus
 from tests.factories import (
     AppUserFactory,
     EpisodeFactory,

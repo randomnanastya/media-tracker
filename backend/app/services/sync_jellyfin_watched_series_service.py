@@ -4,7 +4,9 @@ from sqlalchemy.orm import selectinload
 
 from app.client.jellyfin_client import fetch_jellyfin_episodes_for_user_all
 from app.config import logger
-from app.models import Episode, Season, ServiceType, User, WatchHistory, WatchStatus
+from app.models.media import Episode, Season
+from app.models.schedule import ServiceType
+from app.models.user import User, WatchHistory, WatchStatus
 from app.schemas.jellyfin import JellyfinWatchedSeriesResponse
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime

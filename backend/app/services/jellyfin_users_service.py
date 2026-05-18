@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_users
 from app.config import logger
-from app.models import ServiceType, User
+from app.models.schedule import ServiceType
+from app.models.user import User
 from app.schemas.jellyfin import JellyfinUsersResponse
 from app.services.service_config_repository import get_decrypted_config
 

@@ -7,7 +7,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import SyncJobType
+from app.models.schedule import SyncJobType
 from app.schemas.sync_schedule import SyncTriggerResponse
 from app.services import schedule_repository as schedule_repo
 from app.services import service_config_repository as config_repo

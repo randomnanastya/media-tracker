@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.models import SchedulePreset, ServiceType, SyncJobType
+from app.models.schedule import SchedulePreset, ServiceType, SyncJobType
 from app.services.schedule_constants import DEFAULT_PRESETS, DEFAULT_SCHEDULES
 from tests.factories import SyncScheduleFactory
 
 
 def _make_configs(service_types: list[ServiceType]) -> list:
-    from app.models import ServiceConfig
+    from app.models.schedule import ServiceConfig
 
     configs = []
     for st in service_types:

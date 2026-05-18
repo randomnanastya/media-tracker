@@ -10,7 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.database import get_session
 from app.dependencies.auth import get_current_user
 from app.main import app
-from app.models import AppUser, Base, MediaType, WatchStatus
+from app.models.auth import AppUser
+from app.models.base import Base
+from app.models.media import MediaType
+from app.models.user import WatchStatus
 from app.utils.security import hash_password
 from tests.factories import (
     AppUserFactory,

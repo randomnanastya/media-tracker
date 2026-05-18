@@ -2,7 +2,7 @@
 
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from app.models import ServiceConfig, ServiceType
+from app.models.schedule import ServiceConfig, ServiceType
 from app.services import service_config_repository as repo
 
 # ---------------------------------------------------------------------------

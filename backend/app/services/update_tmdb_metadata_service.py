@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.client.tmdb_bridge_client import TmdbBridgeClientError, fetch_tmdb_movie
 from app.config import logger
-from app.models import Movie
+from app.models.media import Movie
 from app.schemas.tmdb_bridge import TmdbBridgeMovieResponse, TmdbMetadataUpdateResponse
 from app.services.movie_utils import map_tmdb_status
 from app.services.update_tmdb_series_metadata_service import update_series_tmdb_metadata

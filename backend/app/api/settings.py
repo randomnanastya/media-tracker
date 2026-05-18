@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import ServiceConfig, ServiceType
+from app.models.schedule import ServiceConfig, ServiceType
 from app.schemas.service_config import (
     ServiceConfigListResponse,
     ServiceConfigRequest,

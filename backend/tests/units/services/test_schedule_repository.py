@@ -2,7 +2,7 @@
 
 from unittest.mock import AsyncMock, Mock
 
-from app.models import SchedulePreset, SyncJobType, SyncSchedule
+from app.models.schedule import SchedulePreset, SyncJobType, SyncSchedule
 from app.services import schedule_repository as repo
 from tests.factories import SyncScheduleFactory
 

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.client.tmdb_bridge_client import TmdbBridgeClientError
-from app.models import Season, SeriesStatus
+from app.models.media import Season, SeriesStatus
 from app.schemas.error_codes import TmdbBridgeErrorCode
 from app.schemas.tmdb_bridge import (
     TmdbBridgeEpisodeResponse,

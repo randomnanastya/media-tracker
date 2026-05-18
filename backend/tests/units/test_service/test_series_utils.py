@@ -1,4 +1,4 @@
-from app.models import Media, MediaType, Series
+from app.models.media import Media, MediaType, Series
 from app.services.series_utils import update_existing_series
 
 

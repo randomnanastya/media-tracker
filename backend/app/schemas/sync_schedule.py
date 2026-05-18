@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models import SchedulePreset, SyncJobType
+from app.models.schedule import SchedulePreset, SyncJobType
 
 
 class SyncScheduleRequest(BaseModel):

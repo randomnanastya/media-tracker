@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from app.models import Episode, Media, MediaType, Season, Series, SeriesStatus
+from app.models.media import Episode, Media, MediaType, Season, Series, SeriesStatus
 from tests.factories import SeriesDictFactory, SonarrEpisodeDictFactory
 
 

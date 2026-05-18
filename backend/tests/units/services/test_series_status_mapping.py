@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.models import SeriesStatus
+from app.models.media import SeriesStatus
 from app.services.series_utils import (
     map_jellyfin_series_status,
     map_sonarr_series_status,

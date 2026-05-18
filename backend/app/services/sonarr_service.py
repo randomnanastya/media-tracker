@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 
 from app.client.sonarr_client import fetch_sonarr_episodes, fetch_sonarr_series
 from app.config import logger
-from app.models import Episode, Season, Series, ServiceType
+from app.models.media import Episode, Season, Series
+from app.models.schedule import ServiceType
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.series_utils import (
     create_new_series,

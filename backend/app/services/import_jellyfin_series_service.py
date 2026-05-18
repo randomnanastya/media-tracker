@@ -11,7 +11,8 @@ from app.client.jellyfin_client import (
     fetch_jellyfin_series,
 )
 from app.config import logger
-from app.models import Episode, Season, Series, ServiceType
+from app.models.media import Episode, Season, Series
+from app.models.schedule import ServiceType
 from app.schemas.jellyfin import JellyfinImportSeriesResponse
 from app.services.series_utils import (
     create_new_series,

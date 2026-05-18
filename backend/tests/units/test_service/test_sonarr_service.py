@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from app.exceptions.client_errors import ClientError
-from app.models import Episode, Media, MediaType, Season, Series, SeriesStatus
+from app.models.media import Episode, Media, MediaType, Season, Series, SeriesStatus
 from app.schemas.error_codes import SonarrErrorCode
 from app.schemas.sonarr import SonarrImportResponse
 from app.services.sonarr_service import import_sonarr_series

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.client.jellyfin_client import fetch_jellyfin_movies
 from app.config import logger
-from app.models import ServiceType
+from app.models.schedule import ServiceType
 from app.schemas.jellyfin import JellyfinImportMoviesResponse
 from app.services.movie_utils import (
     create_new_movie,
