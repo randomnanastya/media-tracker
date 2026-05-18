@@ -20,6 +20,14 @@ export interface MediaListResponse {
   total: number;
 }
 
+export interface EpisodeDetail {
+  number: number;
+  title: string;
+  air_date: string | null;
+  still_url: string | null;
+  watch_status: WatchStatus | null;
+}
+
 export interface SeasonDetail {
   number: number;
   poster_url: string | null;
@@ -27,6 +35,7 @@ export interface SeasonDetail {
   release_date: string | null;
   total_episodes: number;
   watched_episodes: number;
+  episodes: EpisodeDetail[];
 }
 
 export interface MediaDetailResponse {
