@@ -511,6 +511,37 @@ async def test_get_media_detail_episode_air_date_null(client_with_db, session_fo
     assert ep["air_date"] is None
 
 
+async def test_get_media_detail_episode_returns_still_url(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="Still URL Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = EpisodeFactory(
+        season_id=season.id,
+        number=1,
+        title="Ep With Still",
+        still_url="https://image.tmdb.org/t/p/w300/abc.jpg",
+    )
+    session_for_test.add(episode)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["still_url"] == "https://image.tmdb.org/t/p/w300/abc.jpg"
+
+
+async def test_get_media_detail_episode_still_url_null(client_with_db, session_for_test):
+    series = await create_series(session_for_test, title="No Still URL Series")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    episode = EpisodeFactory(season_id=season.id, number=1, title="Ep No Still", still_url=None)
+    session_for_test.add(episode)
+    await session_for_test.flush()
+
+    resp = await client_with_db.get(f"/api/v1/media/{series.id}")
+    assert resp.status_code == 200
+    ep = resp.json()["seasons"][0]["episodes"][0]
+    assert ep["still_url"] is None
+
+
 async def test_get_media_detail_movie_has_no_seasons(client_with_db, session_for_test):
     movie = await create_movie(session_for_test, title="Just a Movie")
 

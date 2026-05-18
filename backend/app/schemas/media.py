@@ -8,6 +8,7 @@ class EpisodeDetail(BaseModel):
     number: int
     title: str
     air_date: datetime | None = None
+    still_url: str | None = None
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
 
 
