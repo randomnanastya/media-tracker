@@ -1,3 +1,9 @@
+## [1.13.0](https://github.com/randomnanastya/media-tracker/compare/v1.12.1...v1.13.0) (2026-05-19)
+
+### Features
+
+* **sync:** stable jellyfin matching via external IDs with heal-on-match ([de844bb](https://github.com/randomnanastya/media-tracker/commit/de844bb7f1cc3d0b9edea288b9db83b0a559af8e))
+
 ## [1.12.1](https://github.com/randomnanastya/media-tracker/compare/v1.12.0...v1.12.1) (2026-05-18)
 
 ### Bug Fixes
