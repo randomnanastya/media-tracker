@@ -7,6 +7,7 @@ from app.models.media import Movie
 from app.models.schedule import ServiceType
 from app.models.user import User, WatchHistory, WatchStatus
 from app.schemas.jellyfin import JellyfinWatchedMoviesResponse
+from app.services.movie_utils import resolve_movie_from_indexes
 from app.services.service_config_repository import get_decrypted_config
 from app.utils.datetime import parse_datetime
 
@@ -120,28 +121,38 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                 total_movies_processed += 1
 
                 # Find movie into saved data
-                movie: Movie | None = None
                 jellyfin_id = str(movie_data.get("Id")) if movie_data.get("Id") else None
+                provider_ids = movie_data.get("ProviderIds", {}) or {}
+                tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
+                imdb_id = provider_ids.get("Imdb") or None
 
-                if jellyfin_id and jellyfin_id in movies_by_jellyfin_id:
-                    movie = movies_by_jellyfin_id[jellyfin_id]
-                else:
-                    provider_ids = movie_data.get("ProviderIds", {})
-                    tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
-                    imdb_id = provider_ids.get("Imdb")
-
-                    if tmdb_id and tmdb_id in movies_by_tmdb_id:
-                        movie = movies_by_tmdb_id[tmdb_id]
-                    elif imdb_id and imdb_id in movies_by_imdb_id:
-                        movie = movies_by_imdb_id[imdb_id]
-
+                movie = resolve_movie_from_indexes(
+                    jellyfin_id=jellyfin_id,
+                    tmdb_id=tmdb_id,
+                    imdb_id=imdb_id,
+                    by_jellyfin_id=movies_by_jellyfin_id,
+                    by_tmdb_id=movies_by_tmdb_id,
+                    by_imdb_id=movies_by_imdb_id,
+                )
                 if not movie:
-                    logger.debug(
-                        "Movie not found in database: %s (Jellyfin ID: %s)",
+                    logger.warning(
+                        "Movie not found in DB: name=%s jellyfin_id=%s tmdb=%s imdb=%s",
                         movie_data.get("Name"),
                         jellyfin_id,
+                        tmdb_id,
+                        imdb_id,
                     )
                     continue
+
+                if jellyfin_id and movie.jellyfin_id != jellyfin_id:
+                    logger.info(
+                        "Healing Movie.jellyfin_id: id=%s old=%s new=%s",
+                        movie.id,
+                        movie.jellyfin_id,
+                        jellyfin_id,
+                    )
+                    movie.jellyfin_id = jellyfin_id
+                    movies_by_jellyfin_id[jellyfin_id] = movie
 
                 # Data about watching
                 user_data = movie_data.get("UserData", {})
@@ -196,19 +207,22 @@ async def sync_jellyfin_watched_movies(session: AsyncSession) -> JellyfinWatched
                     logger.debug("Added: %s", movie.id)
 
             # 4b. Dropped detection: фильмы, исчезнувшие из Jellyfin
-            jellyfin_media_ids = set()
+            jellyfin_media_ids: set[int] = set()
             for movie_data in movies_data:
-                jellyfin_id = str(movie_data.get("Id")) if movie_data.get("Id") else None
-                if jellyfin_id and jellyfin_id in movies_by_jellyfin_id:
-                    jellyfin_media_ids.add(movies_by_jellyfin_id[jellyfin_id].id)
-                else:
-                    provider_ids = movie_data.get("ProviderIds", {})
-                    tmdb_id = str(provider_ids.get("Tmdb")) if provider_ids.get("Tmdb") else None
-                    imdb_id = provider_ids.get("Imdb")
-                    if tmdb_id and tmdb_id in movies_by_tmdb_id:
-                        jellyfin_media_ids.add(movies_by_tmdb_id[tmdb_id].id)
-                    elif imdb_id and imdb_id in movies_by_imdb_id:
-                        jellyfin_media_ids.add(movies_by_imdb_id[imdb_id].id)
+                jf_id = str(movie_data.get("Id")) if movie_data.get("Id") else None
+                pids = movie_data.get("ProviderIds", {}) or {}
+                t_id = str(pids.get("Tmdb")) if pids.get("Tmdb") else None
+                i_id = pids.get("Imdb") or None
+                resolved = resolve_movie_from_indexes(
+                    jellyfin_id=jf_id,
+                    tmdb_id=t_id,
+                    imdb_id=i_id,
+                    by_jellyfin_id=movies_by_jellyfin_id,
+                    by_tmdb_id=movies_by_tmdb_id,
+                    by_imdb_id=movies_by_imdb_id,
+                )
+                if resolved:
+                    jellyfin_media_ids.add(resolved.id)
 
             for media_id, wh in current_watches.items():
                 if (

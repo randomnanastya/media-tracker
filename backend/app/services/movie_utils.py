@@ -217,3 +217,21 @@ def update_existing_movie(
         logger.info("Updated movie '%s' with new data %s", title, source_info)
 
     return was_updated
+
+
+def resolve_movie_from_indexes(
+    *,
+    jellyfin_id: str | None,
+    tmdb_id: str | None,
+    imdb_id: str | None,
+    by_jellyfin_id: dict[str, Movie],
+    by_tmdb_id: dict[str, Movie],
+    by_imdb_id: dict[str, Movie],
+) -> Movie | None:
+    if jellyfin_id and jellyfin_id in by_jellyfin_id:
+        return by_jellyfin_id[jellyfin_id]
+    if tmdb_id and tmdb_id in by_tmdb_id:
+        return by_tmdb_id[tmdb_id]
+    if imdb_id and imdb_id in by_imdb_id:
+        return by_imdb_id[imdb_id]
+    return None

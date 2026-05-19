@@ -281,3 +281,21 @@ def update_existing_series(
         ids_info = f" ({', '.join(updated_ids)})" if updated_ids else ""
         logger.info("Updated series '%s'%s%s", title, ids_info, source_info)
     return was_updated
+
+
+def resolve_series_from_indexes(
+    *,
+    jellyfin_id: str | None,
+    tvdb_id: str | None,
+    imdb_id: str | None,
+    by_jellyfin_id: dict[str, Series],
+    by_tvdb_id: dict[str, Series],
+    by_imdb_id: dict[str, Series],
+) -> Series | None:
+    if jellyfin_id and jellyfin_id in by_jellyfin_id:
+        return by_jellyfin_id[jellyfin_id]
+    if tvdb_id and tvdb_id in by_tvdb_id:
+        return by_tvdb_id[tvdb_id]
+    if imdb_id and imdb_id in by_imdb_id:
+        return by_imdb_id[imdb_id]
+    return None

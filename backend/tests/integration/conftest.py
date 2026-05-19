@@ -178,14 +178,21 @@ async def create_watch_history(
     return wh
 
 
-async def create_series(session, jellyfin_id=None, tmdb_id=None, imdb_id=None, title="Series"):
+async def create_series(
+    session, jellyfin_id=None, tmdb_id=None, imdb_id=None, tvdb_id=None, title="Series"
+):
     """Создает тестовый сериал."""
     media = MediaFactory(media_type=MediaType.SERIES, title=title)
     session.add(media)
     await session.flush()
 
     series = SeriesFactory(
-        id=media.id, jellyfin_id=jellyfin_id, tmdb_id=tmdb_id, imdb_id=imdb_id, media=media
+        id=media.id,
+        jellyfin_id=jellyfin_id,
+        tmdb_id=tmdb_id,
+        imdb_id=imdb_id,
+        tvdb_id=tvdb_id,
+        media=media,
     )
     session.add(series)
     media.series = series

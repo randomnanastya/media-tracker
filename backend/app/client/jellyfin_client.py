@@ -217,7 +217,7 @@ async def fetch_jellyfin_episodes_for_user_all(
                 params={
                     "IncludeItemTypes": "Episode",
                     "Recursive": "true",
-                    "Fields": "UserData",
+                    "Fields": "UserData,ProviderIds,ParentIndexNumber,IndexNumber,SeriesId,SeasonId",
                     "ImageTypeLimit": "0",
                 },
                 limit=100,
@@ -228,3 +228,42 @@ async def fetch_jellyfin_episodes_for_user_all(
         except Exception as e:
             await _handle_jellyfin_error(e)
             raise
+
+
+async def fetch_jellyfin_series_by_ids(
+    url: str,
+    api_key: str,
+    user_jellyfin_id: str,
+    series_jellyfin_ids: list[str],
+) -> list[dict[str, Any]]:
+    if not series_jellyfin_ids:
+        return []
+
+    chunk_size = 50
+    headers = {"X-Emby-Token": api_key}
+    base_url = f"{url}/Users/{user_jellyfin_id}/Items"
+    all_items: list[dict[str, Any]] = []
+
+    async with httpx.AsyncClient() as client:
+        try:
+            for i in range(0, len(series_jellyfin_ids), chunk_size):
+                chunk = series_jellyfin_ids[i : i + chunk_size]
+                items = await fetch_paginated(
+                    client=client,
+                    url=base_url,
+                    headers=headers,
+                    params={
+                        "Ids": ",".join(chunk),
+                        "IncludeItemTypes": "Series",
+                        "Fields": "ProviderIds",
+                        "ImageTypeLimit": "0",
+                    },
+                    limit=100,
+                    timeout=60.0,
+                    service_name=f"Jellyfin Series by IDs (chunk {i // chunk_size + 1})",
+                )
+                all_items.extend(items)
+        except Exception as e:
+            await _handle_jellyfin_error(e)
+            raise
+    return all_items
