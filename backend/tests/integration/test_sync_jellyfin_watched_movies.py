@@ -344,6 +344,50 @@ async def test_error_handling(session_no_expire, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_sync_heals_stale_jellyfin_id_via_tmdb(session_no_expire, monkeypatch):
+    """
+    Jellyfin_id в БД устарел, но tmdb_id совпадает — фильм должен быть найден
+    и jellyfin_id обновлён (heal-on-match).
+    """
+    _ = await create_user(session_no_expire, username="heal_user", jellyfin_user_id="jf_heal_1")
+    movie = await create_movie(
+        session_no_expire,
+        jellyfin_id="old-jellyfin-id",
+        tmdb_id="tmdb-heal-100",
+        imdb_id=None,
+    )
+    await session_no_expire.commit()
+
+    async def mock_fetch(url, api_key, jellyfin_user_id):
+        return [
+            JellyfinMovieDictFactory(
+                Id="new-jellyfin-id",
+                Name="Healed Movie",
+                ProviderIds={"Tmdb": "tmdb-heal-100"},
+                UserData={"Played": True, "LastPlayedDate": "2024-06-01T12:00:00Z"},
+            )
+        ]
+
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_movies_service.fetch_jellyfin_movies_for_user_all",
+        mock_fetch,
+    )
+
+    result = await sync_jellyfin_watched_movies(session_no_expire)
+    await session_no_expire.commit()
+
+    await session_no_expire.refresh(movie)
+
+    assert result.watched_added == 1
+    assert movie.jellyfin_id == "new-jellyfin-id"
+
+    watches = (await session_no_expire.execute(select(WatchHistory))).scalars().all()
+    assert len(watches) == 1
+    assert watches[0].media_id == movie.id
+    assert watches[0].status == WatchStatus.WATCHED
+
+
+@pytest.mark.asyncio
 async def test_no_movies_found(session_no_expire, monkeypatch):
     """Тест случая, когда у пользователя нет фильмов в Jellyfin"""
     _ = await create_user(session_no_expire, username="empty", jellyfin_user_id="jf_10")

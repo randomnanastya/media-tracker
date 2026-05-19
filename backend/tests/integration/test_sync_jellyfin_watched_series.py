@@ -18,6 +18,24 @@ def mock_jellyfin_config(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def mock_fetch_series_by_ids_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Default stub for fetch_jellyfin_series_by_ids.
+    Returns empty ProviderIds for every requested series ID so existing tests
+    (where series are already matched by jellyfin_id in DB) continue to pass.
+    Tests that need custom behaviour override this via their own monkeypatch.setattr.
+    """
+
+    async def _default(url, api_key, user_jellyfin_id, series_jellyfin_ids):
+        return [{"Id": sid, "ProviderIds": {}} for sid in series_jellyfin_ids]
+
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_series_by_ids",
+        _default,
+    )
+
+
 async def test_sync_adds_watched_episode(session_no_expire, monkeypatch):
     """
     Тест добавления просмотренной серии.
@@ -125,11 +143,12 @@ async def test_sync_updates_existing_watched_episode(session_no_expire, monkeypa
                 Name="Episode to Update",
                 SeriesId="series_2",
                 SeasonId="season_2",
+                IndexNumber=1,
                 ParentIndexNumber=1,
                 ProviderIds={"Tmdb": "tmdb_200"},
                 UserData={
                     "Played": True,
-                    "LastPlayedDate": "2024-01-15T20:00:00Z",  # Новая дата просмотра
+                    "LastPlayedDate": "2024-01-15T20:00:00Z",
                 },
             ),
         ]
@@ -197,6 +216,7 @@ async def test_sync_marks_episode_unwatched(session_no_expire, monkeypatch):
                 Name="Episode to Unwatch",
                 SeriesId="series_3",
                 SeasonId="season_3",
+                IndexNumber=1,
                 ParentIndexNumber=1,
                 ProviderIds={"Tmdb": "tmdb_300"},
                 UserData={"Played": False},
@@ -262,6 +282,7 @@ async def test_sync_multiple_episodes_for_user(session_no_expire, monkeypatch):
                 Name="Episode 1",
                 SeriesId="series_4",
                 SeasonId="season_4",
+                IndexNumber=1,
                 ParentIndexNumber=1,
                 ProviderIds={"Tmdb": "tmdb_400"},
                 UserData={"Played": True, "LastPlayedDate": "2024-01-01T10:00:00Z"},
@@ -601,3 +622,117 @@ async def test_bulk_insert_of_watched_episodes(session_no_expire, monkeypatch):
     watched_episode_ids = {w.episode_id for w in watches}
     for episode in episodes:
         assert episode.id in watched_episode_ids
+
+
+@pytest.mark.asyncio
+async def test_sync_heals_stale_series_jellyfin_id_via_tvdb(session_no_expire, monkeypatch):
+    """
+    Series.jellyfin_id in DB is stale ("old-series").
+    Jellyfin returns episode with SeriesId="new-series".
+    fetch_jellyfin_series_by_ids maps "new-series" → Tvdb="tvdb-999" that matches DB series.
+    After sync: series.jellyfin_id must be updated to "new-series" and watched_added == 1.
+    """
+    _ = await create_user(session_no_expire, username="heal_s", jellyfin_user_id="jf_hs_1")
+    series = await create_series(
+        session_no_expire,
+        title="Healed Series",
+        jellyfin_id="old-series",
+        tvdb_id="tvdb-999",
+    )
+    season = await create_season(
+        session_no_expire, series_id=series.id, number=1, jellyfin_id="season-heal"
+    )
+    _ = await create_episode(
+        session_no_expire, season_id=season.id, number=1, title="Ep1", jellyfin_id="old-ep"
+    )
+    await session_no_expire.commit()
+
+    async def mock_fetch_episodes(url, api_key, jellyfin_user_id):
+        return [
+            JellyfinSeriesDictFactory(
+                Id="new-ep-id",
+                SeriesId="new-series",
+                SeasonId="new-season-id",
+                ParentIndexNumber=1,
+                IndexNumber=1,
+                UserData={"Played": True, "LastPlayedDate": "2024-06-01T12:00:00Z"},
+            )
+        ]
+
+    async def mock_fetch_series_by_ids(url, api_key, user_jellyfin_id, series_jellyfin_ids):
+        return [{"Id": "new-series", "ProviderIds": {"Tvdb": "tvdb-999"}}]
+
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
+        mock_fetch_episodes,
+    )
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_series_by_ids",
+        mock_fetch_series_by_ids,
+    )
+
+    result = await sync_jellyfin_watched_series(session_no_expire)
+    await session_no_expire.commit()
+
+    await session_no_expire.refresh(series)
+    assert series.jellyfin_id == "new-series"
+    assert result.watched_added == 1
+
+
+@pytest.mark.asyncio
+async def test_sync_heals_stale_episode_jellyfin_id_via_season_ep(session_no_expire, monkeypatch):
+    """
+    Episode.jellyfin_id in DB is stale ("old-ep-2").
+    Series is matched correctly by its unchanged jellyfin_id.
+    Jellyfin returns episode Id="new-ep-2" for S01E02.
+    After sync: episode.jellyfin_id must be updated to "new-ep-2" and watched_added == 1.
+    """
+    _ = await create_user(session_no_expire, username="heal_ep", jellyfin_user_id="jf_he_1")
+    series = await create_series(
+        session_no_expire,
+        title="Stable Series",
+        jellyfin_id="jf-series-stable",
+        tvdb_id="tvdb-stable",
+    )
+    season = await create_season(
+        session_no_expire, series_id=series.id, number=1, jellyfin_id="season-stable"
+    )
+    episode = await create_episode(
+        session_no_expire,
+        season_id=season.id,
+        number=2,
+        title="Ep2",
+        jellyfin_id="old-ep-2",
+    )
+    await session_no_expire.commit()
+
+    async def mock_fetch_episodes(url, api_key, jellyfin_user_id):
+        return [
+            JellyfinSeriesDictFactory(
+                Id="new-ep-2",
+                SeriesId="jf-series-stable",
+                SeasonId="season-stable",
+                ParentIndexNumber=1,
+                IndexNumber=2,
+                UserData={"Played": True, "LastPlayedDate": "2024-07-01T12:00:00Z"},
+            )
+        ]
+
+    async def mock_fetch_series_by_ids(url, api_key, user_jellyfin_id, series_jellyfin_ids):
+        return [{"Id": "jf-series-stable", "ProviderIds": {}}]
+
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_episodes_for_user_all",
+        mock_fetch_episodes,
+    )
+    monkeypatch.setattr(
+        "app.services.sync_jellyfin_watched_series_service.fetch_jellyfin_series_by_ids",
+        mock_fetch_series_by_ids,
+    )
+
+    result = await sync_jellyfin_watched_series(session_no_expire)
+    await session_no_expire.commit()
+
+    await session_no_expire.refresh(episode)
+    assert episode.jellyfin_id == "new-ep-2"
+    assert result.watched_added == 1
