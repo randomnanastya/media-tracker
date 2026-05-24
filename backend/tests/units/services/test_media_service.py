@@ -27,6 +27,7 @@ def _movie_row(
     title: str = "Test Movie",
     movie_status: str | None = None,
     movie_wh_user_id: int | None = None,
+    movie_is_manual: bool = False,
 ) -> dict:
     return {
         "id": media_id,
@@ -37,6 +38,7 @@ def _movie_row(
         "poster_url": None,
         "rating": 7.5,
         "movie_status": movie_status,
+        "movie_is_manual": movie_is_manual,
         "movie_wh_user_id": movie_wh_user_id,
         "total_count": None,
         "watched_count": None,
@@ -294,3 +296,19 @@ class TestComputeSeriesStatus:
 
     def test_total_one_episode_watched_returns_watched(self) -> None:
         assert compute_series_status(watched=1, watching=0, dropped=0, total=1) == "watched"
+
+
+class TestMovieIsManual:
+    async def test_movie_is_manual_true_propagates(self) -> None:
+        """Когда movie_is_manual=True в строке БД — items[0].is_manual должен быть True."""
+        row = _movie_row(movie_is_manual=True)
+        session = _make_session([row])
+        result = await get_media_list(session)
+        assert result.items[0].is_manual is True
+
+    async def test_movie_is_manual_default_false(self) -> None:
+        """Когда movie_is_manual не указан (по умолчанию False) — items[0].is_manual False."""
+        row = _movie_row()
+        session = _make_session([row])
+        result = await get_media_list(session)
+        assert result.items[0].is_manual is False
