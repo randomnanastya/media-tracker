@@ -10,6 +10,7 @@ class EpisodeDetail(BaseModel):
     air_date: datetime | None = None
     still_url: str | None = None
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
+    is_manual: bool = False
 
 
 class SeasonDetail(BaseModel):
@@ -33,6 +34,7 @@ class MediaItem(BaseModel):
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
     total_episodes: int | None = None
     watched_episodes: int | None = None
+    is_manual: bool = False
 
 
 class MediaListResponse(BaseModel):
@@ -52,6 +54,8 @@ class MediaDetailResponse(BaseModel):
     status: str | None = None
     tmdb_rating_percent: int | None = None
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
+    is_manual: bool = False
+    watched_at: datetime | None = None
     tmdb_id: str | None = None
     imdb_id: str | None = None
     tvdb_id: str | None = None

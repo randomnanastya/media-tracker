@@ -52,8 +52,9 @@ async def engine_for_test():
 
 @pytest.fixture
 async def session_for_test(engine_for_test):
-    """Базовая сессия для тестов."""
-    async with AsyncSession(engine_for_test) as session:
+    """Базовая сессия для тестов. expire_on_commit=False чтобы атрибуты
+    были доступны после commit без async refresh."""
+    async with AsyncSession(engine_for_test, expire_on_commit=False) as session:
         yield session
 
 

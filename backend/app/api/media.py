@@ -30,6 +30,9 @@ async def list_media(
 @router.get("/media/{media_id}", response_model=MediaDetailResponse)
 async def get_media_detail(
     media_id: int,
+    jellyfin_user_id: str | None = Query(default=None, description="Jellyfin user ID (UUID)"),
     session: AsyncSession = Depends(get_session),
 ) -> MediaDetailResponse:
-    return await get_media_detail_by_id(session=session, media_id=media_id)
+    return await get_media_detail_by_id(
+        session=session, media_id=media_id, jellyfin_user_id=jellyfin_user_id
+    )

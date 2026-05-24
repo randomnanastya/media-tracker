@@ -81,6 +81,7 @@ async def get_media_list(
             COALESCE(mov.poster_url, s.poster_url) AS poster_url,
             COALESCE(mov.rating_value, s.rating_value) AS rating,
             movie_wh.status AS movie_status,
+            movie_wh.is_manual AS movie_is_manual,
             movie_wh.user_id AS movie_wh_user_id,
             ep_stats.total_count,
             ep_stats.watched_count,
@@ -165,6 +166,7 @@ async def get_media_list(
                 watched_episodes=(
                     (row["watched_count"] or 0) if media_type_val == "SERIES" else None
                 ),
+                is_manual=bool(row["movie_is_manual"]) if media_type_val != "SERIES" else False,
             )
         )
 
@@ -174,7 +176,15 @@ async def get_media_list(
 async def get_media_detail_by_id(
     session: AsyncSession,
     media_id: int,
+    jellyfin_user_id: str | None = None,
 ) -> MediaDetailResponse:
+    internal_user_id: int | None = None
+    if jellyfin_user_id:
+        result = await session.execute(
+            select(User.id).where(User.jellyfin_user_id == jellyfin_user_id)
+        )
+        internal_user_id = result.scalar_one_or_none()
+
     query = text(
         """
         SELECT
@@ -193,6 +203,8 @@ async def get_media_detail_by_id(
             mov.status AS movie_release_status,
             s.status AS series_status,
             movie_wh.status AS movie_status,
+            movie_wh.is_manual AS movie_is_manual,
+            movie_wh.watched_at AS movie_watched_at,
             ep_stats.total_count,
             ep_stats.watched_count,
             ep_stats.watching_count,
@@ -203,6 +215,7 @@ async def get_media_detail_by_id(
         LEFT JOIN watch_history movie_wh
             ON movie_wh.media_id = m.id
             AND movie_wh.episode_id IS NULL
+            AND (CAST(:user_id AS INTEGER) IS NULL OR movie_wh.user_id = CAST(:user_id AS INTEGER))
         LEFT JOIN LATERAL (
             SELECT
                 COUNT(e.id) AS total_count,
@@ -218,7 +231,11 @@ async def get_media_detail_by_id(
         """
     )
 
-    rows = (await session.execute(query, {"media_id": media_id})).mappings().all()
+    rows = (
+        (await session.execute(query, {"media_id": media_id, "user_id": internal_user_id}))
+        .mappings()
+        .all()
+    )
 
     if not rows:
         raise HTTPException(status_code=404, detail="Media not found")
@@ -275,7 +292,8 @@ async def get_media_detail_by_id(
                     WHEN bool_or(wh.status = 'DROPPED') THEN 'DROPPED'
                     WHEN bool_or(wh.status = 'PLANNED') THEN 'PLANNED'
                     ELSE NULL
-                END AS episode_status
+                END AS episode_status,
+                bool_or(wh.is_manual) AS episode_is_manual
             FROM seasons sea
             JOIN episodes e ON e.season_id = sea.id
             LEFT JOIN watch_history wh ON wh.episode_id = e.id
@@ -303,6 +321,11 @@ async def get_media_detail_by_id(
                     still_url=ep["still_url"],
                     watch_status=cast(
                         Literal["watched", "watching", "planned", "dropped"] | None, ep_status
+                    ),
+                    is_manual=(
+                        bool(ep["episode_is_manual"])
+                        if ep["episode_is_manual"] is not None
+                        else False
                     ),
                 )
             )
@@ -336,6 +359,8 @@ async def get_media_detail_by_id(
         status=status_val,
         tmdb_rating_percent=_to_percent(row["rating_value"]),
         watch_status=watch_status_typed,
+        is_manual=bool(row["movie_is_manual"]) if media_type_val == "MOVIE" else False,
+        watched_at=row["movie_watched_at"] if media_type_val == "MOVIE" else None,
         tmdb_id=row["tmdb_id"],
         imdb_id=row["imdb_id"],
         tvdb_id=tvdb_id,

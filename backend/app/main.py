@@ -7,7 +7,18 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, jellyfin, media, radarr, schedule, settings, sonarr, sync
+from app.api import (
+    auth,
+    jellyfin,
+    media,
+    radarr,
+    schedule,
+    settings,
+    sonarr,
+    sync,
+    users,
+    watch_history,
+)
 from app.config import logger
 from app.database import AsyncSessionLocal
 from app.dependencies.auth import get_current_user
@@ -104,6 +115,8 @@ def create_app() -> FastAPI:
     app.include_router(schedule.router, dependencies=[Depends(get_current_user)])
     app.include_router(sync.router, dependencies=[Depends(get_current_user)])
     app.include_router(media.router, dependencies=[Depends(get_current_user)])
+    app.include_router(users.router, dependencies=[Depends(get_current_user)])
+    app.include_router(watch_history.router, dependencies=[Depends(get_current_user)])
 
     # Register exception handlers
     register_exception_handlers(app)
