@@ -1,3 +1,9 @@
+## [1.14.0](https://github.com/randomnanastya/media-tracker/compare/v1.13.0...v1.14.0) (2026-05-24)
+
+### Features
+
+* **watch:** add manual watch status endpoints with is_manual sync protection ([ba67120](https://github.com/randomnanastya/media-tracker/commit/ba671201feeaafd8c791cc65a9d5c4a6ca1c34f6))
+
 ## [1.13.0](https://github.com/randomnanastya/media-tracker/compare/v1.12.1...v1.13.0) (2026-05-19)
 
 ### Features
