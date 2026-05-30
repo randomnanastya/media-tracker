@@ -264,6 +264,7 @@ async def get_media_detail_by_id(
         seasons_query = text(
             """
             SELECT
+                sea.id,
                 sea.number,
                 sea.poster_url,
                 sea.vote_average,
@@ -282,10 +283,12 @@ async def get_media_detail_by_id(
             """
             SELECT
                 sea.number AS season_number,
+                e.id AS episode_id,
                 e.number AS episode_number,
                 e.title,
                 e.air_date,
                 e.still_url,
+                MAX(wh.watched_at) AS watched_at,
                 CASE
                     WHEN bool_or(wh.status = 'WATCHED') THEN 'WATCHED'
                     WHEN bool_or(wh.status = 'WATCHING') THEN 'WATCHING'
@@ -315,10 +318,11 @@ async def get_media_detail_by_id(
             ep_status = raw_ep_status.lower() if raw_ep_status else None
             episodes_by_season[ep["season_number"]].append(
                 EpisodeDetail(
-                    number=ep["episode_number"],
+                    id=ep["episode_id"],
+                    episode_number=ep["episode_number"],
                     title=ep["title"],
                     air_date=ep["air_date"],
-                    still_url=ep["still_url"],
+                    thumbnail_url=ep["still_url"],
                     watch_status=cast(
                         Literal["watched", "watching", "planned", "dropped"] | None, ep_status
                     ),
@@ -327,11 +331,13 @@ async def get_media_detail_by_id(
                         if ep["episode_is_manual"] is not None
                         else False
                     ),
+                    watched_at=ep["watched_at"],
                 )
             )
 
         seasons = [
             SeasonDetail(
+                id=s["id"],
                 number=s["number"],
                 poster_url=s["poster_url"],
                 vote_average=s["vote_average"],

@@ -5,15 +5,19 @@ from pydantic import BaseModel
 
 
 class EpisodeDetail(BaseModel):
-    number: int
+    id: int
+    episode_number: int
     title: str
     air_date: datetime | None = None
-    still_url: str | None = None
+    thumbnail_url: str | None = None
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
     is_manual: bool = False
+    watched_at: datetime | None = None
+    runtime_minutes: int | None = None
 
 
 class SeasonDetail(BaseModel):
+    id: int
     number: int
     poster_url: str | None = None
     vote_average: float | None = None
