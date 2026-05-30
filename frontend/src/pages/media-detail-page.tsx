@@ -9,7 +9,10 @@ import type { MediaType } from "../types/media";
 import { MediaPoster } from "../features/media/media-poster";
 import { MediaStatusBadge } from "../features/media/media-status-badge";
 import { MediaSeasonsSection } from "../features/media/media-seasons-section";
+import { MovieWatchToggle } from "../features/media/movie-watch-toggle";
+import { MediaActionsMenu } from "../features/media/media-actions-menu";
 import { useDynamicCrumb } from "../contexts/breadcrumb-context";
+import { useJellyfinUser } from "../contexts/jellyfin-user-context";
 
 function getExternalUrl(label: string, value: string, mediaType: MediaType): string | null {
   if (label === "TMDB")
@@ -25,6 +28,7 @@ export function MediaDetailPage() {
   const isValidId = !!id && !isNaN(numericId);
 
   const { setDynamicCrumb } = useDynamicCrumb();
+  const { selectedUser } = useJellyfinUser();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["media", numericId],
@@ -212,6 +216,23 @@ export function MediaDetailPage() {
                 ))}
               </div>
             )}
+
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {data.media_type === "movie" && (
+                <MovieWatchToggle
+                  mediaId={data.id}
+                  watched={data.watch_status === "watched"}
+                  isManual={data.is_manual}
+                  watchedAt={data.watched_at}
+                  disabled={!selectedUser}
+                />
+              )}
+              <MediaActionsMenu
+                mediaId={data.id}
+                mediaType={data.media_type}
+                isManual={data.is_manual}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -226,7 +247,7 @@ export function MediaDetailPage() {
       )}
 
       {data.media_type === "series" && data.seasons && data.seasons.length > 0 && (
-        <MediaSeasonsSection seasons={data.seasons} />
+        <MediaSeasonsSection seasons={data.seasons} mediaId={numericId} />
       )}
     </div>
   );
