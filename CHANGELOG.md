@@ -1,3 +1,13 @@
+## [1.15.0](https://github.com/randomnanastya/media-tracker/compare/v1.14.0...v1.15.0) (2026-05-30)
+
+### Features
+
+* **media:** extend episode and season detail schemas for watch status ([4828737](https://github.com/randomnanastya/media-tracker/commit/4828737a5a6cf7b3064871d03f8c949a33626fd2))
+
+### Bug Fixes
+
+* **media:** remove runtime_minutes from schema, update integration tests ([bb4a507](https://github.com/randomnanastya/media-tracker/commit/bb4a5078b2b42ff0ba5000a5ca26ff370a197b20))
+
 ## [1.14.0](https://github.com/randomnanastya/media-tracker/compare/v1.13.0...v1.14.0) (2026-05-24)
 
 ### Features
