@@ -25,15 +25,14 @@ export function EpisodeStatusToggle({
 }: EpisodeStatusToggleProps) {
   const title = getTitle(watched, isManual, disabled);
 
-  const ringClass = isManual ? "ring-2 ring-[#96551d] ring-offset-1" : "";
   const hoverClass = !disabled ? "hover:ring-2 hover:ring-mt-cta/50 hover:ring-offset-1" : "";
   const disabledClass = disabled ? "opacity-50 cursor-not-allowed" : "";
 
   let circleClass: string;
   if (watched) {
-    circleClass = `bg-mt-cta rounded-full w-5 h-5 flex items-center justify-center ${ringClass} ${hoverClass}`;
+    circleClass = `bg-mt-cta rounded-full w-5 h-5 flex items-center justify-center ${hoverClass}`;
   } else {
-    circleClass = `border-2 border-[#2a2520]/30 rounded-full w-5 h-5 flex items-center justify-center ${ringClass} ${hoverClass}`;
+    circleClass = `border-2 border-[#2a2520]/30 rounded-full w-5 h-5 flex items-center justify-center ${hoverClass}`;
   }
 
   return (
@@ -44,17 +43,21 @@ export function EpisodeStatusToggle({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      className={`flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffb826]/60 rounded-full transition-all ${disabledClass}`}
+      className={`relative flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffb826]/60 rounded-full transition-all ${disabledClass}`}
     >
       <span className={circleClass}>
         {isLoading ? (
           <Loader2 size={12} className="animate-spin text-[#2a2520]/50" />
         ) : watched ? (
           <Check size={12} className="text-[#2a2520]" />
-        ) : isManual ? (
-          <span className="text-[#96551d] text-[10px] leading-none font-bold select-none">–</span>
         ) : null}
       </span>
+      {isManual && !isLoading && (
+        <span
+          className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#96551d] ring-1 ring-white"
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 }
