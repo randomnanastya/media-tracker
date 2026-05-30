@@ -4,9 +4,10 @@ import { MediaSeasonRow } from "./media-season-row";
 
 interface Props {
   seasons: SeasonDetail[];
+  mediaId: number;
 }
 
-export function MediaSeasonsSection({ seasons }: Props) {
+export function MediaSeasonsSection({ seasons, mediaId }: Props) {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const toggle = (n: number) => setExpanded(prev => {
     const next = new Set(prev);
@@ -38,6 +39,7 @@ export function MediaSeasonsSection({ seasons }: Props) {
           <MediaSeasonRow
             key={s.number}
             season={s}
+            mediaId={mediaId}
             isExpanded={expanded.has(s.number)}
             onToggle={() => toggle(s.number)}
           />

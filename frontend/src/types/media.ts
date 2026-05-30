@@ -21,14 +21,19 @@ export interface MediaListResponse {
 }
 
 export interface EpisodeDetail {
-  number: number;
+  id: number;
+  episode_number: number;
   title: string;
   air_date: string | null;
-  still_url: string | null;
+  thumbnail_url: string | null;
   watch_status: WatchStatus | null;
+  is_manual: boolean;
+  watched_at: string | null;
+  runtime_minutes: number | null;
 }
 
 export interface SeasonDetail {
+  id: number;
   number: number;
   poster_url: string | null;
   vote_average: number | null;
@@ -50,6 +55,8 @@ export interface MediaDetailResponse {
   status: string | null;
   tmdb_rating_percent: number | null;
   watch_status: WatchStatus | null;
+  is_manual: boolean;
+  watched_at: string | null;
   tmdb_id: string | null;
   imdb_id: string | null;
   tvdb_id: string | null;

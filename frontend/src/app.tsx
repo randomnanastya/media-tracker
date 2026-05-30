@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { AuthGuard } from "./auth/auth-guard";
 import { BreadcrumbProvider } from "./contexts/breadcrumb-context";
+import { JellyfinUserProvider } from "./contexts/jellyfin-user-context";
 import { AppLayout } from "./components/layout/app-layout";
 import { AuthPage } from "./pages/auth-page";
 import { DashboardPage } from "./pages/dashboard-page";
@@ -94,9 +95,11 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BreadcrumbProvider>
-        <RouterProvider router={router} />
-      </BreadcrumbProvider>
+      <JellyfinUserProvider>
+        <BreadcrumbProvider>
+          <RouterProvider router={router} />
+        </BreadcrumbProvider>
+      </JellyfinUserProvider>
     </QueryClientProvider>
   );
 }
