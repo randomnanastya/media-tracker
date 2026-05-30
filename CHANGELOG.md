@@ -1,3 +1,13 @@
+## [1.16.0](https://github.com/randomnanastya/media-tracker/compare/v1.15.0...v1.16.0) (2026-05-30)
+
+### Features
+
+* **watch:** manual watch status UI for movies and series ([4007559](https://github.com/randomnanastya/media-tracker/commit/4007559bfbaab79bf334d12bbc780b624e10dfc5))
+
+### Bug Fixes
+
+* **ui:** refine episode and season UI per design review ([7559e4f](https://github.com/randomnanastya/media-tracker/commit/7559e4f80e3b008b4295d68f34378cb9838c5cb6))
+
 ## [1.15.0](https://github.com/randomnanastya/media-tracker/compare/v1.14.0...v1.15.0) (2026-05-30)
 
 ### Features
