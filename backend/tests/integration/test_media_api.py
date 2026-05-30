@@ -378,7 +378,7 @@ async def test_get_media_detail_episode_no_watch_history_status_is_none(
     resp = await client_with_db.get(f"/api/v1/media/{series.id}")
     assert resp.status_code == 200
     ep = resp.json()["seasons"][0]["episodes"][0]
-    assert ep["number"] == 1
+    assert ep["episode_number"] == 1
     assert ep["title"] == "Pilot"
     assert ep["watch_status"] is None
 
@@ -435,7 +435,7 @@ async def test_get_media_detail_episodes_ordered_by_number(client_with_db, sessi
     resp = await client_with_db.get(f"/api/v1/media/{series.id}")
     assert resp.status_code == 200
     episodes = resp.json()["seasons"][0]["episodes"]
-    assert [ep["number"] for ep in episodes] == [1, 2, 3]
+    assert [ep["episode_number"] for ep in episodes] == [1, 2, 3]
 
 
 async def test_get_media_detail_episodes_grouped_per_season(client_with_db, session_for_test):
@@ -526,7 +526,7 @@ async def test_get_media_detail_episode_returns_still_url(client_with_db, sessio
     resp = await client_with_db.get(f"/api/v1/media/{series.id}")
     assert resp.status_code == 200
     ep = resp.json()["seasons"][0]["episodes"][0]
-    assert ep["still_url"] == "https://image.tmdb.org/t/p/w300/abc.jpg"
+    assert ep["thumbnail_url"] == "https://image.tmdb.org/t/p/w300/abc.jpg"
 
 
 async def test_get_media_detail_episode_still_url_null(client_with_db, session_for_test):
@@ -539,7 +539,7 @@ async def test_get_media_detail_episode_still_url_null(client_with_db, session_f
     resp = await client_with_db.get(f"/api/v1/media/{series.id}")
     assert resp.status_code == 200
     ep = resp.json()["seasons"][0]["episodes"][0]
-    assert ep["still_url"] is None
+    assert ep["thumbnail_url"] is None
 
 
 async def test_get_media_detail_movie_has_no_seasons(client_with_db, session_for_test):
