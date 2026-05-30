@@ -13,7 +13,6 @@ class EpisodeDetail(BaseModel):
     watch_status: Literal["watched", "watching", "planned", "dropped"] | None = None
     is_manual: bool = False
     watched_at: datetime | None = None
-    runtime_minutes: int | None = None
 
 
 class SeasonDetail(BaseModel):
