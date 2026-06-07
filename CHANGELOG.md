@@ -1,3 +1,12 @@
+## [1.16.1](https://github.com/randomnanastya/media-tracker/compare/v1.16.0...v1.16.1) (2026-06-07)
+
+### Bug Fixes
+
+* **watch:** add unique constraint on watch_history and prevent duplicate inserts in series sync ([a43c47b](https://github.com/randomnanastya/media-tracker/commit/a43c47b327c867b0f49b6887389fafc10689379d))
+* **watch:** fix linter ([4441438](https://github.com/randomnanastya/media-tracker/commit/4441438c20a911c76cb033a5a3887cecfd32c905))
+* **watch:** fix partial unique index for movies and safe migration dedup ([b6e942c](https://github.com/randomnanastya/media-tracker/commit/b6e942c71d258644cebf8175f01335ccd3bfef33))
+* **watch:** fix partial unique index for movies and safe migration dedup ([#162](https://github.com/randomnanastya/media-tracker/issues/162)) ([b89f01f](https://github.com/randomnanastya/media-tracker/commit/b89f01fe121390f591e02c3001467b335e87a380))
+
 ## [1.16.0](https://github.com/randomnanastya/media-tracker/compare/v1.15.0...v1.16.0) (2026-05-30)
 
 ### Features
