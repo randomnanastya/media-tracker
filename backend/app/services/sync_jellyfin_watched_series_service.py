@@ -1,4 +1,5 @@
-from sqlalchemy import insert, or_, select
+from sqlalchemy import or_, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -295,7 +296,12 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
 
             # Step 10: bulk insert and commit
             if to_insert:
-                await session.execute(insert(WatchHistory), to_insert)
+                stmt = (
+                    insert(WatchHistory)
+                    .values(to_insert)
+                    .on_conflict_do_nothing(index_elements=["user_id", "media_id", "episode_id"])
+                )
+                await session.execute(stmt)
             await session.commit()
             logger.info(
                 "User %s: added=%d updated=%d unwatched=%d",
