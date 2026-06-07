@@ -1,5 +1,8 @@
+from typing import Any, cast
+
 from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -301,7 +304,7 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
                     .values(to_insert)
                     .on_conflict_do_nothing(index_elements=["user_id", "media_id", "episode_id"])
                 )
-                result = await session.execute(stmt)
+                result = cast(CursorResult[Any], await session.execute(stmt))
                 skipped = len(to_insert) - result.rowcount
                 if skipped:
                     user_added -= skipped
