@@ -301,7 +301,11 @@ async def sync_jellyfin_watched_series(session: AsyncSession) -> JellyfinWatched
                     .values(to_insert)
                     .on_conflict_do_nothing(index_elements=["user_id", "media_id", "episode_id"])
                 )
-                await session.execute(stmt)
+                result = await session.execute(stmt)
+                skipped = len(to_insert) - result.rowcount
+                if skipped:
+                    user_added -= skipped
+                    watched_added -= skipped
             await session.commit()
             logger.info(
                 "User %s: added=%d updated=%d unwatched=%d",
