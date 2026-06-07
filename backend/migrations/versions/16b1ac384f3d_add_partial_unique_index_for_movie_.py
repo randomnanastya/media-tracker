@@ -1,9 +1,9 @@
-"""add unique constraint
-  to watch_history
+"""add partial unique
+  index for movie watch history
 
-Revision ID: 9afc76d62278
-Revises: 9f8e7d6c5b4a
-Create Date: 2026-06-07 11:32:44.844286
+Revision ID: 16b1ac384f3d
+Revises: 9afc76d62278
+Create Date: 2026-06-07 11:48:52.651276
 
 """
 
@@ -15,8 +15,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "9afc76d62278"
-down_revision: Union[str, Sequence[str], None] = "9f8e7d6c5b4a"
+revision: str = "16b1ac384f3d"
+down_revision: Union[str, Sequence[str], None] = "9afc76d62278"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -30,7 +30,7 @@ def upgrade() -> None:
             SELECT id FROM (
                 SELECT id,
                        ROW_NUMBER() OVER (
-                           PARTITION BY user_id, media_id, episode_id
+                           PARTITION BY user_id, media_id
                            ORDER BY
                                CASE status
                                    WHEN 'WATCHED' THEN 1
@@ -42,19 +42,25 @@ def upgrade() -> None:
                                id DESC
                        ) AS rn
                 FROM watch_history
-                WHERE episode_id IS NOT NULL
+                WHERE episode_id IS NULL
             ) sub
             WHERE rn > 1
         )
         """
     )
-    op.create_unique_constraint(
-        "uq_watch_history_user_media_episode",
+    op.create_index(
+        "uq_watch_history_user_media_no_episode",
         "watch_history",
-        ["user_id", "media_id", "episode_id"],
+        ["user_id", "media_id"],
+        unique=True,
+        postgresql_where=sa.text("episode_id IS NULL"),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_constraint("uq_watch_history_user_media_episode", "watch_history", type_="unique")
+    op.drop_index(
+        "uq_watch_history_user_media_no_episode",
+        table_name="watch_history",
+        postgresql_where=sa.text("episode_id IS NULL"),
+    )
