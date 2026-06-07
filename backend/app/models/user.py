@@ -8,10 +8,12 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -45,6 +47,13 @@ class WatchHistory(Base):
     __table_args__ = (
         UniqueConstraint(
             "user_id", "media_id", "episode_id", name="uq_watch_history_user_media_episode"
+        ),
+        Index(
+            "uq_watch_history_user_media_no_episode",
+            "user_id",
+            "media_id",
+            unique=True,
+            postgresql_where=text("episode_id IS NULL"),
         ),
     )
 
