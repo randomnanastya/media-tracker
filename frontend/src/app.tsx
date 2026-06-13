@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router";
 import { AuthGuard } from "./auth/auth-guard";
 import { BreadcrumbProvider } from "./contexts/breadcrumb-context";
 import { JellyfinUserProvider } from "./contexts/jellyfin-user-context";
@@ -27,64 +27,63 @@ const router = createBrowserRouter([
     element: <ForgotPasswordPage />,
   },
   {
-    path: "/",
     element: (
       <AuthGuard>
-        <AppLayout breadcrumb={["Dashboard"]}>
-          <DashboardPage />
-        </AppLayout>
+        <JellyfinUserProvider>
+          <Outlet />
+        </JellyfinUserProvider>
       </AuthGuard>
     ),
-  },
-  {
-    path: "/settings",
-    element: (
-      <AuthGuard>
-        <AppLayout breadcrumb={["Settings"]}>
-          <SettingsPage />
-        </AppLayout>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/media",
-    element: (
-      <AuthGuard>
-        <AppLayout breadcrumb={["Dashboard", "Media"]}>
-          <MediaListPage />
-        </AppLayout>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/media/movies",
-    element: (
-      <AuthGuard>
-        <AppLayout breadcrumb={["Dashboard", "Media", "Movies"]}>
-          <MediaListPage type="movie" />
-        </AppLayout>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/media/series",
-    element: (
-      <AuthGuard>
-        <AppLayout breadcrumb={["Dashboard", "Media", "Series"]}>
-          <MediaListPage type="series" />
-        </AppLayout>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/media/:id",
-    element: (
-      <AuthGuard>
-        <AppLayout breadcrumb={["Dashboard", "Media", "Detail"]}>
-          <MediaDetailPage />
-        </AppLayout>
-      </AuthGuard>
-    ),
+    children: [
+      {
+        path: "/",
+        element: (
+          <AppLayout breadcrumb={["Dashboard"]}>
+            <DashboardPage />
+          </AppLayout>
+        ),
+      },
+      {
+        path: "/settings",
+        element: (
+          <AppLayout breadcrumb={["Settings"]}>
+            <SettingsPage />
+          </AppLayout>
+        ),
+      },
+      {
+        path: "/media",
+        element: (
+          <AppLayout breadcrumb={["Dashboard", "Media"]}>
+            <MediaListPage />
+          </AppLayout>
+        ),
+      },
+      {
+        path: "/media/movies",
+        element: (
+          <AppLayout breadcrumb={["Dashboard", "Media", "Movies"]}>
+            <MediaListPage type="movie" />
+          </AppLayout>
+        ),
+      },
+      {
+        path: "/media/series",
+        element: (
+          <AppLayout breadcrumb={["Dashboard", "Media", "Series"]}>
+            <MediaListPage type="series" />
+          </AppLayout>
+        ),
+      },
+      {
+        path: "/media/:id",
+        element: (
+          <AppLayout breadcrumb={["Dashboard", "Media", "Detail"]}>
+            <MediaDetailPage />
+          </AppLayout>
+        ),
+      },
+    ],
   },
   {
     path: "*",
@@ -95,11 +94,9 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <JellyfinUserProvider>
-        <BreadcrumbProvider>
-          <RouterProvider router={router} />
-        </BreadcrumbProvider>
-      </JellyfinUserProvider>
+      <BreadcrumbProvider>
+        <RouterProvider router={router} />
+      </BreadcrumbProvider>
     </QueryClientProvider>
   );
 }
