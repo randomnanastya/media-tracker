@@ -1,3 +1,9 @@
+## [1.16.2](https://github.com/randomnanastya/media-tracker/compare/v1.16.1...v1.16.2) (2026-06-13)
+
+### Bug Fixes
+
+* **watch:** fix-auth-loop-on-public-routes ([#163](https://github.com/randomnanastya/media-tracker/issues/163)) ([01e65ca](https://github.com/randomnanastya/media-tracker/commit/01e65caa013fa39afd49fe6edde358c5801625ef))
+
 ## [1.16.1](https://github.com/randomnanastya/media-tracker/compare/v1.16.0...v1.16.1) (2026-06-07)
 
 ### Bug Fixes
