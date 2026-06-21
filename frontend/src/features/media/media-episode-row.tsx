@@ -111,6 +111,11 @@ export function MediaEpisodeRow({ episode, mediaId }: EpisodeRowProps) {
         disabled={!selectedUser}
         onClick={() => toggleMutation.mutate()}
       />
+      <ResetToJellyfinButton
+        isManual={episode.is_manual}
+        isLoading={resetMutation.isPending}
+        onClick={() => resetMutation.mutate()}
+      />
       <span className="text-sm text-[#2a2520]/50 w-5 text-center shrink-0">
         {episode.episode_number}
       </span>
@@ -124,19 +129,14 @@ export function MediaEpisodeRow({ episode, mediaId }: EpisodeRowProps) {
         <div className="w-16 h-9 rounded bg-[#2a2520]/10 shrink-0" />
       )}
       <span className="text-sm flex-1 min-w-0 truncate">{episode.title}</span>
-      {episode.watch_status === "watched" && (
+      {episode.air_date && (
         <span className="text-xs text-[#2a2520]/65 shrink-0">
-          {formatDate(episode.watched_at)}
+          {formatDate(episode.air_date)}
         </span>
       )}
       <span className="text-xs text-[#2a2520]/65 shrink-0">
         {formatRuntime(episode.runtime_minutes)}
       </span>
-      <ResetToJellyfinButton
-        isManual={episode.is_manual}
-        isLoading={resetMutation.isPending}
-        onClick={() => resetMutation.mutate()}
-      />
     </div>
   );
 }
