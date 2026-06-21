@@ -1,6 +1,7 @@
 import { Star } from "lucide-react";
 import { Link } from "react-router";
 import type { MediaItem } from "../../types/media";
+import { saveScrollPosition } from "../../hooks/use-scroll-restore";
 import { MediaPoster } from "./media-poster";
 import { MediaStatusBadge } from "./media-status-badge";
 import { MediaProgressBar } from "./media-progress-bar";
@@ -12,7 +13,7 @@ interface Props {
 
 export function MediaGridCard({ item, from }: Props) {
   return (
-    <Link to={`/media/${item.id}`} state={{ from }} className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden group transition-shadow hover:shadow-md">
+    <Link to={`/media/${item.id}`} state={{ from }} onClick={() => saveScrollPosition(window.location.pathname)} className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden group transition-shadow hover:shadow-md">
       <div className="relative">
         <MediaPoster
           src={item.poster_url}

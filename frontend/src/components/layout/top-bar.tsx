@@ -18,6 +18,8 @@ const BREADCRUMB_PATHS: Record<string, string> = {
   Settings: "/settings",
 };
 
+const LIST_PATHS = new Set(["/media", "/media/movies", "/media/series"]);
+
 export function TopBar({ breadcrumb }: TopBarProps) {
   const navigate = useNavigate();
   const { dynamicCrumb, extraCrumbs } = useDynamicCrumb();
@@ -53,7 +55,7 @@ export function TopBar({ breadcrumb }: TopBarProps) {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => void navigate(path)}
+                    onClick={() => void navigate(path, { state: LIST_PATHS.has(path) ? { scrollRestore: true } : undefined })}
                     className="text-[#2a2520]/50 hover:text-[#2a2520] transition-colors"
                   >
                     {displaySegment}
