@@ -20,7 +20,7 @@ const BREADCRUMB_PATHS: Record<string, string> = {
 
 export function TopBar({ breadcrumb }: TopBarProps) {
   const navigate = useNavigate();
-  const { dynamicCrumb } = useDynamicCrumb();
+  const { dynamicCrumb, extraCrumbs } = useDynamicCrumb();
 
   const mutation = useMutation({
     mutationFn: authApi.logout,
@@ -35,27 +35,34 @@ export function TopBar({ breadcrumb }: TopBarProps) {
   return (
     <header className="h-14 flex items-center justify-between px-6 bg-white shadow-sm border-b border-gray-100 shrink-0">
       <div className="flex items-center gap-1.5 text-sm">
-        {breadcrumb.map((segment, i) => {
-          const isLast = i === breadcrumb.length - 1;
-          const displaySegment = isLast && dynamicCrumb ? dynamicCrumb : segment;
-          const path = BREADCRUMB_PATHS[segment];
-          return (
-            <Fragment key={i}>
-              {i > 0 && <span className="text-[#2a2520]/30">›</span>}
-              {isLast || !path ? (
-                <span className="text-[#2a2520] font-medium">{displaySegment}</span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void navigate(path)}
-                  className="text-[#2a2520]/50 hover:text-[#2a2520] transition-colors"
-                >
-                  {displaySegment}
-                </button>
-              )}
-            </Fragment>
-          );
-        })}
+        {(() => {
+          const allSegments = [
+            ...breadcrumb.slice(0, -1),
+            ...extraCrumbs,
+            breadcrumb[breadcrumb.length - 1],
+          ];
+          return allSegments.map((segment, i) => {
+            const isLast = i === allSegments.length - 1;
+            const displaySegment = isLast && dynamicCrumb ? dynamicCrumb : segment;
+            const path = BREADCRUMB_PATHS[segment];
+            return (
+              <Fragment key={i}>
+                {i > 0 && <span className="text-[#2a2520]/30">›</span>}
+                {isLast || !path ? (
+                  <span className="text-[#2a2520] font-medium">{displaySegment}</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void navigate(path)}
+                    className="text-[#2a2520]/50 hover:text-[#2a2520] transition-colors"
+                  >
+                    {displaySegment}
+                  </button>
+                )}
+              </Fragment>
+            );
+          });
+        })()}
       </div>
       <div className="flex items-center gap-4">
         <JellyfinUserSelector />

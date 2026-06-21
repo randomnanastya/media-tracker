@@ -7,11 +7,12 @@ import { MediaProgressBar } from "./media-progress-bar";
 
 interface Props {
   item: MediaItem;
+  from?: string;
 }
 
-export function MediaGridCard({ item }: Props) {
+export function MediaGridCard({ item, from }: Props) {
   return (
-    <Link to={`/media/${item.id}`} className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden group transition-shadow hover:shadow-md">
+    <Link to={`/media/${item.id}`} state={{ from }} className="flex flex-col bg-white/80 border border-[#c9b89a]/30 rounded-xl overflow-hidden group transition-shadow hover:shadow-md">
       <div className="relative">
         <MediaPoster
           src={item.poster_url}
