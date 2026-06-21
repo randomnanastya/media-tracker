@@ -11,13 +11,23 @@ interface MediaActionsMenuProps {
   isManual: boolean;
 }
 
-type ConfirmActionType = "watched" | "planned" | "reset";
+type ConfirmActionType = "watched" | "watching" | "dropped" | "planned" | "reset";
 
 const DIALOG_CONFIG: Record<ConfirmActionType, { title: string; description: string; confirmLabel: string }> = {
   watched: {
     title: "Mark as watched",
     description: "Mark entire series as watched for all episodes?",
     confirmLabel: "Mark watched",
+  },
+  watching: {
+    title: "Mark as watching",
+    description: "Mark entire series as currently watching for all episodes?",
+    confirmLabel: "Mark watching",
+  },
+  dropped: {
+    title: "Mark as dropped",
+    description: "Mark entire series as dropped for all episodes?",
+    confirmLabel: "Mark dropped",
   },
   planned: {
     title: "Mark as unwatched",
@@ -94,6 +104,10 @@ export function MediaActionsMenu({ mediaId, mediaType, isManual }: MediaActionsM
       if (!canAct) throw new Error("No Jellyfin user");
       if (action === "watched") {
         await mediaApi.setSeriesWatchStatus(mediaId, "watched", jellyfinUserId);
+      } else if (action === "watching") {
+        await mediaApi.setSeriesWatchStatus(mediaId, "watching", jellyfinUserId);
+      } else if (action === "dropped") {
+        await mediaApi.setSeriesWatchStatus(mediaId, "dropped", jellyfinUserId);
       } else if (action === "planned") {
         await mediaApi.setSeriesWatchStatus(mediaId, "planned", jellyfinUserId);
       } else if (mediaType === "series") {
@@ -153,6 +167,22 @@ export function MediaActionsMenu({ mediaId, mediaType, isManual }: MediaActionsM
                 onClick={() => handleMenuItemClick("watched")}
               >
                 Mark entire series as watched
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => handleMenuItemClick("watching")}
+              >
+                Mark entire series as watching
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemClass}
+                onClick={() => handleMenuItemClick("dropped")}
+              >
+                Mark entire series as dropped
               </button>
               <button
                 type="button"
