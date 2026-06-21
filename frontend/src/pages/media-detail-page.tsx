@@ -30,7 +30,7 @@ export function MediaDetailPage() {
   const location = useLocation();
   const { setDynamicCrumb, setExtraCrumbs } = useDynamicCrumb();
   const { selectedUser } = useJellyfinUser();
-  const jellyfinUserId = selectedUser?.jellyfin_user_id;
+  const jellyfinUserId = selectedUser?.jellyfin_user_id ?? undefined;
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["media", numericId, jellyfinUserId],
