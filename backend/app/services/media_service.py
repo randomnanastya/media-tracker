@@ -224,7 +224,9 @@ async def get_media_detail_by_id(
                 COUNT(*) FILTER (WHERE wh.status = 'DROPPED') AS dropped_count
             FROM seasons sea
             JOIN episodes e ON e.season_id = sea.id
-            LEFT JOIN watch_history wh ON wh.episode_id = e.id
+            LEFT JOIN watch_history wh
+                ON wh.episode_id = e.id
+                AND (CAST(:user_id AS INTEGER) IS NULL OR wh.user_id = CAST(:user_id AS INTEGER))
             WHERE sea.series_id = m.id
         ) ep_stats ON m.media_type = 'SERIES'
         WHERE m.id = :media_id
@@ -273,7 +275,9 @@ async def get_media_detail_by_id(
                 COUNT(*) FILTER (WHERE wh.status = 'WATCHED') AS watched_episodes
             FROM seasons sea
             LEFT JOIN episodes e ON e.season_id = sea.id
-            LEFT JOIN watch_history wh ON wh.episode_id = e.id
+            LEFT JOIN watch_history wh
+                ON wh.episode_id = e.id
+                AND (CAST(:user_id AS INTEGER) IS NULL OR wh.user_id = CAST(:user_id AS INTEGER))
             WHERE sea.series_id = :media_id
             GROUP BY sea.id, sea.number, sea.poster_url, sea.vote_average, sea.release_date
             ORDER BY sea.number
@@ -299,17 +303,31 @@ async def get_media_detail_by_id(
                 bool_or(wh.is_manual) AS episode_is_manual
             FROM seasons sea
             JOIN episodes e ON e.season_id = sea.id
-            LEFT JOIN watch_history wh ON wh.episode_id = e.id
+            LEFT JOIN watch_history wh
+                ON wh.episode_id = e.id
+                AND (CAST(:user_id AS INTEGER) IS NULL OR wh.user_id = CAST(:user_id AS INTEGER))
             WHERE sea.series_id = :media_id
             GROUP BY sea.id, sea.number, e.id, e.number, e.title, e.air_date, e.still_url
             ORDER BY sea.number, e.number
             """
         )
         season_rows = (
-            (await session.execute(seasons_query, {"media_id": media_id})).mappings().all()
+            (
+                await session.execute(
+                    seasons_query, {"media_id": media_id, "user_id": internal_user_id}
+                )
+            )
+            .mappings()
+            .all()
         )
         episode_rows = (
-            (await session.execute(episodes_query, {"media_id": media_id})).mappings().all()
+            (
+                await session.execute(
+                    episodes_query, {"media_id": media_id, "user_id": internal_user_id}
+                )
+            )
+            .mappings()
+            .all()
         )
 
         episodes_by_season: dict[int, list[EpisodeDetail]] = defaultdict(list)
