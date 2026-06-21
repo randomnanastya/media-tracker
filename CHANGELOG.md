@@ -1,3 +1,9 @@
+## [1.17.0](https://github.com/randomnanastya/media-tracker/compare/v1.16.2...v1.17.0) (2026-06-21)
+
+### Features
+
+* **watch:** add watching and dropped as manual watch statuses ([#168](https://github.com/randomnanastya/media-tracker/issues/168)) ([8f859e4](https://github.com/randomnanastya/media-tracker/commit/8f859e42ba4996a83f24552880d0a74417ff596f))
+
 ## [1.16.2](https://github.com/randomnanastya/media-tracker/compare/v1.16.1...v1.16.2) (2026-06-13)
 
 ### Bug Fixes
