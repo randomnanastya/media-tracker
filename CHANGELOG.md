@@ -1,3 +1,9 @@
+## [1.18.1](https://github.com/randomnanastya/media-tracker/compare/v1.18.0...v1.18.1) (2026-06-21)
+
+### Bug Fixes
+
+* **watch:** preserve progress on bulk status, fix affected count and series status priority ([f82d1bd](https://github.com/randomnanastya/media-tracker/commit/f82d1bdbed9c27ae2fd74cf34f8794b5261c4ad5))
+
 ## [1.18.0](https://github.com/randomnanastya/media-tracker/compare/v1.17.0...v1.18.0) (2026-06-21)
 
 ### Features
