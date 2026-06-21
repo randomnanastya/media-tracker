@@ -12,7 +12,6 @@ import { MediaSeasonsSection } from "../features/media/media-seasons-section";
 import { MovieWatchToggle } from "../features/media/movie-watch-toggle";
 import { MediaActionsMenu } from "../features/media/media-actions-menu";
 import { useDynamicCrumb } from "../contexts/breadcrumb-context";
-import { useJellyfinUser } from "../contexts/jellyfin-user-context";
 
 function getExternalUrl(label: string, value: string, mediaType: MediaType): string | null {
   if (label === "TMDB")
@@ -29,8 +28,6 @@ export function MediaDetailPage() {
 
   const location = useLocation();
   const { setDynamicCrumb, setExtraCrumbs } = useDynamicCrumb();
-  const { selectedUser } = useJellyfinUser();
-
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["media", numericId],
     queryFn: () => mediaApi.detail(numericId),
@@ -230,10 +227,9 @@ export function MediaDetailPage() {
               {data.media_type === "movie" && (
                 <MovieWatchToggle
                   mediaId={data.id}
-                  watched={data.watch_status === "watched"}
+                  status={data.watch_status}
                   isManual={data.is_manual}
                   watchedAt={data.watched_at}
-                  disabled={!selectedUser}
                 />
               )}
               <MediaActionsMenu

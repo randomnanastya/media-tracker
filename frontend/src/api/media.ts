@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { MediaDetailResponse, MediaListResponse } from "../types/media";
+import type { MediaDetailResponse, MediaListResponse, WatchStatus } from "../types/media";
 
 interface MediaListParams {
   type?: string;
@@ -32,7 +32,7 @@ export const mediaApi = {
     apiClient.get(`api/v1/media/${id}`).json<MediaDetailResponse>(),
   setMovieWatchStatus: (
     mediaId: number,
-    status: "watched" | "planned",
+    status: WatchStatus,
     jellyfinUserId: string,
   ): Promise<WatchStatusUpdateResponse> =>
     apiClient
@@ -48,7 +48,7 @@ export const mediaApi = {
       .then(() => undefined),
   setEpisodeWatchStatus: (
     episodeId: number,
-    status: "watched" | "planned",
+    status: WatchStatus,
     jellyfinUserId: string,
   ): Promise<WatchStatusUpdateResponse> =>
     apiClient
@@ -64,7 +64,7 @@ export const mediaApi = {
       .then(() => undefined),
   setSeasonWatchStatus: (
     seasonId: number,
-    status: "watched" | "planned",
+    status: WatchStatus,
     jellyfinUserId: string,
   ): Promise<BulkWatchStatusResponse> =>
     apiClient
@@ -74,7 +74,7 @@ export const mediaApi = {
       .json(),
   setSeriesWatchStatus: (
     mediaId: number,
-    status: "watched" | "planned",
+    status: WatchStatus,
     jellyfinUserId: string,
   ): Promise<BulkWatchStatusResponse> =>
     apiClient
