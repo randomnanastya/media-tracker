@@ -28,8 +28,12 @@ export const mediaApi = {
     apiClient
       .get("api/v1/media", { searchParams: (params as Record<string, string | number>) ?? {} })
       .json<MediaListResponse>(),
-  detail: (id: number): Promise<MediaDetailResponse> =>
-    apiClient.get(`api/v1/media/${id}`).json<MediaDetailResponse>(),
+  detail: (id: number, jellyfinUserId?: string): Promise<MediaDetailResponse> =>
+    apiClient
+      .get(`api/v1/media/${id}`, {
+        searchParams: jellyfinUserId ? { jellyfin_user_id: jellyfinUserId } : {},
+      })
+      .json<MediaDetailResponse>(),
   setMovieWatchStatus: (
     mediaId: number,
     status: WatchStatus,
