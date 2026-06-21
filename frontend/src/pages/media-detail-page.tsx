@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { mediaApi } from "../api/media";
 import type { MediaType } from "../types/media";
+import { useJellyfinUser } from "../contexts/jellyfin-user-context";
 import { MediaPoster } from "../features/media/media-poster";
 import { MediaStatusBadge } from "../features/media/media-status-badge";
 import { MediaSeasonsSection } from "../features/media/media-seasons-section";
@@ -28,9 +29,12 @@ export function MediaDetailPage() {
 
   const location = useLocation();
   const { setDynamicCrumb, setExtraCrumbs } = useDynamicCrumb();
+  const { selectedUser } = useJellyfinUser();
+  const jellyfinUserId = selectedUser?.jellyfin_user_id;
+
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["media", numericId],
-    queryFn: () => mediaApi.detail(numericId),
+    queryKey: ["media", numericId, jellyfinUserId],
+    queryFn: () => mediaApi.detail(numericId, jellyfinUserId),
     enabled: isValidId,
   });
 
