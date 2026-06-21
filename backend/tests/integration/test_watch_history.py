@@ -306,3 +306,166 @@ async def test_nonexistent_movie_returns_404(client_with_db, session_for_test) -
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "WATCH_MEDIA_NOT_FOUND"
+
+
+# --- Tests for bulk_upsert: WATCHING/DROPPED skip already-WATCHED episodes ----
+
+
+async def test_set_season_watching_skips_watched_episodes(client_with_db, session_for_test) -> None:
+    """PUT /seasons/{id} status=watching must not overwrite episodes already WATCHED."""
+    user = await create_user(session_for_test, username="ivan", jellyfin_user_id=str(uuid.uuid4()))
+    series = await create_series(session_for_test, title="The Wire")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    ep1 = await create_episode(session_for_test, season_id=season.id, number=1, title="S01E01")
+    ep2 = await create_episode(session_for_test, season_id=season.id, number=2, title="S01E02")
+
+    wh_watched = WatchHistoryFactory.build(
+        user_id=user.id,
+        media_id=series.id,
+        episode_id=ep1.id,
+        status=WatchStatus.WATCHED,
+        is_manual=True,
+    )
+    session_for_test.add(wh_watched)
+
+    jf_user_id = user.jellyfin_user_id
+    season_id = season.id
+    ep1_id, ep2_id = ep1.id, ep2.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/seasons/{season_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "watching"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["affected"] == 1
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    by_episode = {row.episode_id: row for row in rows}
+
+    assert by_episode[ep1_id].status == WatchStatus.WATCHED
+    assert by_episode[ep2_id].status == WatchStatus.WATCHING
+
+
+async def test_set_season_dropped_skips_watched_and_watching_episodes(
+    client_with_db, session_for_test
+) -> None:
+    """PUT /seasons/{id} status=dropped preserves WATCHED and WATCHING episodes."""
+    user = await create_user(session_for_test, username="julia", jellyfin_user_id=str(uuid.uuid4()))
+    series = await create_series(session_for_test, title="Sopranos")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    ep1 = await create_episode(session_for_test, season_id=season.id, number=1, title="S01E01")
+    ep2 = await create_episode(session_for_test, season_id=season.id, number=2, title="S01E02")
+    ep3 = await create_episode(session_for_test, season_id=season.id, number=3, title="S01E03")
+
+    session_for_test.add(
+        WatchHistoryFactory.build(
+            user_id=user.id,
+            media_id=series.id,
+            episode_id=ep1.id,
+            status=WatchStatus.WATCHED,
+            is_manual=True,
+        )
+    )
+    session_for_test.add(
+        WatchHistoryFactory.build(
+            user_id=user.id,
+            media_id=series.id,
+            episode_id=ep2.id,
+            status=WatchStatus.WATCHING,
+            is_manual=True,
+        )
+    )
+
+    jf_user_id = user.jellyfin_user_id
+    season_id = season.id
+    ep1_id, ep2_id, ep3_id = ep1.id, ep2.id, ep3.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/seasons/{season_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "dropped"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["affected"] == 1
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    by_episode = {row.episode_id: row for row in rows}
+
+    assert by_episode[ep1_id].status == WatchStatus.WATCHED
+    assert by_episode[ep2_id].status == WatchStatus.WATCHING
+    assert by_episode[ep3_id].status == WatchStatus.DROPPED
+
+
+async def test_set_season_planned_skips_watched_episodes(client_with_db, session_for_test) -> None:
+    """PUT /seasons/{id} status=planned must not overwrite episodes already WATCHED."""
+    user = await create_user(session_for_test, username="lena", jellyfin_user_id=str(uuid.uuid4()))
+    series = await create_series(session_for_test, title="Friends")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    ep1 = await create_episode(session_for_test, season_id=season.id, number=1, title="S01E01")
+    ep2 = await create_episode(session_for_test, season_id=season.id, number=2, title="S01E02")
+
+    session_for_test.add(
+        WatchHistoryFactory.build(
+            user_id=user.id,
+            media_id=series.id,
+            episode_id=ep1.id,
+            status=WatchStatus.WATCHED,
+            is_manual=True,
+        )
+    )
+
+    jf_user_id = user.jellyfin_user_id
+    season_id = season.id
+    ep1_id, ep2_id = ep1.id, ep2.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/seasons/{season_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "planned"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["affected"] == 1
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    by_episode = {row.episode_id: row for row in rows}
+
+    assert by_episode[ep1_id].status == WatchStatus.WATCHED
+    assert by_episode[ep2_id].status == WatchStatus.PLANNED
+
+
+async def test_set_season_watched_updates_all_episodes(client_with_db, session_for_test) -> None:
+    """PUT /seasons/{id} status=watched must update all episodes regardless of current status."""
+    user = await create_user(session_for_test, username="karl", jellyfin_user_id=str(uuid.uuid4()))
+    series = await create_series(session_for_test, title="Oz")
+    season = await create_season(session_for_test, series_id=series.id, number=1)
+    ep1 = await create_episode(session_for_test, season_id=season.id, number=1, title="S01E01")
+    await create_episode(session_for_test, season_id=season.id, number=2, title="S01E02")
+
+    session_for_test.add(
+        WatchHistoryFactory.build(
+            user_id=user.id,
+            media_id=series.id,
+            episode_id=ep1.id,
+            status=WatchStatus.WATCHING,
+            is_manual=True,
+        )
+    )
+
+    jf_user_id = user.jellyfin_user_id
+    season_id = season.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/seasons/{season_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "watched"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["affected"] == 2
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    assert all(row.status == WatchStatus.WATCHED for row in rows)

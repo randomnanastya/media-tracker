@@ -64,6 +64,13 @@ async def _upsert_watch_history(
     return wh, created
 
 
+_BULK_SKIP: dict[ManualWatchStatus, frozenset[WatchStatus]] = {
+    ManualWatchStatus.WATCHING: frozenset({WatchStatus.WATCHED}),
+    ManualWatchStatus.DROPPED: frozenset({WatchStatus.WATCHED, WatchStatus.WATCHING}),
+    ManualWatchStatus.PLANNED: frozenset({WatchStatus.WATCHED}),
+}
+
+
 async def _bulk_upsert(
     session: AsyncSession,
     user_id: int,
@@ -71,9 +78,26 @@ async def _bulk_upsert(
     episode_ids: list[int],
     status: ManualWatchStatus,
 ) -> tuple[int, int]:
+    skip_statuses = _BULK_SKIP.get(status, frozenset())
+
+    existing_map: dict[int | None, WatchHistory] = {}
+    if skip_statuses and episode_ids:
+        result = await session.execute(
+            select(WatchHistory).where(
+                WatchHistory.user_id == user_id,
+                WatchHistory.media_id == media_id,
+                WatchHistory.episode_id.in_(episode_ids),
+            )
+        )
+        existing_map = {wh.episode_id: wh for wh in result.scalars().all()}
+
     inserted = 0
     updated = 0
     for episode_id in episode_ids:
+        existing = existing_map.get(episode_id)
+        if existing is not None and existing.status in skip_statuses:
+            continue
+
         _, created = await _upsert_watch_history(session, user_id, media_id, episode_id, status)
         if created:
             inserted += 1
@@ -205,7 +229,7 @@ async def set_season_watch_status(
     inserted, updated = await _bulk_upsert(session, user.id, media_id, episode_ids, status)
 
     return BulkWatchStatusResponse(
-        affected=len(episode_ids),
+        affected=inserted + updated,
         inserted=inserted,
         updated=updated,
     )
@@ -268,7 +292,7 @@ async def set_series_watch_status(
     inserted, updated = await _bulk_upsert(session, user.id, series_media_id, episode_ids, status)
 
     return BulkWatchStatusResponse(
-        affected=len(episode_ids),
+        affected=inserted + updated,
         inserted=inserted,
         updated=updated,
     )
