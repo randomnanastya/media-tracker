@@ -1,3 +1,9 @@
+## [1.18.2](https://github.com/randomnanastya/media-tracker/compare/v1.18.1...v1.18.2) (2026-06-21)
+
+### Bug Fixes
+
+* **frontend:** show episode air date, fix reset button layout in episode row ([cfd5ca1](https://github.com/randomnanastya/media-tracker/commit/cfd5ca1eb4f2a18b3de3c6a438eeec5366b87d8d))
+
 ## [1.18.1](https://github.com/randomnanastya/media-tracker/compare/v1.18.0...v1.18.1) (2026-06-21)
 
 ### Bug Fixes
