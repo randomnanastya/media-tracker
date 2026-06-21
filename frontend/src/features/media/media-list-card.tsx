@@ -7,16 +7,17 @@ import { MediaProgressBar } from "./media-progress-bar";
 
 interface Props {
   item: MediaItem;
+  from?: string;
 }
 
-export function MediaListCard({ item }: Props) {
+export function MediaListCard({ item, from }: Props) {
   const metaParts = [
     item.year?.toString(),
     item.genres.join(", ") || undefined,
   ].filter(Boolean);
 
   return (
-    <Link to={`/media/${item.id}`} className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group transition-shadow hover:shadow-md">
+    <Link to={`/media/${item.id}`} state={{ from }} className="flex gap-3 p-3 bg-white/80 border border-[#c9b89a]/30 rounded-xl group transition-shadow hover:shadow-md">
       <MediaPoster
         src={item.poster_url}
         alt={item.title}

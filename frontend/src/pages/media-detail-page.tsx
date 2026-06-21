@@ -3,7 +3,7 @@ import { HTTPError } from "ky";
 import { ExternalLink } from "lucide-react";
 import tmdbIcon from "../assets/tmdb.svg";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { mediaApi } from "../api/media";
 import type { MediaType } from "../types/media";
 import { MediaPoster } from "../features/media/media-poster";
@@ -27,7 +27,8 @@ export function MediaDetailPage() {
   const numericId = Number(id);
   const isValidId = !!id && !isNaN(numericId);
 
-  const { setDynamicCrumb } = useDynamicCrumb();
+  const location = useLocation();
+  const { setDynamicCrumb, setExtraCrumbs } = useDynamicCrumb();
   const { selectedUser } = useJellyfinUser();
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -40,6 +41,14 @@ export function MediaDetailPage() {
     if (data?.title) setDynamicCrumb(data.title);
     return () => setDynamicCrumb(null);
   }, [data?.title, setDynamicCrumb]);
+
+  useEffect(() => {
+    const from = (location.state as { from?: string } | null)?.from;
+    if (from === "movies") setExtraCrumbs(["Movies"]);
+    else if (from === "series") setExtraCrumbs(["Series"]);
+    else setExtraCrumbs([]);
+    return () => setExtraCrumbs([]);
+  }, [location.state, setExtraCrumbs]);
 
   if (!isValidId) {
     return (

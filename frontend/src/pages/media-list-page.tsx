@@ -37,6 +37,8 @@ export function MediaListPage({ type }: Props) {
     queryFn: () => mediaApi.list({ type, status: status ?? undefined }),
   });
 
+  const from = type === "movie" ? "movies" : type === "series" ? "series" : undefined;
+
   if (isLoading) {
     return <MediaListSkeleton viewMode={viewMode} />;
   }
@@ -71,9 +73,9 @@ export function MediaListPage({ type }: Props) {
       {isEmpty ? (
         <EmptyState />
       ) : viewMode === "list" ? (
-        <MediaListView items={items} />
+        <MediaListView items={items} from={from} />
       ) : (
-        <MediaGridView items={items} />
+        <MediaGridView items={items} from={from} />
       )}
     </div>
   );
