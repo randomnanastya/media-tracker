@@ -77,6 +77,52 @@ async def test_set_movie_planned_success(async_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_set_movie_watching_success(async_client: AsyncClient) -> None:
+    """PUT movies/1 status=watching → 200 с статусом watching."""
+    wh = _make_watch_history(
+        media_id=1, status=WatchStatus.WATCHING, is_manual=True, watched_at=None
+    )
+
+    with patch(
+        "app.api.watch_history.watch_history_service.set_movie_watch_status",
+        new_callable=AsyncMock,
+        return_value=wh,
+    ):
+        response = await async_client.put(
+            "/api/v1/watch/movies/1",
+            json={"jellyfin_user_id": "some-uuid", "status": "watching"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["item"]["status"] == "watching"
+    assert data["item"]["watched_at"] is None
+
+
+@pytest.mark.asyncio
+async def test_set_movie_dropped_success(async_client: AsyncClient) -> None:
+    """PUT movies/1 status=dropped → 200 с статусом dropped."""
+    wh = _make_watch_history(
+        media_id=1, status=WatchStatus.DROPPED, is_manual=True, watched_at=None
+    )
+
+    with patch(
+        "app.api.watch_history.watch_history_service.set_movie_watch_status",
+        new_callable=AsyncMock,
+        return_value=wh,
+    ):
+        response = await async_client.put(
+            "/api/v1/watch/movies/1",
+            json={"jellyfin_user_id": "some-uuid", "status": "dropped"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["item"]["status"] == "dropped"
+    assert data["item"]["watched_at"] is None
+
+
+@pytest.mark.asyncio
 async def test_set_movie_user_not_found(async_client: AsyncClient) -> None:
     """Если сервис поднимает HTTPException(404) → ответ 404."""
     with patch(

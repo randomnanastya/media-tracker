@@ -7,6 +7,8 @@ from pydantic import BaseModel
 
 class ManualWatchStatus(StrEnum):
     WATCHED = "watched"
+    WATCHING = "watching"
+    DROPPED = "dropped"
     PLANNED = "planned"
 
 

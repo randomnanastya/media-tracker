@@ -238,7 +238,59 @@ async def test_unknown_user_returns_404(client_with_db, session_for_test) -> Non
     assert response.json()["detail"]["code"] == "WATCH_USER_NOT_FOUND"
 
 
-# --- Test 7: Nonexistent media_id → 404 WATCH_MEDIA_NOT_FOUND ---------------
+# --- Test 7: PUT /movies status=watching creates record with WATCHING status ---
+
+
+async def test_set_movie_watching_creates_record(client_with_db, session_for_test) -> None:
+    """PUT /movies/{id} status=watching → WatchHistory: status=WATCHING, watched_at=None."""
+    user = await create_user(session_for_test, username="grace", jellyfin_user_id=str(uuid.uuid4()))
+    movie = await create_movie(session_for_test, title="Dune")
+    jf_user_id = user.jellyfin_user_id
+    movie_id = movie.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/movies/{movie_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "watching"},
+    )
+
+    assert response.status_code == 200
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    assert len(rows) == 1
+    wh = rows[0]
+    assert wh.status == WatchStatus.WATCHING
+    assert wh.is_manual is True
+    assert wh.watched_at is None
+
+
+# --- Test 8: PUT /movies status=dropped creates record with DROPPED status ----
+
+
+async def test_set_movie_dropped_creates_record(client_with_db, session_for_test) -> None:
+    """PUT /movies/{id} status=dropped → WatchHistory: status=DROPPED, watched_at=None."""
+    user = await create_user(session_for_test, username="henry", jellyfin_user_id=str(uuid.uuid4()))
+    movie = await create_movie(session_for_test, title="Avatar")
+    jf_user_id = user.jellyfin_user_id
+    movie_id = movie.id
+    await session_for_test.commit()
+
+    response = await client_with_db.put(
+        f"/api/v1/watch/movies/{movie_id}",
+        json={"jellyfin_user_id": jf_user_id, "status": "dropped"},
+    )
+
+    assert response.status_code == 200
+
+    rows = (await session_for_test.execute(select(WatchHistory))).scalars().all()
+    assert len(rows) == 1
+    wh = rows[0]
+    assert wh.status == WatchStatus.DROPPED
+    assert wh.is_manual is True
+    assert wh.watched_at is None
+
+
+# --- Nonexistent media_id → 404 WATCH_MEDIA_NOT_FOUND ---------------
 
 
 async def test_nonexistent_movie_returns_404(client_with_db, session_for_test) -> None:

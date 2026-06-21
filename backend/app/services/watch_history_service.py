@@ -46,16 +46,20 @@ async def _upsert_watch_history(
         )
         session.add(wh)
 
+    wh.is_manual = True
+    wh.playback_position_ticks = None
     if status == ManualWatchStatus.WATCHED:
         wh.status = WatchStatus.WATCHED
-        wh.is_manual = True
         wh.watched_at = datetime.now(UTC)
-        wh.playback_position_ticks = None
+    elif status == ManualWatchStatus.WATCHING:
+        wh.status = WatchStatus.WATCHING
+        wh.watched_at = None
+    elif status == ManualWatchStatus.DROPPED:
+        wh.status = WatchStatus.DROPPED
+        wh.watched_at = None
     else:
         wh.status = WatchStatus.PLANNED
-        wh.is_manual = True
         wh.watched_at = None
-        wh.playback_position_ticks = None
 
     return wh, created
 
