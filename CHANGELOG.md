@@ -1,3 +1,11 @@
+## [1.18.0](https://github.com/randomnanastya/media-tracker/compare/v1.17.0...v1.18.0) (2026-06-21)
+
+### Features
+
+* **frontend:** add dynamic breadcrumbs for media detail page ([f06e5cd](https://github.com/randomnanastya/media-tracker/commit/f06e5cd48632ea64eaea35f1a57b6c574c16ec60))
+* **frontend:** restore scroll position when returning to media list ([ce4e37a](https://github.com/randomnanastya/media-tracker/commit/ce4e37a88679c2c8712f4a79d473da5157450d6a))
+* **watch:** replace movie toggle with 4-status dropdown, add watching/dropped for series ([2a2b61b](https://github.com/randomnanastya/media-tracker/commit/2a2b61bb574d8b20d6eb2b6b8fdd77556e340a32))
+
 ## [1.17.0](https://github.com/randomnanastya/media-tracker/compare/v1.16.2...v1.17.0) (2026-06-21)
 
 ### Features
