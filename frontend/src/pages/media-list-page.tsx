@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useScrollRestore } from "../hooks/use-scroll-restore";
 import { Film } from "lucide-react";
 import { mediaApi } from "../api/media";
 import { MediaListHeader } from "../features/media/media-list-header";
@@ -17,6 +18,7 @@ const VIEW_MODE_KEY = "media-view-mode";
 
 export function MediaListPage({ type }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const status = (searchParams.get("status") as WatchStatus | null) ?? null;
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -37,7 +39,12 @@ export function MediaListPage({ type }: Props) {
     queryFn: () => mediaApi.list({ type, status: status ?? undefined }),
   });
 
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const isEmpty = items.length === 0;
   const from = type === "movie" ? "movies" : type === "series" ? "series" : undefined;
+
+  useScrollRestore(location.pathname, !isLoading && items.length > 0);
 
   if (isLoading) {
     return <MediaListSkeleton viewMode={viewMode} />;
@@ -53,10 +60,6 @@ export function MediaListPage({ type }: Props) {
       </div>
     );
   }
-
-  const items = data?.items ?? [];
-  const total = data?.total ?? 0;
-  const isEmpty = items.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
