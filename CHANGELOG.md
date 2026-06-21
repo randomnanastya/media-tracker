@@ -1,3 +1,10 @@
+## [1.18.4](https://github.com/randomnanastya/media-tracker/compare/v1.18.3...v1.18.4) (2026-06-21)
+
+### Bug Fixes
+
+* **media:** fix null jellyfin_user_id type in detail query ([29eac90](https://github.com/randomnanastya/media-tracker/commit/29eac90ef476e81e2d01714bd858f063885b2674))
+* **media:** pass jellyfin_user_id to detail endpoint ([8f35ca0](https://github.com/randomnanastya/media-tracker/commit/8f35ca09389a44dc5b5e9d48dda448af0118d20e))
+
 ## [1.18.3](https://github.com/randomnanastya/media-tracker/compare/v1.18.2...v1.18.3) (2026-06-21)
 
 ### Bug Fixes
