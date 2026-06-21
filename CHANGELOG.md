@@ -1,3 +1,9 @@
+## [1.18.3](https://github.com/randomnanastya/media-tracker/compare/v1.18.2...v1.18.3) (2026-06-21)
+
+### Bug Fixes
+
+* **media:** filter series watch status by user in detail query ([0e957a2](https://github.com/randomnanastya/media-tracker/commit/0e957a2e60f65d6703598a50932b35dab92583c4))
+
 ## [1.18.2](https://github.com/randomnanastya/media-tracker/compare/v1.18.1...v1.18.2) (2026-06-21)
 
 ### Bug Fixes
