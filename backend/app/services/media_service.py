@@ -48,10 +48,10 @@ def compute_series_status(watched: int, watching: int, dropped: int, total: int)
         return None
     if watched == total:
         return "watched"
-    if watched > 0 or watching > 0:
-        return "watching"
     if dropped > 0:
         return "dropped"
+    if watched > 0 or watching > 0:
+        return "watching"
     return "planned"
 
 

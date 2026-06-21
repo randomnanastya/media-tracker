@@ -297,6 +297,15 @@ class TestComputeSeriesStatus:
     def test_total_one_episode_watched_returns_watched(self) -> None:
         assert compute_series_status(watched=1, watching=0, dropped=0, total=1) == "watched"
 
+    def test_dropped_beats_watching(self) -> None:
+        assert compute_series_status(watched=0, watching=1, dropped=1, total=5) == "dropped"
+
+    def test_dropped_beats_partial_watched(self) -> None:
+        assert compute_series_status(watched=2, watching=0, dropped=1, total=10) == "dropped"
+
+    def test_watching_without_dropped_still_returns_watching(self) -> None:
+        assert compute_series_status(watched=0, watching=2, dropped=0, total=5) == "watching"
+
 
 class TestMovieIsManual:
     async def test_movie_is_manual_true_propagates(self) -> None:
